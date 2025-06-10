@@ -42,6 +42,8 @@ const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorProps) =
     document.execCommand(command, false, value);
   };
 
+  const isEmpty = !value || value.trim() === '';
+
   return (
     <div className="border border-gray-300 rounded-md">
       {/* Toolbar */}
@@ -62,18 +64,24 @@ const RichTextEditor = ({ value, onChange, placeholder }: RichTextEditorProps) =
       </div>
 
       {/* Editor */}
-      <div
-        contentEditable
-        className="min-h-[300px] p-4 focus:outline-none"
-        dangerouslySetInnerHTML={{ __html: value }}
-        onInput={(e) => onChange(e.currentTarget.innerHTML)}
-        onSelect={() => {
-          const selection = window.getSelection();
-          setSelectedText(selection?.toString() || "");
-        }}
-        style={{ whiteSpace: 'pre-wrap' }}
-        placeholder={placeholder}
-      />
+      <div className="relative">
+        {isEmpty && placeholder && (
+          <div className="absolute top-4 left-4 text-gray-400 pointer-events-none">
+            {placeholder}
+          </div>
+        )}
+        <div
+          contentEditable
+          className="min-h-[300px] p-4 focus:outline-none"
+          dangerouslySetInnerHTML={{ __html: value }}
+          onInput={(e) => onChange(e.currentTarget.innerHTML)}
+          onSelect={() => {
+            const selection = window.getSelection();
+            setSelectedText(selection?.toString() || "");
+          }}
+          style={{ whiteSpace: 'pre-wrap' }}
+        />
+      </div>
     </div>
   );
 };
