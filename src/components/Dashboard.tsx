@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -9,6 +8,7 @@ import { useAuthStore } from "@/stores/authStore";
 import { useToast } from "@/hooks/use-toast";
 import EmailCard from "@/components/EmailCard";
 import { useEmailStore } from "@/stores/emailStore";
+import { supabase } from "@/integrations/supabase/client";
 
 const Dashboard = () => {
   const { user, logout } = useAuthStore();
@@ -16,12 +16,31 @@ const Dashboard = () => {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [profile, setProfile] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!user) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+      
+      if (!error && data) {
+        setProfile(data);
+      }
+    };
+
+    fetchProfile();
+  }, [user]);
 
   const copyEmailToClipboard = async () => {
-    if (!user?.generatedEmail) return;
+    if (!profile?.generated_email) return;
     
     try {
-      await navigator.clipboard.writeText(user.generatedEmail);
+      await navigator.clipboard.writeText(profile.generated_email);
       toast({
         title: "Copied!",
         description: "Your newsletter email has been copied to clipboard.",
@@ -61,7 +80,7 @@ const Dashboard = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">NewsletterAI</h1>
-                <p className="text-sm text-gray-600">Welcome back, {user?.name}</p>
+                <p className="text-sm text-gray-600">Welcome back, {profile?.full_name || user?.email}</p>
               </div>
             </div>
             
@@ -95,12 +114,13 @@ const Dashboard = () => {
             <div className="flex items-center gap-3">
               <div className="flex-1 p-3 bg-white rounded-lg border border-primary-200">
                 <code className="text-lg font-mono text-primary-700">
-                  {user?.generatedEmail}
+                  {profile?.generated_email || 'Loading...'}
                 </code>
               </div>
               <Button 
                 onClick={copyEmailToClipboard}
                 className="bg-primary hover:bg-primary-600"
+                disabled={!profile?.generated_email}
               >
                 <Copy className="w-4 h-4 mr-2" />
                 Copy
