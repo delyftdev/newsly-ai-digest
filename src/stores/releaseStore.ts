@@ -1,27 +1,11 @@
 
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
-interface Release {
-  id: string;
-  company_id: string;
-  title: string;
-  content: any;
-  category: string;
-  release_type: string;
-  version: string | null;
-  release_date: string;
-  status: 'draft' | 'published' | 'archived';
-  visibility: 'public' | 'private';
-  featured_image_url: string | null;
-  ai_summary: string | null;
-  tags: string[] | null;
-  source_type: string;
-  created_by: string | null;
-  published_at: string | null;
-  created_at: string;
-  updated_at: string;
-}
+type Release = Database['public']['Tables']['releases']['Row'];
+type ReleaseInsert = Database['public']['Tables']['releases']['Insert'];
+type ReleaseUpdate = Database['public']['Tables']['releases']['Update'];
 
 interface ReleaseState {
   releases: Release[];
@@ -29,8 +13,8 @@ interface ReleaseState {
   isLoading: boolean;
   fetchReleases: () => Promise<void>;
   fetchRelease: (id: string) => Promise<void>;
-  createRelease: (release: Partial<Release>) => Promise<{ data?: Release; error?: string }>;
-  updateRelease: (id: string, updates: Partial<Release>) => Promise<{ error?: string }>;
+  createRelease: (release: Partial<ReleaseInsert>) => Promise<{ data?: Release; error?: string }>;
+  updateRelease: (id: string, updates: ReleaseUpdate) => Promise<{ error?: string }>;
   deleteRelease: (id: string) => Promise<{ error?: string }>;
   publishRelease: (id: string) => Promise<{ error?: string }>;
 }
@@ -87,7 +71,7 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
     try {
       const { data, error } = await supabase
         .from('releases')
-        .insert(release)
+        .insert(release as ReleaseInsert)
         .select()
         .single();
 
@@ -153,7 +137,7 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
 
   publishRelease: async (id: string) => {
     return get().updateRelease(id, {
-      status: 'published' as const,
+      status: 'published',
       published_at: new Date().toISOString(),
     });
   },

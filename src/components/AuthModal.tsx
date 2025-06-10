@@ -49,40 +49,38 @@ const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps) => {
     }
 
     try {
-      let success = false;
+      let result;
       
       if (mode === 'login') {
-        success = await login(formData.email, formData.password);
-        if (!success) {
+        result = await login(formData.email, formData.password);
+        if (result.error) {
           toast({
             title: "Login Failed",
-            description: "Invalid email or password",
+            description: result.error,
             variant: "destructive",
           });
           return;
         }
       } else {
-        success = await signup(formData.name, formData.email, formData.password);
-        if (!success) {
+        result = await signup(formData.name, formData.email, formData.password);
+        if (result.error) {
           toast({
             title: "Signup Failed",
-            description: "User with this email already exists",
+            description: result.error,
             variant: "destructive",
           });
           return;
         }
       }
 
-      if (success) {
-        toast({
-          title: mode === 'login' ? "Welcome back!" : "Account created!",
-          description: mode === 'login' 
-            ? "You've been successfully logged in." 
-            : "Your account has been created and you're now logged in.",
-        });
-        onClose();
-        setFormData({ name: '', email: '', password: '' });
-      }
+      toast({
+        title: mode === 'login' ? "Welcome back!" : "Account created!",
+        description: mode === 'login' 
+          ? "You've been successfully logged in." 
+          : "Your account has been created and you're now logged in.",
+      });
+      onClose();
+      setFormData({ name: '', email: '', password: '' });
     } catch (error) {
       toast({
         title: "Error",
@@ -113,8 +111,8 @@ const AuthModal = ({ isOpen, onClose, mode: initialMode }: AuthModalProps) => {
           <CardHeader className="pb-4">
             <CardDescription>
               {mode === 'login' 
-                ? 'Sign in to access your newsletter dashboard'
-                : 'Get started with your personalized newsletter organization'
+                ? 'Sign in to access your release management dashboard'
+                : 'Get started with your release management platform'
               }
             </CardDescription>
           </CardHeader>

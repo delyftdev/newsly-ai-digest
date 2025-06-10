@@ -1,41 +1,15 @@
 
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
+import type { Database } from '@/integrations/supabase/types';
 
-interface Company {
-  id: string;
-  name: string;
-  domain: string | null;
-  subdomain: string | null;
-  logo_url: string | null;
-  banner_url: string | null;
-  team_size: string | null;
-  industry: string | null;
-  created_at: string;
-  updated_at: string;
-}
-
-interface TeamMember {
-  id: string;
-  user_id: string;
-  role: 'admin' | 'editor' | 'viewer';
-  status: 'pending' | 'active' | 'inactive';
-  invited_at: string;
-  joined_at: string | null;
+type Company = Database['public']['Tables']['companies']['Row'];
+type TeamMember = Database['public']['Tables']['team_members']['Row'] & {
   profiles?: {
     full_name: string | null;
   };
-}
-
-interface Branding {
-  id: string;
-  company_id: string;
-  primary_color: string;
-  secondary_color: string;
-  font_family: string;
-  created_at: string;
-  updated_at: string;
-}
+};
+type Branding = Database['public']['Tables']['branding']['Row'];
 
 interface CompanyState {
   company: Company | null;
@@ -72,12 +46,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       // Fetch team members
       const { data: teamData, error: teamError } = await supabase
         .from('team_members')
-        .select(`
-          *,
-          profiles (
-            full_name
-          )
-        `)
+        .select('*')
         .eq('company_id', companyData.id)
         .eq('status', 'active');
 
@@ -153,7 +122,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
         .from('team_members')
         .insert({
           company_id: company.id,
-          role,
+          role: role as 'admin' | 'editor' | 'viewer',
           status: 'pending',
         });
 

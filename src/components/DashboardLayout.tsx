@@ -6,7 +6,7 @@ import {
   MessageSquare, 
   MessageCircle, 
   FileText, 
-  Roadmap, 
+  Map,
   Settings, 
   LogOut, 
   ChevronLeft,
@@ -41,7 +41,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       ]
     },
     { name: 'Feedback', href: '/feedback', icon: MessageCircle },
-    { name: 'Roadmap', href: '/roadmap', icon: Roadmap },
+    { name: 'Roadmap', href: '/roadmap', icon: Map },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
@@ -63,7 +63,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {!sidebarCollapsed && (
               <div>
                 <h1 className="text-lg font-bold text-gray-900">
-                  {company?.name || 'NewsletterAI'}
+                  {company?.name || 'Release Hub'}
                 </h1>
                 <p className="text-sm text-gray-600">Release Management</p>
               </div>
