@@ -4,10 +4,13 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Save, Eye, Send } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { ArrowLeft, Save, Eye, Send, Upload, Tag, Users, Clock } from "lucide-react";
 import { useReleaseStore } from "@/stores/releaseStore";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
+import RichTextEditor from "@/components/RichTextEditor";
+import ImageUpload from "@/components/ImageUpload";
 
 const ReleaseEditor = () => {
   const { id } = useParams();
@@ -18,7 +21,11 @@ const ReleaseEditor = () => {
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [releaseType, setReleaseType] = useState("update");
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState("");
+  const [featuredImage, setFeaturedImage] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
+  const [visibility, setVisibility] = useState("public");
 
   const isEditing = Boolean(id);
 
@@ -31,8 +38,14 @@ const ReleaseEditor = () => {
   useEffect(() => {
     if (currentRelease) {
       setTitle(currentRelease.title);
-      setContent(JSON.stringify(currentRelease.content || {}));
+      setContent(typeof currentRelease.content === 'string' 
+        ? currentRelease.content 
+        : JSON.stringify(currentRelease.content || {})
+      );
       setReleaseType(currentRelease.release_type);
+      setTags(currentRelease.tags || []);
+      setFeaturedImage(currentRelease.featured_image_url || "");
+      setVisibility(currentRelease.visibility);
     }
   }, [currentRelease]);
 
@@ -50,9 +63,12 @@ const ReleaseEditor = () => {
     try {
       const releaseData = {
         title,
-        content: { text: content },
+        content: { html: content },
         release_type: releaseType,
         status: 'draft' as const,
+        tags,
+        featured_image_url: featuredImage,
+        visibility,
       };
 
       if (isEditing && id) {
@@ -63,7 +79,7 @@ const ReleaseEditor = () => {
         const { error } = await createRelease(releaseData);
         if (error) throw new Error(error);
         toast({ title: "Release created!" });
-        navigate('/dashboard');
+        navigate('/releases');
       }
     } catch (error) {
       toast({
@@ -83,7 +99,7 @@ const ReleaseEditor = () => {
       const { error } = await publishRelease(currentRelease.id);
       if (error) throw new Error(error);
       toast({ title: "Release published!" });
-      navigate('/dashboard');
+      navigate('/releases');
     } catch (error) {
       toast({
         title: "Error",
@@ -93,12 +109,30 @@ const ReleaseEditor = () => {
     }
   };
 
+  const addTag = () => {
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      setTags([...tags, newTag.trim()]);
+      setNewTag("");
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleImageUpload = (file: File) => {
+    // In a real implementation, you'd upload to storage
+    const url = URL.createObjectURL(file);
+    setFeaturedImage(url);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => navigate('/dashboard')}>
+            <Button variant="ghost" onClick={() => navigate('/releases')}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
@@ -125,8 +159,24 @@ const ReleaseEditor = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* Main Content */}
+          <div className="lg:col-span-3 space-y-6">
+            {/* Featured Image */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Featured Image</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ImageUpload
+                  onImageUpload={handleImageUpload}
+                  currentImage={featuredImage}
+                  onImageRemove={() => setFeaturedImage("")}
+                />
+              </CardContent>
+            </Card>
+
+            {/* Release Content */}
             <Card>
               <CardHeader>
                 <CardTitle>Release Details</CardTitle>
@@ -137,16 +187,61 @@ const ReleaseEditor = () => {
                   <Input
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Release title..."
+                    placeholder="What's new in this release?"
+                    className="text-lg"
                   />
                 </div>
                 
+                <div>
+                  <label className="text-sm font-medium">Content</label>
+                  <RichTextEditor
+                    value={content}
+                    onChange={setContent}
+                    placeholder="Describe what's new, what's changed, and what's been fixed..."
+                  />
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Sidebar */}
+          <div className="space-y-6">
+            {/* Publish Settings */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Send className="h-4 w-4 mr-2" />
+                  Publish
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <div className="mt-1">
+                    <Badge variant="outline">
+                      {currentRelease?.status || 'draft'}
+                    </Badge>
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Visibility</label>
+                  <select
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value)}
+                    className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2"
+                  >
+                    <option value="public">Public</option>
+                    <option value="private">Private</option>
+                  </select>
+                </div>
+
                 <div>
                   <label className="text-sm font-medium">Release Type</label>
                   <select
                     value={releaseType}
                     onChange={(e) => setReleaseType(e.target.value)}
-                    className="w-full border border-gray-300 rounded-md px-3 py-2"
+                    className="w-full mt-1 border border-gray-300 rounded-md px-3 py-2"
                   >
                     <option value="update">Update</option>
                     <option value="feature">New Feature</option>
@@ -154,38 +249,63 @@ const ReleaseEditor = () => {
                     <option value="integration">New Integration</option>
                   </select>
                 </div>
+              </CardContent>
+            </Card>
 
-                <div>
-                  <label className="text-sm font-medium">Content</label>
-                  <textarea
-                    value={content}
-                    onChange={(e) => setContent(e.target.value)}
-                    placeholder="Write your release notes..."
-                    className="w-full h-64 border border-gray-300 rounded-md px-3 py-2"
+            {/* Tags */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Tag className="h-4 w-4 mr-2" />
+                  Tags
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex flex-wrap gap-2">
+                  {tags.map((tag) => (
+                    <Badge
+                      key={tag}
+                      variant="secondary"
+                      className="cursor-pointer"
+                      onClick={() => removeTag(tag)}
+                    >
+                      {tag} ×
+                    </Badge>
+                  ))}
+                </div>
+                <div className="flex space-x-2">
+                  <Input
+                    value={newTag}
+                    onChange={(e) => setNewTag(e.target.value)}
+                    placeholder="Add tag..."
+                    onKeyPress={(e) => e.key === 'Enter' && addTag()}
                   />
+                  <Button size="sm" onClick={addTag}>Add</Button>
                 </div>
               </CardContent>
             </Card>
-          </div>
 
-          <div className="space-y-6">
+            {/* Team Activity */}
             <Card>
               <CardHeader>
-                <CardTitle>Settings</CardTitle>
+                <CardTitle className="flex items-center">
+                  <Users className="h-4 w-4 mr-2" />
+                  Team Activity
+                </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium">Visibility</label>
-                    <select className="w-full border border-gray-300 rounded-md px-3 py-2">
-                      <option value="public">Public</option>
-                      <option value="private">Private</option>
-                    </select>
+                <div className="space-y-3 text-sm">
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                      <Clock className="w-3 h-3 text-blue-600" />
+                    </div>
+                    <span className="text-gray-600">Created 2 hours ago</span>
                   </div>
-                  
-                  <div>
-                    <label className="text-sm font-medium">Tags</label>
-                    <Input placeholder="Add tags..." />
+                  <div className="flex items-center space-x-2">
+                    <div className="w-6 h-6 bg-green-100 rounded-full flex items-center justify-center">
+                      <Save className="w-3 h-3 text-green-600" />
+                    </div>
+                    <span className="text-gray-600">Last saved 5 minutes ago</span>
                   </div>
                 </div>
               </CardContent>

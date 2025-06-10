@@ -10,6 +10,11 @@ import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import ReleaseEditor from "./pages/ReleaseEditor";
+import Releases from "./pages/Releases";
+import Changelogs from "./pages/Changelogs";
+import Feedback from "./pages/Feedback";
+import Roadmap from "./pages/Roadmap";
+import Settings from "./pages/Settings";
 import PublicGlossary from "./pages/PublicGlossary";
 import NotFound from "./pages/NotFound";
 
