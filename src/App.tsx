@@ -9,12 +9,15 @@ import { useAuthStore } from "@/stores/authStore";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
+import OnboardingPage from "./pages/OnboardingPage";
 import ReleaseEditor from "./pages/ReleaseEditor";
 import Releases from "./pages/Releases";
 import Changelogs from "./pages/Changelogs";
+import InboxPage from "./pages/InboxPage";
+import SettingsPage from "./pages/SettingsPage";
+import PublicChangelog from "./pages/PublicChangelog";
 import Feedback from "./pages/Feedback";
 import Roadmap from "./pages/Roadmap";
-import Settings from "./pages/Settings";
 import PublicGlossary from "./pages/PublicGlossary";
 import NotFound from "./pages/NotFound";
 
@@ -44,11 +47,18 @@ const App = () => {
           <Routes>
             {/* Public routes */}
             <Route path="/glossary/:userId" element={<PublicGlossary />} />
+            <Route path="/public/:companySlug" element={<PublicChangelog />} />
             
             {/* Auth routes */}
             <Route 
               path="/auth" 
               element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} 
+            />
+            
+            {/* Onboarding route */}
+            <Route 
+              path="/onboarding" 
+              element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} 
             />
             
             {/* Protected routes */}
@@ -57,12 +67,36 @@ const App = () => {
               element={user ? <DashboardPage /> : <Navigate to="/auth" replace />} 
             />
             <Route 
+              path="/releases" 
+              element={user ? <Releases /> : <Navigate to="/auth" replace />} 
+            />
+            <Route 
               path="/releases/new" 
               element={user ? <ReleaseEditor /> : <Navigate to="/auth" replace />} 
             />
             <Route 
               path="/releases/:id/edit" 
               element={user ? <ReleaseEditor /> : <Navigate to="/auth" replace />} 
+            />
+            <Route 
+              path="/inbox" 
+              element={user ? <InboxPage /> : <Navigate to="/auth" replace />} 
+            />
+            <Route 
+              path="/changelog" 
+              element={user ? <Changelogs /> : <Navigate to="/auth" replace />} 
+            />
+            <Route 
+              path="/settings" 
+              element={user ? <SettingsPage /> : <Navigate to="/auth" replace />} 
+            />
+            <Route 
+              path="/feedback" 
+              element={user ? <Feedback /> : <Navigate to="/auth" replace />} 
+            />
+            <Route 
+              path="/roadmap" 
+              element={user ? <Roadmap /> : <Navigate to="/auth" replace />} 
             />
             
             {/* Landing page */}

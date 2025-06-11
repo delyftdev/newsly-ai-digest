@@ -52,10 +52,14 @@ export type Database = {
           banner_url: string | null
           created_at: string | null
           domain: string | null
+          font_family: string | null
           id: string
           industry: string | null
           logo_url: string | null
           name: string
+          primary_color: string | null
+          secondary_color: string | null
+          slug: string | null
           subdomain: string | null
           team_size: string | null
           updated_at: string | null
@@ -64,10 +68,14 @@ export type Database = {
           banner_url?: string | null
           created_at?: string | null
           domain?: string | null
+          font_family?: string | null
           id?: string
           industry?: string | null
           logo_url?: string | null
           name: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          slug?: string | null
           subdomain?: string | null
           team_size?: string | null
           updated_at?: string | null
@@ -76,10 +84,14 @@ export type Database = {
           banner_url?: string | null
           created_at?: string | null
           domain?: string | null
+          font_family?: string | null
           id?: string
           industry?: string | null
           logo_url?: string | null
           name?: string
+          primary_color?: string | null
+          secondary_color?: string | null
+          slug?: string | null
           subdomain?: string | null
           team_size?: string | null
           updated_at?: string | null
@@ -255,6 +267,7 @@ export type Database = {
           full_name: string | null
           generated_email: string | null
           id: string
+          role: string | null
           updated_at: string | null
         }
         Insert: {
@@ -263,6 +276,7 @@ export type Database = {
           full_name?: string | null
           generated_email?: string | null
           id: string
+          role?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -271,6 +285,7 @@ export type Database = {
           full_name?: string | null
           generated_email?: string | null
           id?: string
+          role?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -350,6 +365,82 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "releases_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      subscribers: {
+        Row: {
+          company_id: string | null
+          confirmed: boolean | null
+          email: string
+          id: string
+          subscribed_at: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          confirmed?: boolean | null
+          email: string
+          id?: string
+          subscribed_at?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          confirmed?: boolean | null
+          email?: string
+          id?: string
+          subscribed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscribers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_invitations: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          invited_by: string | null
+          role: string
+          status: string | null
+          token: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          role: string
+          status?: string | null
+          token?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          invited_by?: string | null
+          role?: string
+          status?: string | null
+          token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_invitations_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
