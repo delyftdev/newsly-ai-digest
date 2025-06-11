@@ -11,6 +11,10 @@ interface AuthState {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error?: string }>;
+  // Add aliases for backward compatibility
+  signup: (name: string, email: string, password: string) => Promise<{ error?: string }>;
+  login: (email: string, password: string) => Promise<{ error?: string }>;
+  logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -63,7 +67,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         return { error: error.message };
       }
 
-      // If signup successful and user is confirmed, they'll be redirected via onAuthStateChange
       return {};
     } catch (error) {
       return { error: 'An unexpected error occurred' };
@@ -114,5 +117,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch (error) {
       return { error: 'An unexpected error occurred' };
     }
+  },
+
+  // Backward compatibility aliases
+  signup: async (name: string, email: string, password: string) => {
+    return get().signUp(email, password, name);
+  },
+
+  login: async (email: string, password: string) => {
+    return get().signIn(email, password);
+  },
+
+  logout: async () => {
+    return get().signOut();
   },
 }));

@@ -17,7 +17,7 @@ interface Email {
   subject: string;
   content: string;
   html_content: string;
-  ai_processed: boolean;
+  is_processed: boolean; // Changed from ai_processed to match database
   ai_summary: string;
   created_at: string;
 }
@@ -194,7 +194,7 @@ const InboxPage = () => {
                       <div className="flex items-start justify-between">
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center space-x-2 mb-1">
-                            {email.ai_processed ? (
+                            {email.is_processed ? (
                               <MailOpen className="h-4 w-4 text-blue-500" />
                             ) : (
                               <Mail className="h-4 w-4 text-gray-400" />
@@ -210,7 +210,7 @@ const InboxPage = () => {
                             {formatDate(email.created_at)}
                           </p>
                         </div>
-                        {email.ai_processed && (
+                        {email.is_processed && (
                           <Badge variant="secondary" className="ml-2">AI</Badge>
                         )}
                       </div>
@@ -234,7 +234,7 @@ const InboxPage = () => {
                       </p>
                     </div>
                     <div className="flex space-x-2">
-                      {!selectedEmail.ai_processed && (
+                      {!selectedEmail.is_processed && (
                         <Button onClick={() => processWithAI(selectedEmail)} size="sm" variant="outline">
                           <RefreshCw className="h-4 w-4 mr-2" />
                           Process with AI
