@@ -215,6 +215,75 @@ export type Database = {
           },
         ]
       }
+      inbox_emails: {
+        Row: {
+          created_at: string | null
+          email_address: string
+          id: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          email_address: string
+          id?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          email_address?: string
+          id?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      inbox_messages: {
+        Row: {
+          ai_summary: string | null
+          category: string | null
+          content: string | null
+          created_at: string | null
+          from_email: string
+          from_name: string | null
+          html_content: string | null
+          id: string
+          is_processed: boolean | null
+          received_at: string | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_summary?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          from_email: string
+          from_name?: string | null
+          html_content?: string | null
+          id?: string
+          is_processed?: boolean | null
+          received_at?: string | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          ai_summary?: string | null
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          from_email?: string
+          from_name?: string | null
+          html_content?: string | null
+          id?: string
+          is_processed?: boolean | null
+          received_at?: string | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       onboarding_progress: {
         Row: {
           branding_completed: boolean | null
@@ -494,7 +563,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_company_id: {
+        Args: { user_id?: string }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never

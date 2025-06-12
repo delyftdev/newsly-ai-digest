@@ -31,10 +31,24 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   fetchCompany: async () => {
     set({ isLoading: true });
     try {
-      // Fetch company data
+      // First get the user's profile to find their company_id
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .single();
+
+      if (profileError || !profile?.company_id) {
+        console.error('Error fetching profile or no company_id:', profileError);
+        set({ isLoading: false });
+        return;
+      }
+
+      // Fetch company data using the company_id from profile
       const { data: companyData, error: companyError } = await supabase
         .from('companies')
         .select('*')
+        .eq('id', profile.company_id)
         .single();
 
       if (companyError) {
@@ -46,15 +60,18 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       // Fetch team members
       const { data: teamData, error: teamError } = await supabase
         .from('team_members')
-        .select('*')
-        .eq('company_id', companyData.id)
+        .select(`
+          *,
+          profiles!inner(full_name)
+        `)
+        .eq('company_id', profile.company_id)
         .eq('status', 'active');
 
       // Fetch branding
       const { data: brandingData, error: brandingError } = await supabase
         .from('branding')
         .select('*')
-        .eq('company_id', companyData.id)
+        .eq('company_id', profile.company_id)
         .single();
 
       set({
@@ -116,12 +133,11 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     if (!company) return { error: 'No company found' };
 
     try {
-      // In a real implementation, you'd send an invitation email
-      // For now, we'll just add a pending team member
       const { error } = await supabase
-        .from('team_members')
+        .from('team_invitations')
         .insert({
           company_id: company.id,
+          email,
           role: role as 'admin' | 'editor' | 'viewer',
           status: 'pending',
         });
