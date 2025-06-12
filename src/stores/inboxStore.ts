@@ -224,4 +224,4 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
   setSelectedCategory: (category: string) => set({ selectedCategory: category }),
   setSearchQuery: (query: string) => set({ searchQuery: query }),
-});
+}));
