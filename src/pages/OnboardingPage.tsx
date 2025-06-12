@@ -125,7 +125,7 @@ const OnboardingPage = () => {
             team_size: data.teamSize,
             industry: data.industry,
             logo_url: data.logoUrl || null,
-            slug: `company-${Date.now()}`,
+            subdomain: `company-${Date.now()}`,
             primary_color: data.primaryColor,
           })
           .select()
