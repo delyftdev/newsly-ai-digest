@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -73,11 +72,14 @@ export const useInboxStore = create<InboxState>((set, get) => ({
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) return { error: 'User not authenticated' };
 
-      // Generate unique email
+      // Generate unique email using Mailgun sandbox domain
       const timestamp = Date.now();
       const randomSuffix = Math.random().toString(36).substring(2, 8);
-      const emailAddress = `inbox-${timestamp}-${randomSuffix}@newsletterai.com`;
+      const emailAddress = `inbox-${timestamp}-${randomSuffix}@sandboxbb958968707c47d289a60ae9b53aff0f.mailgun.org`;
 
+      console.log('Creating inbox email:', emailAddress);
+
+      // Create the inbox email record first
       const { data, error } = await supabase
         .from('inbox_emails')
         .insert({
@@ -88,12 +90,34 @@ export const useInboxStore = create<InboxState>((set, get) => ({
         .single();
 
       if (error) {
+        console.error('Error creating inbox email:', error);
         return { error: error.message };
+      }
+
+      console.log('Inbox email created, now creating Mailgun route');
+
+      // Create Mailgun route via edge function
+      try {
+        const { data: routeResult, error: routeError } = await supabase.functions.invoke('create-mailgun-route', {
+          body: { emailAddress }
+        });
+
+        if (routeError) {
+          console.error('Error creating Mailgun route:', routeError);
+          // Don't fail completely, the email is still created
+          console.warn('Mailgun route creation failed, but email address is still usable');
+        } else {
+          console.log('Mailgun route created successfully:', routeResult);
+        }
+      } catch (routeError) {
+        console.error('Error calling create-mailgun-route function:', routeError);
+        // Continue anyway, the email address is still created
       }
 
       set({ inboxEmail: data });
       return { email: emailAddress };
     } catch (error) {
+      console.error('Error in createInboxEmail:', error);
       return { error: 'Failed to create inbox email' };
     }
   },
@@ -200,4 +224,4 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
   setSelectedCategory: (category: string) => set({ selectedCategory: category }),
   setSearchQuery: (query: string) => set({ searchQuery: query }),
-}));
+});
