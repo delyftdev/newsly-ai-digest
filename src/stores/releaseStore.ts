@@ -4,6 +4,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
 
 type Release = Database['public']['Tables']['releases']['Row'];
+type ReleaseInsert = Database['public']['Tables']['releases']['Insert'];
 
 interface ReleaseState {
   releases: Release[];
@@ -11,7 +12,7 @@ interface ReleaseState {
   isLoading: boolean;
   fetchReleases: () => Promise<void>;
   fetchRelease: (id: string) => Promise<void>;
-  createRelease: (data: Partial<Release>) => Promise<{ id?: string; error?: string }>;
+  createRelease: (data: Partial<Release> & { title: string }) => Promise<{ id?: string; error?: string }>;
   updateRelease: (id: string, data: Partial<Release>) => Promise<{ error?: string }>;
   deleteRelease: (id: string) => Promise<{ error?: string }>;
   publishRelease: (id: string) => Promise<{ error?: string }>;
@@ -79,12 +80,27 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
 
       if (!profile?.company_id) return { error: 'No company found' };
 
-      const releaseData = {
-        ...data,
+      // Ensure title is present and create proper insert data
+      const releaseData: ReleaseInsert = {
+        title: data.title, // Required field
         company_id: profile.company_id,
         created_by: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        // Optional fields from data
+        ai_summary: data.ai_summary || null,
+        category: data.category || null,
+        content: data.content || null,
+        featured_image_url: data.featured_image_url || null,
+        published_at: data.published_at || null,
+        release_date: data.release_date || null,
+        release_type: data.release_type || null,
+        source_id: data.source_id || null,
+        source_type: data.source_type || null,
+        status: data.status || 'draft',
+        tags: data.tags || null,
+        version: data.version || null,
+        visibility: data.visibility || 'public',
       };
 
       const { data: release, error } = await supabase
@@ -207,15 +223,27 @@ export const useReleaseStore = create<ReleaseState>((set, get) => ({
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) return { error: 'User not authenticated' };
 
-      const duplicateData = {
-        ...originalRelease,
-        id: undefined,
-        title: `${originalRelease.title} (Copy)`,
-        status: 'draft' as const,
+      // Create proper insert data with required title field
+      const duplicateData: ReleaseInsert = {
+        title: `${originalRelease.title} (Copy)`, // Required field
+        company_id: originalRelease.company_id,
+        status: 'draft',
         published_at: null,
         created_by: user.id,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
+        // Copy all other fields
+        ai_summary: originalRelease.ai_summary,
+        category: originalRelease.category,
+        content: originalRelease.content,
+        featured_image_url: originalRelease.featured_image_url,
+        release_date: originalRelease.release_date,
+        release_type: originalRelease.release_type,
+        source_id: originalRelease.source_id,
+        source_type: originalRelease.source_type,
+        tags: originalRelease.tags,
+        version: originalRelease.version,
+        visibility: originalRelease.visibility,
       };
 
       const { data: release, error } = await supabase

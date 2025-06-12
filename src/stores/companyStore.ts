@@ -57,15 +57,34 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
         return;
       }
 
-      // Fetch team members
+      // Fetch team members without join - just basic team member data
       const { data: teamData, error: teamError } = await supabase
         .from('team_members')
-        .select(`
-          *,
-          profiles!inner(full_name)
-        `)
+        .select('*')
         .eq('company_id', profile.company_id)
         .eq('status', 'active');
+
+      // If we need profile data, we can fetch it separately
+      let enrichedTeamData: TeamMember[] = [];
+      if (teamData && teamData.length > 0) {
+        const userIds = teamData.map(tm => tm.user_id).filter(Boolean);
+        
+        if (userIds.length > 0) {
+          const { data: profilesData } = await supabase
+            .from('profiles')
+            .select('id, full_name')
+            .in('id', userIds);
+          
+          enrichedTeamData = teamData.map(teamMember => ({
+            ...teamMember,
+            profiles: profilesData?.find(p => p.id === teamMember.user_id) 
+              ? { full_name: profilesData.find(p => p.id === teamMember.user_id)?.full_name || null }
+              : undefined
+          }));
+        } else {
+          enrichedTeamData = teamData;
+        }
+      }
 
       // Fetch branding
       const { data: brandingData, error: brandingError } = await supabase
@@ -76,7 +95,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
 
       set({
         company: companyData,
-        teamMembers: teamData || [],
+        teamMembers: enrichedTeamData,
         branding: brandingData,
         isLoading: false,
       });
