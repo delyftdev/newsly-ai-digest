@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { X, Upload, Plus, Check } from "lucide-react";
+import { X, Upload, Plus, Check, AlertCircle } from "lucide-react";
 import { useCompanyStore } from "@/stores/companyStore";
 import { useAuthStore } from "@/stores/authStore";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +26,17 @@ const STEPS: OnboardingStep[] = [
   { id: 5, title: "Setup Complete", description: "You're all set!" }
 ];
 
+// URL validation helper function
+const isValidUrl = (string: string) => {
+  if (!string) return true; // Allow empty URLs
+  try {
+    new URL(string);
+    return true;
+  } catch (_) {
+    return false;
+  }
+};
+
 const OnboardingPage = () => {
   const [currentStep, setCurrentStep] = useState(1);
   const [companyData, setCompanyData] = useState({
@@ -44,6 +54,7 @@ const OnboardingPage = () => {
   });
   const [fontFamily, setFontFamily] = useState("Inter");
   const [isLoading, setIsLoading] = useState(false);
+  const [errors, setErrors] = useState<{[key: string]: string}>({});
 
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -72,13 +83,49 @@ const OnboardingPage = () => {
     checkOnboardingStatus();
   }, [user, navigate]);
 
+  const validateStep1 = () => {
+    const newErrors: {[key: string]: string} = {};
+    
+    if (!companyData.name.trim()) {
+      newErrors.name = "Company name is required";
+    }
+    if (!companyData.team_size) {
+      newErrors.team_size = "Team size is required";
+    }
+    if (!companyData.industry) {
+      newErrors.industry = "Industry is required";
+    }
+    if (!userRole) {
+      newErrors.role = "Your role is required";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateStep3 = () => {
+    const newErrors: {[key: string]: string} = {};
+    
+    if (companyData.domain && !isValidUrl(companyData.domain)) {
+      newErrors.domain = "Please enter a valid website URL";
+    }
+    if (companyData.logo_url && !isValidUrl(companyData.logo_url)) {
+      newErrors.logo_url = "Please enter a valid logo URL";
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   const handleCompanyInfoSubmit = async () => {
-    if (!companyData.name || !companyData.team_size || !companyData.industry || !userRole) {
-      toast({ title: "Please fill in all required fields", variant: "destructive" });
+    if (!validateStep1()) {
+      toast({ title: "Please fix the errors below", variant: "destructive" });
       return;
     }
 
     setIsLoading(true);
+    setErrors({});
+    
     try {
       await updateCompany({
         name: companyData.name,
@@ -104,6 +151,7 @@ const OnboardingPage = () => {
       setCurrentStep(2);
       toast({ title: "Company information saved!" });
     } catch (error) {
+      console.error('Company info save error:', error);
       toast({ title: "Error saving company information", variant: "destructive" });
     } finally {
       setIsLoading(false);
@@ -140,6 +188,7 @@ const OnboardingPage = () => {
 
       setCurrentStep(3);
     } catch (error) {
+      console.error('Team invites error:', error);
       toast({ title: "Error sending invitations", variant: "destructive" });
     } finally {
       setIsLoading(false);
@@ -147,7 +196,14 @@ const OnboardingPage = () => {
   };
 
   const handleDomainSetup = async () => {
+    if (!validateStep3()) {
+      toast({ title: "Please fix the errors below", variant: "destructive" });
+      return;
+    }
+
     setIsLoading(true);
+    setErrors({});
+    
     try {
       const slug = companyData.domain ? 
         companyData.domain.replace(/[^a-zA-Z0-9-]/g, '').toLowerCase() :
@@ -171,7 +227,9 @@ const OnboardingPage = () => {
       setCurrentStep(4);
       toast({ title: "Domain and logo setup complete!" });
     } catch (error) {
+      console.error('Domain setup error:', error);
       toast({ title: "Error saving domain setup", variant: "destructive" });
+      setErrors({ general: "Failed to save domain setup. Please try again." });
     } finally {
       setIsLoading(false);
     }
@@ -198,6 +256,7 @@ const OnboardingPage = () => {
       setCurrentStep(5);
       toast({ title: "Theme customization saved!" });
     } catch (error) {
+      console.error('Theme customization error:', error);
       toast({ title: "Error saving theme", variant: "destructive" });
     } finally {
       setIsLoading(false);
@@ -219,6 +278,7 @@ const OnboardingPage = () => {
       toast({ title: "Onboarding complete! Welcome aboard!" });
       navigate('/dashboard');
     } catch (error) {
+      console.error('Complete onboarding error:', error);
       toast({ title: "Error completing onboarding", variant: "destructive" });
     } finally {
       setIsLoading(false);
@@ -266,6 +326,14 @@ const OnboardingPage = () => {
           <p className="text-gray-600 text-center">{STEPS[currentStep - 1].description}</p>
         </div>
 
+        {/* Error Display */}
+        {errors.general && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center">
+            <AlertCircle className="w-4 h-4 text-red-600 mr-2" />
+            <span className="text-red-700 text-sm">{errors.general}</span>
+          </div>
+        )}
+
         {/* Step Content */}
         <Card>
           <CardHeader>
@@ -282,13 +350,15 @@ const OnboardingPage = () => {
                       value={companyData.name}
                       onChange={(e) => setCompanyData({...companyData, name: e.target.value})}
                       placeholder="Enter your company name"
+                      className={errors.name ? "border-red-500" : ""}
                     />
+                    {errors.name && <p className="text-red-500 text-sm mt-1">{errors.name}</p>}
                   </div>
                   
                   <div>
                     <Label htmlFor="team-size">Team Size *</Label>
                     <Select onValueChange={(value) => setCompanyData({...companyData, team_size: value})}>
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.team_size ? "border-red-500" : ""}>
                         <SelectValue placeholder="Select team size" />
                       </SelectTrigger>
                       <SelectContent>
@@ -299,12 +369,13 @@ const OnboardingPage = () => {
                         <SelectItem value="200+">200+ people</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.team_size && <p className="text-red-500 text-sm mt-1">{errors.team_size}</p>}
                   </div>
 
                   <div>
                     <Label htmlFor="industry">Industry *</Label>
                     <Select onValueChange={(value) => setCompanyData({...companyData, industry: value})}>
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.industry ? "border-red-500" : ""}>
                         <SelectValue placeholder="Select industry" />
                       </SelectTrigger>
                       <SelectContent>
@@ -316,12 +387,13 @@ const OnboardingPage = () => {
                         <SelectItem value="Other">Other</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.industry && <p className="text-red-500 text-sm mt-1">{errors.industry}</p>}
                   </div>
 
                   <div>
                     <Label htmlFor="role">Your Role *</Label>
                     <Select onValueChange={setUserRole}>
-                      <SelectTrigger>
+                      <SelectTrigger className={errors.role ? "border-red-500" : ""}>
                         <SelectValue placeholder="Select your role" />
                       </SelectTrigger>
                       <SelectContent>
@@ -332,6 +404,7 @@ const OnboardingPage = () => {
                         <SelectItem value="Other">Other</SelectItem>
                       </SelectContent>
                     </Select>
+                    {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role}</p>}
                   </div>
                 </div>
 
@@ -404,7 +477,9 @@ const OnboardingPage = () => {
                       value={companyData.domain}
                       onChange={(e) => setCompanyData({...companyData, domain: e.target.value})}
                       placeholder="https://yourcompany.com"
+                      className={errors.domain ? "border-red-500" : ""}
                     />
+                    {errors.domain && <p className="text-red-500 text-sm mt-1">{errors.domain}</p>}
                     <p className="text-sm text-gray-500 mt-1">
                       Your public changelog will be at: changelog.{companyData.domain || 'yourcompany.com'}
                     </p>
@@ -415,17 +490,27 @@ const OnboardingPage = () => {
                     <div className="mt-2 flex items-center space-x-4">
                       <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center">
                         {companyData.logo_url ? (
-                          <img src={companyData.logo_url} alt="Logo" className="w-full h-full object-cover rounded-lg" />
+                          <img 
+                            src={companyData.logo_url} 
+                            alt="Logo" 
+                            className="w-full h-full object-cover rounded-lg"
+                            onError={(e) => {
+                              const target = e.target as HTMLImageElement;
+                              target.style.display = 'none';
+                            }}
+                          />
                         ) : (
                           <Upload className="w-6 h-6 text-gray-400" />
                         )}
                       </div>
-                      <div>
+                      <div className="flex-1">
                         <Input
                           value={companyData.logo_url}
                           onChange={(e) => setCompanyData({...companyData, logo_url: e.target.value})}
                           placeholder="https://yourlogo.com/logo.png"
+                          className={errors.logo_url ? "border-red-500" : ""}
                         />
+                        {errors.logo_url && <p className="text-red-500 text-sm mt-1">{errors.logo_url}</p>}
                         <p className="text-sm text-gray-500 mt-1">Enter a URL to your logo image</p>
                       </div>
                     </div>

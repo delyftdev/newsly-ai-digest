@@ -83,7 +83,7 @@ const App = () => {
               element={user ? <InboxPage /> : <Navigate to="/auth" replace />} 
             />
             <Route 
-              path="/changelog" 
+              path="/changelogs" 
               element={user ? <Changelogs /> : <Navigate to="/auth" replace />} 
             />
             <Route 

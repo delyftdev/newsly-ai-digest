@@ -12,7 +12,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Plus,
-  Bell
+  Bell,
+  Inbox
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useCompanyStore } from "@/stores/companyStore";
@@ -32,6 +33,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
 
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
+    { name: 'Inbox', href: '/inbox', icon: Inbox },
     { 
       name: 'Communications', 
       icon: MessageSquare,
@@ -163,7 +165,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-semibold text-gray-900">
               {location.pathname === '/dashboard' && 'Dashboard'}
+              {location.pathname === '/inbox' && 'Inbox'}
               {location.pathname.includes('/releases') && 'Release Notes'}
+              {location.pathname === '/changelogs' && 'Changelogs'}
               {location.pathname === '/feedback' && 'Feedback'}
               {location.pathname === '/roadmap' && 'Roadmap'}
               {location.pathname === '/settings' && 'Settings'}

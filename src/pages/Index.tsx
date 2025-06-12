@@ -1,239 +1,236 @@
 
-import { useState } from "react";
+import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Mail, Brain, Search, Share, Zap, Shield } from "lucide-react";
-import AuthModal from "@/components/AuthModal";
-import { useAuthStore } from "@/stores/authStore";
-import Dashboard from "@/components/Dashboard";
+import { CheckCircle, Mail, FileText, Users, Zap, ArrowRight, Star, Globe } from "lucide-react";
 
 const Index = () => {
-  const [showAuth, setShowAuth] = useState(false);
-  const [authMode, setAuthMode] = useState<'login' | 'signup'>('signup');
-  const { user } = useAuthStore();
-
-  if (user) {
-    return <Dashboard />;
-  }
-
-  const features = [
-    {
-      icon: Mail,
-      title: "Dynamic Email Generation",
-      description: "Get a unique email address to forward all your newsletters to one organized inbox."
-    },
-    {
-      icon: Brain,
-      title: "AI-Powered Analysis",
-      description: "Advanced AI categorizes and summarizes content automatically, extracting key insights."
-    },
-    {
-      icon: Search,
-      title: "Smart Organization",
-      description: "Search, filter, and browse your newsletter content with intelligent categorization."
-    },
-    {
-      icon: Share,
-      title: "Shareable Glossaries",
-      description: "Create public pages to share your curated newsletter insights with others."
-    },
-    {
-      icon: Zap,
-      title: "Real-time Processing",
-      description: "Emails are processed instantly with immediate AI analysis and categorization."
-    },
-    {
-      icon: Shield,
-      title: "Secure & Private",
-      description: "Your data is encrypted and secure with enterprise-grade protection."
-    }
-  ];
-
-  const handleAuthOpen = (mode: 'login' | 'signup') => {
-    setAuthMode(mode);
-    setShowAuth(true);
-  };
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100">
-      {/* Header */}
-      <header className="container mx-auto px-4 py-6">
-        <nav className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
-              <Mail className="w-5 h-5 text-white" />
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+      {/* Navigation */}
+      <nav className="bg-white shadow-sm border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between h-16">
+            <div className="flex items-center">
+              <div className="flex-shrink-0 flex items-center">
+                <Zap className="h-8 w-8 text-blue-600" />
+                <span className="ml-2 text-xl font-bold text-gray-900">Release Hub</span>
+              </div>
             </div>
-            <span className="text-xl font-bold text-gray-900">NewsletterAI</span>
+            <div className="flex items-center space-x-4">
+              <Link to="/auth">
+                <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/auth">
+                <Button className="bg-blue-600 hover:bg-blue-700">
+                  Get Started
+                </Button>
+              </Link>
+            </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Button 
-              variant="ghost" 
-              onClick={() => handleAuthOpen('login')}
-              className="text-gray-600 hover:text-gray-900"
-            >
-              Sign In
-            </Button>
-            <Button 
-              onClick={() => handleAuthOpen('signup')}
-              className="bg-primary hover:bg-primary-600 text-white"
-            >
-              Get Started
-            </Button>
-          </div>
-        </nav>
-      </header>
+        </div>
+      </nav>
 
       {/* Hero Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-4xl mx-auto animate-fade-in">
-          <Badge className="mb-4 bg-primary-100 text-primary-700 hover:bg-primary-200">
-            🚀 AI-Powered Newsletter Organization
-          </Badge>
-          <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-6 leading-tight">
-            Turn Newsletter Chaos Into
-            <span className="text-primary block mt-2">Organized Intelligence</span>
-          </h1>
-          <p className="text-xl text-gray-600 mb-8 leading-relaxed max-w-2xl mx-auto">
-            Aggregate all your newsletters in one place, let AI analyze and categorize content automatically, 
-            and create shareable glossaries of product updates and insights.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button 
-              size="lg" 
-              onClick={() => handleAuthOpen('signup')}
-              className="bg-primary hover:bg-primary-600 text-white px-8 py-3 text-lg"
-            >
-              Start Organizing Now
-            </Button>
-            <Button 
-              size="lg" 
-              variant="outline"
-              className="border-gray-300 text-gray-700 hover:bg-gray-50 px-8 py-3 text-lg"
-            >
-              View Demo
-            </Button>
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="container mx-auto px-4 py-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Everything You Need to Master Newsletter Content
-          </h2>
-          <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-            Powerful features designed to transform how you consume and organize newsletter content.
-          </p>
-        </div>
-        
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {features.map((feature, index) => (
-            <Card 
-              key={index} 
-              className="border-0 shadow-lg hover:shadow-xl transition-all duration-300 animate-slide-in hover:-translate-y-1"
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <CardHeader>
-                <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center mb-4">
-                  <feature.icon className="w-6 h-6 text-primary-600" />
+      <div className="relative overflow-hidden">
+        <div className="max-w-7xl mx-auto">
+          <div className="relative z-10 pb-8 bg-transparent sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
+            <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
+              <div className="sm:text-center lg:text-left">
+                <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
+                  <span className="block xl:inline">Turn emails into</span>{' '}
+                  <span className="block text-blue-600 xl:inline">beautiful releases</span>
+                </h1>
+                <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
+                  Transform your newsletter emails and product updates into professional release notes and changelogs. Automate your communication workflow with AI-powered organization.
+                </p>
+                <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
+                  <div className="rounded-md shadow">
+                    <Link to="/auth">
+                      <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
+                        Start Organizing Now
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                    </Link>
+                  </div>
+                  <div className="mt-3 sm:mt-0 sm:ml-3">
+                    <Button variant="outline" size="lg" className="w-full">
+                      Watch Demo
+                    </Button>
+                  </div>
                 </div>
-                <CardTitle className="text-xl text-gray-900">{feature.title}</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <CardDescription className="text-gray-600 leading-relaxed">
-                  {feature.description}
-                </CardDescription>
-              </CardContent>
-            </Card>
-          ))}
+              </div>
+            </main>
+          </div>
         </div>
-      </section>
+        <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
+          <img
+            className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full"
+            src="https://images.unsplash.com/photo-1551288049-bebda4e38f71?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
+            alt="Dashboard preview"
+          />
+        </div>
+      </div>
 
-      {/* How It Works */}
-      <section className="container mx-auto px-4 py-20 bg-white/50 rounded-3xl mx-4 my-20">
-        <div className="text-center mb-16">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            How It Works
-          </h2>
-          <p className="text-lg text-gray-600">
-            Get started in minutes with our simple 3-step process.
-          </p>
-        </div>
+      {/* Features Section */}
+      <div className="py-12 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="lg:text-center">
+            <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase">Features</h2>
+            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              Everything you need to organize releases
+            </p>
+          </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          <div className="text-center">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-white font-bold text-xl">1</span>
+          <div className="mt-10">
+            <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-x-8 md:gap-y-10">
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                  <Mail className="h-6 w-6" />
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Email Integration</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Get a unique email address for each project. Forward newsletters and updates to automatically import them.
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                  <Zap className="h-6 w-6" />
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">AI Organization</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Automatically categorize and summarize your emails using advanced AI technology.
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                  <FileText className="h-6 w-6" />
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Release Notes</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Transform emails into professional release notes with rich formatting and version control.
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                  <Globe className="h-6 w-6" />
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Public Changelog</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Share your updates with the world through beautiful, branded public changelogs.
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                  <Users className="h-6 w-6" />
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Team Collaboration</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Work together with your team to review, edit, and publish release notes.
+                </p>
+              </div>
+
+              <div className="relative">
+                <div className="absolute flex items-center justify-center h-12 w-12 rounded-md bg-blue-500 text-white">
+                  <CheckCircle className="h-6 w-6" />
+                </div>
+                <p className="ml-16 text-lg leading-6 font-medium text-gray-900">Easy Publishing</p>
+                <p className="mt-2 ml-16 text-base text-gray-500">
+                  Publish updates with one click and notify your subscribers automatically.
+                </p>
+              </div>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Sign Up & Get Your Email</h3>
-            <p className="text-gray-600">
-              Create your account and receive a unique forwarding email address for all your newsletters.
-            </p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-white font-bold text-xl">2</span>
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">Forward Your Newsletters</h3>
-            <p className="text-gray-600">
-              Update your newsletter subscriptions to use your new forwarding email address.
-            </p>
-          </div>
-          
-          <div className="text-center">
-            <div className="w-16 h-16 bg-primary rounded-full flex items-center justify-center mx-auto mb-6">
-              <span className="text-white font-bold text-xl">3</span>
-            </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Does the Rest</h3>
-            <p className="text-gray-600">
-              Watch as AI automatically categorizes, summarizes, and organizes all your content.
-            </p>
           </div>
         </div>
-      </section>
+      </div>
+
+      {/* How it works */}
+      <div className="py-12 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="lg:text-center">
+            <h2 className="text-base text-blue-600 font-semibold tracking-wide uppercase">How it works</h2>
+            <p className="mt-2 text-3xl leading-8 font-extrabold tracking-tight text-gray-900 sm:text-4xl">
+              Simple 3-step process
+            </p>
+          </div>
+
+          <div className="mt-10">
+            <div className="space-y-10 md:space-y-0 md:grid md:grid-cols-3 md:gap-x-8 md:gap-y-10">
+              <div className="text-center">
+                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 text-blue-600 mx-auto mb-4">
+                  <span className="text-xl font-bold">1</span>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900">Forward Emails</h3>
+                <p className="mt-2 text-base text-gray-500">
+                  Get your unique email address and start forwarding newsletters, product updates, and announcements.
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 text-blue-600 mx-auto mb-4">
+                  <span className="text-xl font-bold">2</span>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900">AI Processes</h3>
+                <p className="mt-2 text-base text-gray-500">
+                  Our AI automatically categorizes, summarizes, and organizes your emails into meaningful groups.
+                </p>
+              </div>
+
+              <div className="text-center">
+                <div className="flex items-center justify-center h-16 w-16 rounded-full bg-blue-100 text-blue-600 mx-auto mb-4">
+                  <span className="text-xl font-bold">3</span>
+                </div>
+                <h3 className="text-lg font-medium text-gray-900">Create & Publish</h3>
+                <p className="mt-2 text-base text-gray-500">
+                  Transform organized content into beautiful release notes and publish to your public changelog.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* CTA Section */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <div className="max-w-2xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-6">
-            Ready to Organize Your Newsletter Inbox?
+      <div className="bg-blue-600">
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
+          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
+            <span className="block">Ready to get organized?</span>
+            <span className="block text-blue-200">Start your free trial today.</span>
           </h2>
-          <p className="text-lg text-gray-600 mb-8">
-            Join thousands of professionals who've transformed their newsletter consumption.
-          </p>
-          <Button 
-            size="lg" 
-            onClick={() => handleAuthOpen('signup')}
-            className="bg-primary hover:bg-primary-600 text-white px-8 py-3 text-lg"
-          >
-            Start Your Free Account
-          </Button>
+          <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
+            <div className="inline-flex rounded-md shadow">
+              <Link to="/auth">
+                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
         </div>
-      </section>
+      </div>
 
       {/* Footer */}
-      <footer className="border-t border-gray-200 bg-white/80">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-center space-x-2">
-            <div className="w-6 h-6 bg-primary rounded flex items-center justify-center">
-              <Mail className="w-4 h-4 text-white" />
+      <footer className="bg-white">
+        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center">
+              <Zap className="h-6 w-6 text-blue-600" />
+              <span className="ml-2 text-lg font-bold text-gray-900">Release Hub</span>
             </div>
-            <span className="text-gray-900 font-semibold">NewsletterAI</span>
+            <p className="text-gray-500 text-sm">
+              © 2024 Release Hub. All rights reserved.
+            </p>
           </div>
-          <p className="text-center text-gray-600 mt-4">
-            © 2024 NewsletterAI. All rights reserved.
-          </p>
         </div>
       </footer>
-
-      <AuthModal 
-        isOpen={showAuth} 
-        onClose={() => setShowAuth(false)} 
-        mode={authMode}
-      />
     </div>
   );
 };
