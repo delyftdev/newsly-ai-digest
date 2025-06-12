@@ -14,6 +14,7 @@ interface InboxState {
   fetchMessages: () => Promise<void>;
   fetchInboxEmail: () => Promise<void>;
   createInboxEmail: () => Promise<{ email?: string; error?: string }>;
+  regenerateInboxEmail: () => Promise<{ email?: string; error?: string }>;
   categorizeMessage: (messageId: string, category: string) => Promise<{ error?: string }>;
   convertToRelease: (messageId: string) => Promise<{ error?: string }>;
   setSelectedCategory: (category: string) => void;
@@ -119,6 +120,70 @@ export const useInboxStore = create<InboxState>((set, get) => ({
     } catch (error) {
       console.error('Error in createInboxEmail:', error);
       return { error: 'Failed to create inbox email' };
+    }
+  },
+
+  regenerateInboxEmail: async () => {
+    try {
+      const user = (await supabase.auth.getUser()).data.user;
+      if (!user) return { error: 'User not authenticated' };
+
+      // Delete the existing inbox email record
+      const { error: deleteError } = await supabase
+        .from('inbox_emails')
+        .delete()
+        .eq('user_id', user.id);
+
+      if (deleteError) {
+        console.error('Error deleting old inbox email:', deleteError);
+        return { error: 'Failed to delete old email' };
+      }
+
+      // Generate new unique email using Mailgun sandbox domain
+      const timestamp = Date.now();
+      const randomSuffix = Math.random().toString(36).substring(2, 8);
+      const emailAddress = `inbox-${timestamp}-${randomSuffix}@sandboxbb958968707c47d289a60ae9b53aff0f.mailgun.org`;
+
+      console.log('Creating new inbox email:', emailAddress);
+
+      // Create the new inbox email record
+      const { data, error } = await supabase
+        .from('inbox_emails')
+        .insert({
+          user_id: user.id,
+          email_address: emailAddress,
+        })
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error creating new inbox email:', error);
+        return { error: error.message };
+      }
+
+      console.log('New inbox email created, now creating Mailgun route');
+
+      // Create Mailgun route via edge function
+      try {
+        const { data: routeResult, error: routeError } = await supabase.functions.invoke('create-mailgun-route', {
+          body: { emailAddress }
+        });
+
+        if (routeError) {
+          console.error('Error creating Mailgun route:', routeError);
+          console.warn('Mailgun route creation failed, but email address is still usable');
+        } else {
+          console.log('Mailgun route created successfully:', routeResult);
+        }
+      } catch (routeError) {
+        console.error('Error calling create-mailgun-route function:', routeError);
+      }
+
+      set({ inboxEmail: data });
+      return { email: emailAddress };
+    } catch (error) {
+      console.error('Error in regenerateInboxEmail:', error);
+      return { error: 'Failed to regenerate inbox email' };
     }
   },
 

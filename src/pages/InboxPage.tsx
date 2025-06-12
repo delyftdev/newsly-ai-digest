@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useInboxStore } from "@/stores/inboxStore";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -7,6 +6,17 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { 
   Mail, 
   Search, 
@@ -16,7 +26,8 @@ import {
   FileText,
   Copy,
   CheckCircle,
-  Clock
+  Clock,
+  RefreshCw
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
@@ -30,6 +41,7 @@ const InboxPage = () => {
     fetchMessages,
     fetchInboxEmail,
     createInboxEmail,
+    regenerateInboxEmail,
     categorizeMessage,
     convertToRelease,
     setSelectedCategory,
@@ -38,6 +50,7 @@ const InboxPage = () => {
   } = useInboxStore();
 
   const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
+  const [isRegenerating, setIsRegenerating] = useState(false);
 
   useEffect(() => {
     fetchMessages();
@@ -56,6 +69,25 @@ const InboxPage = () => {
       toast({
         title: "Success",
         description: "Inbox email created successfully!",
+      });
+    }
+  };
+
+  const handleRegenerateEmail = async () => {
+    setIsRegenerating(true);
+    const result = await regenerateInboxEmail();
+    setIsRegenerating(false);
+    
+    if (result.error) {
+      toast({
+        title: "Error",
+        description: result.error,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Success",
+        description: "New inbox email generated successfully!",
       });
     }
   };
@@ -176,7 +208,7 @@ const InboxPage = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 mb-2">
                 <code className="bg-gray-100 px-2 py-1 rounded text-sm">
                   {inboxEmail.email_address}
                 </code>
@@ -184,9 +216,37 @@ const InboxPage = () => {
                   <Copy className="h-4 w-4 mr-1" />
                   Copy
                 </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm" disabled={isRegenerating}>
+                      <RefreshCw className={`h-4 w-4 mr-1 ${isRegenerating ? 'animate-spin' : ''}`} />
+                      Regenerate
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Regenerate Inbox Email?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will create a new email address with the correct Mailgun domain. 
+                        The current email address will stop working immediately. Any emails sent to the old address will not be received.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={handleRegenerateEmail}>
+                        Regenerate Email
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
-              <p className="text-sm text-gray-600 mt-2">
+              <p className="text-sm text-gray-600">
                 Use this email to subscribe to newsletters and receive product updates.
+                {inboxEmail.email_address.includes('mailgun.org') ? (
+                  <span className="text-green-600 ml-1">✓ Configured with Mailgun</span>
+                ) : (
+                  <span className="text-amber-600 ml-1">⚠ Legacy domain - consider regenerating</span>
+                )}
               </p>
             </CardContent>
           </Card>
