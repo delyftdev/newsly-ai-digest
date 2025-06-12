@@ -36,7 +36,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const mailgunApiKey = Deno.env.get('Mailgun_APIkey');
     const mailgunDomain = Deno.env.get('Mailgun_domain');
-    const webhookUrl = Deno.env.get('Mailgun_Webhook');
+    let webhookUrl = Deno.env.get('Mailgun_Webhook');
 
     if (!mailgunApiKey || !mailgunDomain || !webhookUrl) {
       console.error('Missing Mailgun configuration');
@@ -46,8 +46,14 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
+    // Ensure webhook URL is the full URL
+    if (!webhookUrl.startsWith('http')) {
+      webhookUrl = `https://darirbyisgzrxvavbhox.supabase.co/functions/v1/${webhookUrl}`;
+    }
+
     console.log('Creating route for:', emailAddress);
-    console.log('Webhook URL:', webhookUrl);
+    console.log('Using webhook URL:', webhookUrl);
+    console.log('Mailgun domain:', mailgunDomain);
 
     // Create Mailgun route
     const routeData = new URLSearchParams({
@@ -56,6 +62,8 @@ const handler = async (req: Request): Promise<Response> => {
       expression: `match_recipient("${emailAddress}")`,
       action: `forward("${webhookUrl}")`
     });
+
+    console.log('Route data:', Object.fromEntries(routeData));
 
     const response = await fetch(`https://api.mailgun.net/v3/routes`, {
       method: 'POST',
@@ -67,13 +75,15 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const result = await response.json();
+    console.log('Mailgun API response status:', response.status);
     console.log('Mailgun API response:', result);
 
     if (!response.ok) {
       console.error('Mailgun API error:', result);
       return new Response(JSON.stringify({ 
         error: 'Failed to create Mailgun route',
-        details: result 
+        details: result,
+        status: response.status
       }), { 
         status: 500, 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -83,7 +93,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ 
       success: true, 
       routeId: result.route?.id,
-      message: 'Route created successfully' 
+      message: 'Route created successfully',
+      webhookUrl: webhookUrl
     }), {
       status: 200,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
