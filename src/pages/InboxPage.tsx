@@ -27,7 +27,8 @@ import {
   Copy,
   CheckCircle,
   Clock,
-  RefreshCw
+  RefreshCw,
+  Users
 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
 
@@ -68,7 +69,7 @@ const InboxPage = () => {
     } else {
       toast({
         title: "Success",
-        description: "Inbox email created successfully!",
+        description: "Company inbox email created successfully!",
       });
     }
   };
@@ -87,7 +88,7 @@ const InboxPage = () => {
     } else {
       toast({
         title: "Success",
-        description: "New inbox email generated successfully!",
+        description: "New company inbox email generated successfully!",
       });
     }
   };
@@ -175,8 +176,14 @@ const InboxPage = () => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold">Inbox</h1>
-            <p className="text-gray-600">Manage your incoming emails and convert them to releases</p>
+            <div className="flex items-center gap-2">
+              <h1 className="text-2xl font-bold">Company Inbox</h1>
+              <Badge variant="secondary" className="flex items-center gap-1">
+                <Users className="h-3 w-3" />
+                Team-wide
+              </Badge>
+            </div>
+            <p className="text-gray-600">Manage company incoming emails and convert them to releases</p>
           </div>
         </div>
 
@@ -186,16 +193,17 @@ const InboxPage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="h-5 w-5" />
-                Set Up Your Inbox Email
+                Set Up Your Company Inbox Email
               </CardTitle>
             </CardHeader>
             <CardContent>
               <p className="text-gray-600 mb-4">
-                Create a unique email address to receive newsletters and product updates.
+                Create a unique company email address to receive newsletters and product updates.
+                This inbox will be accessible to all team members.
               </p>
               <Button onClick={handleCreateInboxEmail}>
                 <Mail className="h-4 w-4 mr-2" />
-                Create Inbox Email
+                Create Company Inbox Email
               </Button>
             </CardContent>
           </Card>
@@ -204,7 +212,7 @@ const InboxPage = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Mail className="h-5 w-5" />
-                Your Inbox Email
+                Your Company Inbox Email
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -225,9 +233,9 @@ const InboxPage = () => {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Regenerate Inbox Email?</AlertDialogTitle>
+                      <AlertDialogTitle>Regenerate Company Inbox Email?</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This will create a new email address with the correct Mailgun domain. 
+                        This will create a new company email address using the scalable catch-all system. 
                         The current email address will stop working immediately. Any emails sent to the old address will not be received.
                       </AlertDialogDescription>
                     </AlertDialogHeader>
@@ -242,11 +250,7 @@ const InboxPage = () => {
               </div>
               <p className="text-sm text-gray-600">
                 Use this email to subscribe to newsletters and receive product updates.
-                {inboxEmail.email_address.includes('mailgun.org') ? (
-                  <span className="text-green-600 ml-1">✓ Configured with Mailgun</span>
-                ) : (
-                  <span className="text-amber-600 ml-1">⚠ Legacy domain - consider regenerating</span>
-                )}
+                <span className="text-green-600 ml-1">✓ Scalable catch-all system enabled</span>
               </p>
             </CardContent>
           </Card>

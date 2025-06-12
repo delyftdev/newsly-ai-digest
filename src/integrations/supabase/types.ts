@@ -243,6 +243,7 @@ export type Database = {
         Row: {
           ai_summary: string | null
           category: string | null
+          company_id: string | null
           content: string | null
           created_at: string | null
           from_email: string
@@ -257,6 +258,7 @@ export type Database = {
         Insert: {
           ai_summary?: string | null
           category?: string | null
+          company_id?: string | null
           content?: string | null
           created_at?: string | null
           from_email: string
@@ -271,6 +273,7 @@ export type Database = {
         Update: {
           ai_summary?: string | null
           category?: string | null
+          company_id?: string | null
           content?: string | null
           created_at?: string | null
           from_email?: string
@@ -282,7 +285,15 @@ export type Database = {
           subject?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "inbox_messages_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       onboarding_progress: {
         Row: {

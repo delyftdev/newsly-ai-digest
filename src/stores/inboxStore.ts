@@ -32,9 +32,30 @@ export const useInboxStore = create<InboxState>((set, get) => ({
   fetchMessages: async () => {
     set({ isLoading: true });
     try {
+      // Get user's company
+      const user = (await supabase.auth.getUser()).data.user;
+      if (!user) {
+        set({ isLoading: false });
+        return;
+      }
+
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        console.error('No company found for user');
+        set({ isLoading: false });
+        return;
+      }
+
+      // Fetch company messages
       const { data, error } = await supabase
         .from('inbox_messages')
         .select('*')
+        .eq('company_id', profile.company_id)
         .order('received_at', { ascending: false });
 
       if (error) {
@@ -73,14 +94,24 @@ export const useInboxStore = create<InboxState>((set, get) => ({
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) return { error: 'User not authenticated' };
 
-      // Generate unique email using Mailgun sandbox domain
-      const timestamp = Date.now();
+      // Get user's company
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id, companies!inner(subdomain)')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id || !profile.companies?.subdomain) {
+        return { error: 'No company found or company subdomain missing' };
+      }
+
+      // Generate company-based email using subdomain
       const randomSuffix = Math.random().toString(36).substring(2, 8);
-      const emailAddress = `inbox-${timestamp}-${randomSuffix}@sandboxbb958968707c47d289a60ae9b53aff0f.mailgun.org`;
+      const emailAddress = `app-${profile.companies.subdomain}-${randomSuffix}@sandboxbb958968707c47d289a60ae9b53aff0f.mailgun.org`;
 
-      console.log('Creating inbox email:', emailAddress);
+      console.log('Creating company inbox email:', emailAddress);
 
-      // Create the inbox email record first
+      // Create the inbox email record
       const { data, error } = await supabase
         .from('inbox_emails')
         .insert({
@@ -95,24 +126,22 @@ export const useInboxStore = create<InboxState>((set, get) => ({
         return { error: error.message };
       }
 
-      console.log('Inbox email created, now creating Mailgun route');
+      console.log('Company inbox email created, now ensuring catch-all route exists');
 
-      // Create Mailgun route via edge function
+      // Ensure catch-all route exists via edge function
       try {
         const { data: routeResult, error: routeError } = await supabase.functions.invoke('create-mailgun-route', {
-          body: { emailAddress }
+          body: { createCatchAll: true }
         });
 
         if (routeError) {
-          console.error('Error creating Mailgun route:', routeError);
-          // Don't fail completely, the email is still created
-          console.warn('Mailgun route creation failed, but email address is still usable');
+          console.error('Error ensuring catch-all route:', routeError);
+          console.warn('Route creation failed, but email address is still usable');
         } else {
-          console.log('Mailgun route created successfully:', routeResult);
+          console.log('Catch-all route ensured successfully:', routeResult);
         }
       } catch (routeError) {
         console.error('Error calling create-mailgun-route function:', routeError);
-        // Continue anyway, the email address is still created
       }
 
       set({ inboxEmail: data });
@@ -128,6 +157,17 @@ export const useInboxStore = create<InboxState>((set, get) => ({
       const user = (await supabase.auth.getUser()).data.user;
       if (!user) return { error: 'User not authenticated' };
 
+      // Get user's company
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id, companies!inner(subdomain)')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id || !profile.companies?.subdomain) {
+        return { error: 'No company found or company subdomain missing' };
+      }
+
       // Delete the existing inbox email record
       const { error: deleteError } = await supabase
         .from('inbox_emails')
@@ -139,12 +179,11 @@ export const useInboxStore = create<InboxState>((set, get) => ({
         return { error: 'Failed to delete old email' };
       }
 
-      // Generate new unique email using Mailgun sandbox domain
-      const timestamp = Date.now();
+      // Generate new company-based email using subdomain
       const randomSuffix = Math.random().toString(36).substring(2, 8);
-      const emailAddress = `inbox-${timestamp}-${randomSuffix}@sandboxbb958968707c47d289a60ae9b53aff0f.mailgun.org`;
+      const emailAddress = `app-${profile.companies.subdomain}-${randomSuffix}@sandboxbb958968707c47d289a60ae9b53aff0f.mailgun.org`;
 
-      console.log('Creating new inbox email:', emailAddress);
+      console.log('Creating new company inbox email:', emailAddress);
 
       // Create the new inbox email record
       const { data, error } = await supabase
@@ -161,23 +200,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
         return { error: error.message };
       }
 
-      console.log('New inbox email created, now creating Mailgun route');
-
-      // Create Mailgun route via edge function
-      try {
-        const { data: routeResult, error: routeError } = await supabase.functions.invoke('create-mailgun-route', {
-          body: { emailAddress }
-        });
-
-        if (routeError) {
-          console.error('Error creating Mailgun route:', routeError);
-          console.warn('Mailgun route creation failed, but email address is still usable');
-        } else {
-          console.log('Mailgun route created successfully:', routeResult);
-        }
-      } catch (routeError) {
-        console.error('Error calling create-mailgun-route function:', routeError);
-      }
+      console.log('New company inbox email created');
 
       set({ inboxEmail: data });
       return { email: emailAddress };

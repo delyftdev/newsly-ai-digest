@@ -63,24 +63,38 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Find the inbox email record to get the user_id
-    console.log('Looking up inbox email for recipient:', recipient);
-    const { data: inboxEmail, error: inboxError } = await supabase
-      .from('inbox_emails')
-      .select('user_id')
-      .eq('email_address', recipient)
+    // Parse company subdomain from email address
+    // Expected format: app-{company-subdomain}-{random}@domain.com
+    console.log('Parsing recipient email:', recipient);
+    const emailMatch = recipient.match(/^app-([^-]+(?:-[^-]+)*)-[^-]+@/);
+    
+    if (!emailMatch) {
+      console.error('Email does not match expected pattern:', recipient);
+      return new Response('Invalid email format', { 
+        status: 400, 
+        headers: corsHeaders 
+      });
+    }
+
+    const companySubdomain = emailMatch[1];
+    console.log('Extracted company subdomain:', companySubdomain);
+
+    // Find the company by subdomain
+    const { data: company, error: companyError } = await supabase
+      .from('companies')
+      .select('id')
+      .eq('subdomain', companySubdomain)
       .single();
 
-    if (inboxError || !inboxEmail) {
-      console.error('Inbox email not found:', inboxError);
-      console.error('Recipient was:', recipient);
-      return new Response('Inbox email not found', { 
+    if (companyError || !company) {
+      console.error('Company not found for subdomain:', companySubdomain, companyError);
+      return new Response('Company not found', { 
         status: 404, 
         headers: corsHeaders 
       });
     }
 
-    console.log('Found inbox email for user_id:', inboxEmail.user_id);
+    console.log('Found company for subdomain:', companySubdomain, 'Company ID:', company.id);
 
     // Basic AI categorization based on subject and content
     let category = 'uncategorized';
@@ -112,12 +126,13 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Store the email in inbox_messages
-    console.log('Inserting message into database...');
+    // Store the email in inbox_messages with company_id
+    console.log('Inserting message into database for company:', company.id);
     const { data: insertedMessage, error: insertError } = await supabase
       .from('inbox_messages')
       .insert({
-        user_id: inboxEmail.user_id,
+        company_id: company.id,
+        user_id: null, // No longer needed since we're using company-based access
         from_email: sender || from || 'unknown@example.com',
         from_name: from || sender || null,
         subject: subject || 'No Subject',
@@ -142,7 +157,8 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(JSON.stringify({ 
       success: true, 
       messageId: insertedMessage?.id,
-      message: 'Email processed successfully' 
+      message: 'Email processed successfully',
+      companyId: company.id
     }), { 
       status: 200, 
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
