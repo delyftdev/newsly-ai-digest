@@ -225,13 +225,11 @@ const OnboardingPage = () => {
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
       <div className="w-full max-w-2xl">
-        {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Release Hub</h1>
           <p className="text-gray-600">Let's set up your account in a few simple steps</p>
         </div>
 
-        {/* Progress */}
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
             {steps.map((step, index) => (
@@ -256,7 +254,6 @@ const OnboardingPage = () => {
           <Progress value={progress} className="h-2" />
         </div>
 
-        {/* Step Content */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
