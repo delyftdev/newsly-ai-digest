@@ -20,7 +20,7 @@ const AuthPage = () => {
   const { login, signup, resetPassword, isLoading } = useAuthStore();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     
     if (!loginData.email.trim() || !loginData.password.trim()) {
@@ -48,7 +48,7 @@ const AuthPage = () => {
     }
   };
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     
     if (!signupData.name.trim() || !signupData.email.trim() || !signupData.password.trim()) {
@@ -76,7 +76,7 @@ const AuthPage = () => {
     }
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     
     if (!resetEmail.trim()) {

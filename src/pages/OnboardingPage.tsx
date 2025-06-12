@@ -232,24 +232,27 @@ const OnboardingPage = () => {
 
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            {steps.map((step, index) => (
-              <div key={index} className="flex items-center">
-                <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                  index + 1 <= currentStep ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'
-                }`}>
-                  {index + 1 < currentStep ? (
-                    <CheckCircle className="w-5 h-5" />
-                  ) : (
-                    <step.icon className="w-5 h-5" />
-                  )}
+            {steps.map((step, index) => {
+              const IconComponent = step.icon;
+              return (
+                <div key={index} className="flex items-center">
+                  <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
+                    index + 1 <= currentStep ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'
+                  }`}>
+                    {index + 1 < currentStep ? (
+                      <CheckCircle className="w-5 h-5" />
+                    ) : (
+                      <IconComponent className="w-5 h-5" />
+                    )}
+                  </div>
+                  {index < steps.length - 1 ? (
+                    <div className={`w-16 h-1 mx-2 ${
+                      index + 1 < currentStep ? 'bg-primary' : 'bg-gray-200'
+                    }`} />
+                  ) : null}
                 </div>
-                {index < steps.length - 1 && (
-                  <div className={`w-16 h-1 mx-2 ${
-                    index + 1 < currentStep ? 'bg-primary' : 'bg-gray-200'
-                  }`} />
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
           <Progress value={progress} className="h-2" />
         </div>
@@ -257,12 +260,15 @@ const OnboardingPage = () => {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <steps[currentStep - 1].icon className="w-5 h-5" />
+              {(() => {
+                const IconComponent = steps[currentStep - 1].icon;
+                return <IconComponent className="w-5 h-5" />;
+              })()}
               Step {currentStep}: {steps[currentStep - 1].title}
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            {currentStep === 1 && (
+            {currentStep === 1 ? (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -321,9 +327,9 @@ const OnboardingPage = () => {
                   </div>
                 </div>
               </>
-            )}
+            ) : null}
 
-            {currentStep === 2 && (
+            {currentStep === 2 ? (
               <div className="text-center space-y-6">
                 <div>
                   <h3 className="text-lg font-semibold mb-2">Team Collaboration</h3>
@@ -337,9 +343,9 @@ const OnboardingPage = () => {
                   </p>
                 </div>
               </div>
-            )}
+            ) : null}
 
-            {currentStep === 3 && (
+            {currentStep === 3 ? (
               <>
                 <div>
                   <Label htmlFor="logoUrl">Company Logo URL (Optional)</Label>
@@ -373,7 +379,7 @@ const OnboardingPage = () => {
                   </div>
                 </div>
               </>
-            )}
+            ) : null}
 
             <div className="flex justify-between pt-6">
               <Button
