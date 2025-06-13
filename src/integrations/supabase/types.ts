@@ -582,6 +582,29 @@ export type Database = {
         Args: { user_id?: string }
         Returns: string
       }
+      upsert_branding_info: {
+        Args: {
+          user_uuid: string
+          brand_primary_color?: string
+          brand_secondary_color?: string
+          brand_font_family?: string
+        }
+        Returns: Json
+      }
+      upsert_company_info: {
+        Args: {
+          user_uuid: string
+          company_name?: string
+          company_domain?: string
+          company_team_size?: string
+          company_industry?: string
+        }
+        Returns: Json
+      }
+      upsert_profile_info: {
+        Args: { user_uuid: string; user_full_name?: string; user_role?: string }
+        Returns: Json
+      }
     }
     Enums: {
       [_ in never]: never

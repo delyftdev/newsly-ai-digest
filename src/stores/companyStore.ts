@@ -19,6 +19,7 @@ interface CompanyState {
   fetchCompany: () => Promise<void>;
   updateCompany: (updates: Partial<Company>) => Promise<{ error?: string }>;
   updateBranding: (updates: Partial<Branding>) => Promise<{ error?: string }>;
+  updateProfile: (updates: { full_name?: string; role?: string }) => Promise<{ error?: string }>;
   inviteTeamMember: (email: string, role: string) => Promise<{ error?: string }>;
   ensureUserCompany: () => Promise<{ error?: string }>;
 }
@@ -131,23 +132,35 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   },
 
   updateCompany: async (updates) => {
-    const { company } = get();
-    if (!company) return { error: 'No company found' };
-
     try {
-      console.log('Updating company with:', updates);
-      const { error } = await supabase
-        .from('companies')
-        .update(updates)
-        .eq('id', company.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { error: 'User not authenticated' };
+
+      console.log('Updating company with upsert function:', updates);
+      
+      const { data, error } = await supabase.rpc('upsert_company_info', {
+        user_uuid: user.id,
+        company_name: updates.name,
+        company_domain: updates.domain,
+        company_team_size: updates.team_size,
+        company_industry: updates.industry
+      });
 
       if (error) {
-        console.error('Error updating company:', error);
+        console.error('Error calling upsert_company_info:', error);
         return { error: error.message };
       }
 
-      console.log('Company updated successfully');
-      set({ company: { ...company, ...updates } });
+      if (!data.success) {
+        console.error('Upsert function returned error:', data.error);
+        return { error: data.error };
+      }
+
+      console.log('Company updated successfully:', data);
+      
+      // Refresh the company data
+      await get().fetchCompany();
+      
       return {};
     } catch (error) {
       console.error('Error in updateCompany:', error);
@@ -155,43 +168,65 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     }
   },
 
-  updateBranding: async (updates) => {
-    const { branding, company } = get();
-    if (!company) return { error: 'No company found' };
-
+  updateProfile: async (updates) => {
     try {
-      console.log('Updating branding with:', updates);
-      if (branding) {
-        const { error } = await supabase
-          .from('branding')
-          .update(updates)
-          .eq('company_id', company.id);
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { error: 'User not authenticated' };
 
-        if (error) {
-          console.error('Error updating branding:', error);
-          return { error: error.message };
-        }
+      console.log('Updating profile with upsert function:', updates);
+      
+      const { data, error } = await supabase.rpc('upsert_profile_info', {
+        user_uuid: user.id,
+        user_full_name: updates.full_name,
+        user_role: updates.role
+      });
 
-        set({ branding: { ...branding, ...updates } });
-      } else {
-        // Create branding if it doesn't exist
-        const { data, error } = await supabase
-          .from('branding')
-          .insert({
-            company_id: company.id,
-            ...updates
-          })
-          .select()
-          .single();
-
-        if (error) {
-          console.error('Error creating branding:', error);
-          return { error: error.message };
-        }
-
-        console.log('Created new branding:', data);
-        set({ branding: data });
+      if (error) {
+        console.error('Error calling upsert_profile_info:', error);
+        return { error: error.message };
       }
+
+      if (!data.success) {
+        console.error('Upsert function returned error:', data.error);
+        return { error: data.error };
+      }
+
+      console.log('Profile updated successfully:', data);
+      return {};
+    } catch (error) {
+      console.error('Error in updateProfile:', error);
+      return { error: 'Failed to update profile' };
+    }
+  },
+
+  updateBranding: async (updates) => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { error: 'User not authenticated' };
+
+      console.log('Updating branding with upsert function:', updates);
+      
+      const { data, error } = await supabase.rpc('upsert_branding_info', {
+        user_uuid: user.id,
+        brand_primary_color: updates.primary_color,
+        brand_secondary_color: updates.secondary_color,
+        brand_font_family: updates.font_family
+      });
+
+      if (error) {
+        console.error('Error calling upsert_branding_info:', error);
+        return { error: error.message };
+      }
+
+      if (!data.success) {
+        console.error('Upsert function returned error:', data.error);
+        return { error: data.error };
+      }
+
+      console.log('Branding updated successfully:', data);
+      
+      // Refresh the company data to get updated branding
+      await get().fetchCompany();
       
       return {};
     } catch (error) {
@@ -234,40 +269,9 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return { error: 'User not authenticated' };
 
-      // Check if user has a profile with company_id
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError && profileError.code !== 'PGRST116') {
-        console.error('Error fetching profile:', profileError);
-        return { error: 'Failed to fetch profile' };
-      }
-
-      console.log('Current profile:', profile);
-
-      // If no profile or no company_id, trigger the company creation
-      if (!profile || !profile.company_id) {
-        console.log('No company found, triggering company creation...');
-        // This will trigger the database function to create company
-        const { error: triggerError } = await supabase
-          .from('profiles')
-          .upsert({
-            id: user.id,
-            full_name: user.user_metadata?.full_name || user.email,
-            updated_at: new Date().toISOString(),
-          });
-
-        if (triggerError) {
-          console.error('Error triggering company setup:', triggerError);
-          return { error: 'Failed to ensure company setup' };
-        }
-
-        console.log('Company creation triggered successfully');
-      }
-
+      // Refresh company data - the migration should have set everything up
+      await get().fetchCompany();
+      
       return {};
     } catch (error) {
       console.error('Error in ensureUserCompany:', error);

@@ -1,3 +1,4 @@
+
 import React, { useState } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,7 +17,7 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 const SettingsPage = () => {
-  const { company, branding, updateCompany, updateBranding } = useCompanyStore();
+  const { company, branding, updateCompany, updateBranding, updateProfile, fetchCompany } = useCompanyStore();
   const { user } = useAuthStore();
   const { toast } = useToast();
 
@@ -71,19 +72,15 @@ const SettingsPage = () => {
     enabled: !!company?.id
   });
 
-  const updateProfile = async () => {
+  const updateProfileHandler = async () => {
     setIsLoading(true);
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({
-          full_name: profileData.full_name,
-          role: profileData.role
-        })
-        .eq('id', user?.id);
-
-      if (error) throw error;
-      toast({ title: "Profile updated successfully!" });
+      const result = await updateProfile(profileData);
+      if (result.error) {
+        toast({ title: result.error, variant: "destructive" });
+      } else {
+        toast({ title: "Profile updated successfully!" });
+      }
     } catch (error) {
       toast({ title: "Error updating profile", variant: "destructive" });
     } finally {
@@ -99,6 +96,8 @@ const SettingsPage = () => {
         toast({ title: result.error, variant: "destructive" });
       } else {
         toast({ title: "Company information updated!" });
+        // Refresh company data
+        await fetchCompany();
       }
     } catch (error) {
       toast({ title: "Error updating company", variant: "destructive" });
@@ -186,6 +185,16 @@ const SettingsPage = () => {
     }
   }, [company]);
 
+  React.useEffect(() => {
+    if (branding) {
+      setBrandingData({
+        primary_color: branding.primary_color || "#3B82F6",
+        secondary_color: branding.secondary_color || "#6B7280",
+        font_family: branding.font_family || "Inter"
+      });
+    }
+  }, [branding]);
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -256,7 +265,7 @@ const SettingsPage = () => {
                   <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
                 </div>
 
-                <Button onClick={updateProfile} disabled={isLoading}>
+                <Button onClick={updateProfileHandler} disabled={isLoading}>
                   {isLoading ? "Saving..." : "Save Changes"}
                 </Button>
               </CardContent>
@@ -267,6 +276,9 @@ const SettingsPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Company Information</CardTitle>
+                <p className="text-sm text-gray-600">
+                  Update your company details. If no company exists, one will be created automatically.
+                </p>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
