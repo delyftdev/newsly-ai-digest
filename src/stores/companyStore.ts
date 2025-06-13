@@ -20,6 +20,7 @@ interface CompanyState {
   updateCompany: (updates: Partial<Company>) => Promise<{ error?: string }>;
   updateBranding: (updates: Partial<Branding>) => Promise<{ error?: string }>;
   inviteTeamMember: (email: string, role: string) => Promise<{ error?: string }>;
+  ensureUserCompany: () => Promise<{ error?: string }>;
 }
 
 export const useCompanyStore = create<CompanyState>((set, get) => ({
@@ -31,11 +32,17 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
   fetchCompany: async () => {
     set({ isLoading: true });
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        set({ isLoading: false });
+        return;
+      }
+
       // First get the user's profile to find their company_id
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('company_id')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id)
+        .eq('id', user.id)
         .single();
 
       if (profileError || !profile?.company_id) {
@@ -131,16 +138,35 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
     if (!company) return { error: 'No company found' };
 
     try {
-      const { error } = await supabase
-        .from('branding')
-        .update(updates)
-        .eq('company_id', company.id);
+      if (branding) {
+        const { error } = await supabase
+          .from('branding')
+          .update(updates)
+          .eq('company_id', company.id);
 
-      if (error) {
-        return { error: error.message };
+        if (error) {
+          return { error: error.message };
+        }
+
+        set({ branding: { ...branding, ...updates } });
+      } else {
+        // Create branding if it doesn't exist
+        const { data, error } = await supabase
+          .from('branding')
+          .insert({
+            company_id: company.id,
+            ...updates
+          })
+          .select()
+          .single();
+
+        if (error) {
+          return { error: error.message };
+        }
+
+        set({ branding: data });
       }
-
-      set({ branding: branding ? { ...branding, ...updates } : null });
+      
       return {};
     } catch (error) {
       return { error: 'Failed to update branding' };
@@ -168,6 +194,44 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
       return {};
     } catch (error) {
       return { error: 'Failed to invite team member' };
+    }
+  },
+
+  ensureUserCompany: async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return { error: 'User not authenticated' };
+
+      // Check if user has a profile with company_id
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        return { error: 'Failed to fetch profile' };
+      }
+
+      // If no profile or no company_id, trigger the company creation
+      if (!profile || !profile.company_id) {
+        // This will trigger the database function to create company
+        const { error: triggerError } = await supabase
+          .from('profiles')
+          .upsert({
+            id: user.id,
+            full_name: user.user_metadata?.full_name || user.email,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (triggerError) {
+          return { error: 'Failed to ensure company setup' };
+        }
+      }
+
+      return {};
+    } catch (error) {
+      return { error: 'Failed to ensure user company' };
     }
   },
 }));

@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { useCompanyStore } from "@/stores/companyStore";
+import { useInboxStore } from "@/stores/inboxStore";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,8 @@ interface OnboardingData {
 
 const OnboardingPage = () => {
   const { user } = useAuthStore();
-  const { updateCompany, updateBranding } = useCompanyStore();
+  const { updateCompany, updateBranding, fetchCompany } = useCompanyStore();
+  const { ensureCompanyEmail } = useInboxStore();
   const navigate = useNavigate();
   
   const [currentStep, setCurrentStep] = useState(1);
@@ -48,7 +50,10 @@ const OnboardingPage = () => {
     if (user.user_metadata?.full_name) {
       setData(prev => ({ ...prev, fullName: user.user_metadata.full_name }));
     }
-  }, [user, navigate]);
+
+    // Load existing company data if available
+    fetchCompany();
+  }, [user, navigate, fetchCompany]);
 
   const updateData = (updates: Partial<OnboardingData>) => {
     setData(prev => ({ ...prev, ...updates }));
@@ -109,14 +114,27 @@ const OnboardingPage = () => {
         return;
       }
 
-      // Get user's company from profile
+      // Get user's profile to check company_id
       const { data: profile, error: profileFetchError } = await supabase
         .from('profiles')
         .select('company_id')
         .eq('id', user.id)
         .single();
 
-      if (profileFetchError || !profile?.company_id) {
+      if (profileFetchError) {
+        console.error('Profile fetch error:', profileFetchError);
+        toast({
+          title: "Error",
+          description: "Failed to fetch profile data",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      let companyId = profile?.company_id;
+
+      if (!companyId) {
         // Create company if it doesn't exist
         const { data: newCompany, error: companyCreateError } = await supabase
           .from('companies')
@@ -142,17 +160,19 @@ const OnboardingPage = () => {
           return;
         }
 
+        companyId = newCompany.id;
+
         // Update profile with company_id
         await supabase
           .from('profiles')
-          .update({ company_id: newCompany.id })
+          .update({ company_id: companyId })
           .eq('id', user.id);
 
         // Create team member record
         await supabase
           .from('team_members')
           .insert({
-            company_id: newCompany.id,
+            company_id: companyId,
             user_id: user.id,
             role: 'admin',
             status: 'active',
@@ -163,11 +183,9 @@ const OnboardingPage = () => {
         await supabase
           .from('branding')
           .insert({
-            company_id: newCompany.id,
+            company_id: companyId,
             primary_color: data.primaryColor,
           });
-
-        profile.company_id = newCompany.id;
       } else {
         // Update existing company
         await updateCompany({
@@ -184,17 +202,20 @@ const OnboardingPage = () => {
         });
       }
 
+      // Auto-generate company inbox email
+      await ensureCompanyEmail();
+
       // Mark onboarding as completed
       await supabase
         .from('onboarding_progress')
-        .update({
+        .upsert({
+          user_id: user.id,
           completed_at: new Date().toISOString(),
           company_info_completed: true,
           branding_completed: true,
           current_step: 4,
           completed_steps: [1, 2, 3],
-        })
-        .eq('user_id', user.id);
+        });
 
       toast({
         title: "Welcome aboard!",

@@ -574,6 +574,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      ensure_company_inbox_email: {
+        Args: { company_uuid: string }
+        Returns: string
+      }
       get_user_company_id: {
         Args: { user_id?: string }
         Returns: string

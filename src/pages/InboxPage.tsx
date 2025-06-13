@@ -1,455 +1,279 @@
-import { useEffect, useState } from "react";
-import { useInboxStore } from "@/stores/inboxStore";
+
+import React, { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { 
-  Mail, 
-  Search, 
-  Filter, 
-  Archive, 
-  Trash2, 
-  FileText,
-  Copy,
-  CheckCircle,
-  Clock,
-  RefreshCw,
-  Users
-} from "lucide-react";
-import { toast } from "@/components/ui/use-toast";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Mail, Search, Filter, Copy, Check, Clock } from "lucide-react";
+import { useInboxStore } from "@/stores/inboxStore";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const InboxPage = () => {
-  const {
-    messages,
-    inboxEmail,
-    isLoading,
-    selectedCategory,
-    searchQuery,
-    fetchMessages,
-    fetchInboxEmail,
-    createInboxEmail,
-    regenerateInboxEmail,
-    categorizeMessage,
-    convertToRelease,
-    setSelectedCategory,
-    setSearchQuery,
-    deleteMessage,
-  } = useInboxStore();
+  const { messages, emails, currentEmail, isLoading, fetchMessages, fetchEmails, ensureCompanyEmail } = useInboxStore();
+  const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
+  const [filterCategory, setFilterCategory] = useState("all");
+  const [selectedMessage, setSelectedMessage] = useState<any>(null);
+  const [copiedEmail, setCopiedEmail] = useState(false);
 
-  const [selectedMessage, setSelectedMessage] = useState<string | null>(null);
-  const [isRegenerating, setIsRegenerating] = useState(false);
-
+  // Auto-ensure company email on page load
   useEffect(() => {
-    fetchMessages();
-    fetchInboxEmail();
-  }, [fetchMessages, fetchInboxEmail]);
-
-  const handleCreateInboxEmail = async () => {
-    const result = await createInboxEmail();
-    if (result.error) {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Company inbox email created successfully!",
-      });
-    }
-  };
-
-  const handleRegenerateEmail = async () => {
-    setIsRegenerating(true);
-    const result = await regenerateInboxEmail();
-    setIsRegenerating(false);
+    const initializeInbox = async () => {
+      await ensureCompanyEmail();
+      await fetchEmails();
+      await fetchMessages();
+    };
     
-    if (result.error) {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "New company inbox email generated successfully!",
-      });
-    }
-  };
+    initializeInbox();
+  }, [ensureCompanyEmail, fetchEmails, fetchMessages]);
 
-  const handleCopyEmail = () => {
-    if (inboxEmail?.email_address) {
-      navigator.clipboard.writeText(inboxEmail.email_address);
-      toast({
-        title: "Copied!",
-        description: "Email address copied to clipboard",
-      });
-    }
-  };
-
-  const handleCategorize = async (messageId: string, category: string) => {
-    const result = await categorizeMessage(messageId, category);
-    if (result.error) {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Message categorized successfully",
-      });
-    }
-  };
-
-  const handleConvertToRelease = async (messageId: string) => {
-    const result = await convertToRelease(messageId);
-    if (result.error) {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Message converted to release",
-      });
-    }
-  };
-
-  const handleDelete = async (messageId: string) => {
-    const result = await deleteMessage(messageId);
-    if (result.error) {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Message deleted",
-      });
-    }
-  };
-
-  const categories = [
-    { id: 'all', label: 'All Messages', count: messages.length },
-    { id: 'newsletter', label: 'Newsletters', count: messages.filter(m => m.category === 'newsletter').length },
-    { id: 'product_brief', label: 'Product Briefs', count: messages.filter(m => m.category === 'product_brief').length },
-    { id: 'feature_announcement', label: 'Features', count: messages.filter(m => m.category === 'feature_announcement').length },
-    { id: 'uncategorized', label: 'Uncategorized', count: messages.filter(m => m.category === 'uncategorized').length },
-  ];
-
-  const filteredMessages = messages.filter(message => {
-    const matchesCategory = selectedCategory === 'all' || message.category === selectedCategory;
-    const matchesSearch = !searchQuery || 
-      message.subject?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      message.from_email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      message.content?.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesCategory && matchesSearch;
+  const { data: inboxEmails } = useQuery({
+    queryKey: ['inbox-emails'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('inbox_emails')
+        .select('*')
+        .order('created_at', { ascending: false });
+      
+      if (error) throw error;
+      return data;
+    },
   });
 
-  const selectedMessageData = selectedMessage ? messages.find(m => m.id === selectedMessage) : null;
+  const displayEmail = currentEmail || inboxEmails?.[0]?.email_address;
+
+  const copyEmailToClipboard = async () => {
+    if (!displayEmail) return;
+    
+    try {
+      await navigator.clipboard.writeText(displayEmail);
+      setCopiedEmail(true);
+      toast({
+        title: "Email copied!",
+        description: "The inbox email has been copied to your clipboard.",
+      });
+      
+      setTimeout(() => setCopiedEmail(false), 2000);
+    } catch (error) {
+      toast({
+        title: "Copy failed",
+        description: "Unable to copy email to clipboard.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const filteredMessages = messages.filter(message => {
+    const matchesSearch = searchTerm === "" || 
+      message.subject?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      message.from_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      message.content?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    const matchesCategory = filterCategory === "all" || message.category === filterCategory;
+    
+    return matchesSearch && matchesCategory;
+  });
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const getCategoryColor = (category: string) => {
+    const colors = {
+      feature: "bg-blue-100 text-blue-800",
+      bug: "bg-red-100 text-red-800",
+      feedback: "bg-green-100 text-green-800",
+      question: "bg-yellow-100 text-yellow-800",
+      uncategorized: "bg-gray-100 text-gray-800"
+    };
+    return colors[category as keyof typeof colors] || colors.uncategorized;
+  };
 
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-bold">Company Inbox</h1>
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <Users className="h-3 w-3" />
-                Team-wide
-              </Badge>
-            </div>
-            <p className="text-gray-600">Manage company incoming emails and convert them to releases</p>
+            <h1 className="text-2xl font-bold text-gray-900">Inbox</h1>
+            <p className="text-gray-600">Manage incoming emails and feedback</p>
           </div>
         </div>
 
-        {/* Inbox Email Setup */}
-        {!inboxEmail ? (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Set Up Your Company Inbox Email
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 mb-4">
-                Create a unique company email address to receive newsletters and product updates.
-                This inbox will be accessible to all team members.
-              </p>
-              <Button onClick={handleCreateInboxEmail}>
-                <Mail className="h-4 w-4 mr-2" />
-                Create Company Inbox Email
-              </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                Your Company Inbox Email
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center gap-2 mb-2">
-                <code className="bg-gray-100 px-2 py-1 rounded text-sm">
-                  {inboxEmail.email_address}
-                </code>
-                <Button variant="outline" size="sm" onClick={handleCopyEmail}>
-                  <Copy className="h-4 w-4 mr-1" />
-                  Copy
-                </Button>
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="outline" size="sm" disabled={isRegenerating}>
-                      <RefreshCw className={`h-4 w-4 mr-1 ${isRegenerating ? 'animate-spin' : ''}`} />
-                      Regenerate
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Regenerate Company Inbox Email?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This will create a new company email address using the scalable catch-all system. 
-                        The current email address will stop working immediately. Any emails sent to the old address will not be received.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction onClick={handleRegenerateEmail}>
-                        Regenerate Email
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-              <p className="text-sm text-gray-600">
-                Use this email to subscribe to newsletters and receive product updates.
-                <span className="text-green-600 ml-1">✓ Scalable catch-all system enabled</span>
-              </p>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Search and Filters */}
-        <div className="flex items-center gap-4">
-          <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search messages..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
-          </div>
-          <Button variant="outline">
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
-          </Button>
-        </div>
-
-        {/* Main Content */}
-        <div className="grid grid-cols-12 gap-6">
-          {/* Sidebar Categories */}
-          <div className="col-span-3">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Categories</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {categories.map((category) => (
-                  <button
-                    key={category.id}
-                    onClick={() => setSelectedCategory(category.id)}
-                    className={`w-full flex items-center justify-between p-2 rounded-md text-left hover:bg-gray-100 ${
-                      selectedCategory === category.id ? 'bg-primary-50 text-primary-700' : ''
-                    }`}
+        {/* Inbox Email Card */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Mail className="h-5 w-5" />
+              Company Inbox Email
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {displayEmail ? (
+              <div className="space-y-4">
+                <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                  <code className="flex-1 text-sm font-mono bg-white px-3 py-2 rounded border">
+                    {displayEmail}
+                  </code>
+                  <Button
+                    onClick={copyEmailToClipboard}
+                    size="sm"
+                    variant="outline"
+                    className="flex items-center gap-2"
                   >
-                    <span className="text-sm">{category.label}</span>
-                    <Badge variant="secondary" className="text-xs">
-                      {category.count}
-                    </Badge>
-                  </button>
-                ))}
-              </CardContent>
-            </Card>
-          </div>
+                    {copiedEmail ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    {copiedEmail ? 'Copied!' : 'Copy'}
+                  </Button>
+                </div>
+                <p className="text-sm text-gray-600">
+                  Share this email with your users to collect feedback, feature requests, and bug reports.
+                  All emails sent to this address will appear in your inbox.
+                </p>
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Setting up your inbox...</h3>
+                <p className="text-gray-600">
+                  Your company inbox email is being generated automatically.
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
-          {/* Messages List */}
-          <div className="col-span-5">
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm">Messages</CardTitle>
-              </CardHeader>
-              <CardContent className="p-0">
-                {isLoading ? (
-                  <div className="p-4 text-center">Loading messages...</div>
-                ) : filteredMessages.length === 0 ? (
-                  <div className="p-4 text-center text-gray-500">
-                    No messages found
-                  </div>
-                ) : (
-                  <div className="divide-y">
-                    {filteredMessages.map((message) => (
-                      <div
-                        key={message.id}
-                        onClick={() => setSelectedMessage(message.id)}
-                        className={`p-4 cursor-pointer hover:bg-gray-50 ${
-                          selectedMessage === message.id ? 'bg-primary-50' : ''
-                        }`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2">
-                              <p className="font-medium text-sm truncate">
-                                {message.from_name || message.from_email}
-                              </p>
-                              {message.is_processed && (
-                                <CheckCircle className="h-4 w-4 text-green-600" />
-                              )}
-                            </div>
-                            <p className="text-sm text-gray-900 truncate">
-                              {message.subject}
-                            </p>
-                            <p className="text-xs text-gray-500 truncate">
-                              {message.content}
-                            </p>
-                            <div className="flex items-center gap-2 mt-2">
-                              <Badge variant="outline" className="text-xs">
-                                {message.category?.replace('_', ' ')}
-                              </Badge>
-                              <span className="text-xs text-gray-400">
-                                {new Date(message.received_at || '').toLocaleDateString()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
+        {/* Filters */}
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search messages..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+          </div>
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-48">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Categories</SelectItem>
+              <SelectItem value="feature">Feature Requests</SelectItem>
+              <SelectItem value="bug">Bug Reports</SelectItem>
+              <SelectItem value="feedback">Feedback</SelectItem>
+              <SelectItem value="question">Questions</SelectItem>
+              <SelectItem value="uncategorized">Uncategorized</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
+        {/* Messages */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Message List */}
+          <div className="lg:col-span-1 space-y-3">
+            {isLoading ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+                <p className="text-gray-600 mt-2">Loading messages...</p>
+              </div>
+            ) : filteredMessages.length === 0 ? (
+              <div className="text-center py-8">
+                <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No messages yet</h3>
+                <p className="text-gray-600">
+                  {searchTerm || filterCategory !== "all" 
+                    ? "No messages match your current filters."
+                    : "Share your inbox email to start receiving messages."
+                  }
+                </p>
+              </div>
+            ) : (
+              filteredMessages.map((message) => (
+                <Card 
+                  key={message.id} 
+                  className={`cursor-pointer transition-all hover:shadow-md ${
+                    selectedMessage?.id === message.id ? 'ring-2 ring-primary' : ''
+                  }`}
+                  onClick={() => setSelectedMessage(message)}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div className="flex-1 min-w-0">
+                        <h4 className="font-medium truncate">{message.subject || 'No Subject'}</h4>
+                        <p className="text-sm text-gray-600 truncate">{message.from_email}</p>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                      <Badge className={getCategoryColor(message.category || 'uncategorized')}>
+                        {message.category || 'uncategorized'}
+                      </Badge>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      {formatDate(message.received_at || message.created_at || '')}
+                    </p>
+                  </CardContent>
+                </Card>
+              ))
+            )}
           </div>
 
           {/* Message Detail */}
-          <div className="col-span-4">
-            {selectedMessageData ? (
+          <div className="lg:col-span-2">
+            {selectedMessage ? (
               <Card>
                 <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="text-sm">Message Details</CardTitle>
-                    <div className="flex items-center gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleConvertToRelease(selectedMessageData.id)}
-                        disabled={selectedMessageData.is_processed}
-                      >
-                        <FileText className="h-4 w-4 mr-1" />
-                        Convert
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDelete(selectedMessageData.id)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div>
-                    <h3 className="font-medium">{selectedMessageData.subject}</h3>
-                    <p className="text-sm text-gray-600">
-                      From: {selectedMessageData.from_name || selectedMessageData.from_email}
-                    </p>
-                    <p className="text-xs text-gray-400">
-                      {new Date(selectedMessageData.received_at || '').toLocaleString()}
-                    </p>
-                  </div>
-
-                  {selectedMessageData.ai_summary && (
-                    <div className="bg-blue-50 p-3 rounded-md">
-                      <h4 className="text-sm font-medium text-blue-900 mb-1">AI Summary</h4>
-                      <p className="text-sm text-blue-800">{selectedMessageData.ai_summary}</p>
-                    </div>
-                  )}
-
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Category</h4>
-                    <Tabs value={selectedMessageData.category || 'uncategorized'}>
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger 
-                          value="newsletter"
-                          onClick={() => handleCategorize(selectedMessageData.id, 'newsletter')}
-                        >
-                          Newsletter
-                        </TabsTrigger>
-                        <TabsTrigger 
-                          value="product_brief"
-                          onClick={() => handleCategorize(selectedMessageData.id, 'product_brief')}
-                        >
-                          Product Brief
-                        </TabsTrigger>
-                      </TabsList>
-                      <TabsList className="grid w-full grid-cols-2 mt-2">
-                        <TabsTrigger 
-                          value="feature_announcement"
-                          onClick={() => handleCategorize(selectedMessageData.id, 'feature_announcement')}
-                        >
-                          Feature
-                        </TabsTrigger>
-                        <TabsTrigger 
-                          value="uncategorized"
-                          onClick={() => handleCategorize(selectedMessageData.id, 'uncategorized')}
-                        >
-                          Other
-                        </TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-
-                  <div>
-                    <h4 className="text-sm font-medium mb-2">Content</h4>
-                    <div className="bg-gray-50 p-3 rounded-md max-h-64 overflow-y-auto">
-                      <p className="text-sm whitespace-pre-wrap">
-                        {selectedMessageData.content}
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <CardTitle>{selectedMessage.subject || 'No Subject'}</CardTitle>
+                      <p className="text-gray-600 mt-1">
+                        From: {selectedMessage.from_name || selectedMessage.from_email}
+                      </p>
+                      <p className="text-sm text-gray-500">
+                        {formatDate(selectedMessage.received_at || selectedMessage.created_at)}
                       </p>
                     </div>
+                    <Badge className={getCategoryColor(selectedMessage.category || 'uncategorized')}>
+                      {selectedMessage.category || 'uncategorized'}
+                    </Badge>
                   </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose max-w-none">
+                    {selectedMessage.html_content ? (
+                      <div dangerouslySetInnerHTML={{ __html: selectedMessage.html_content }} />
+                    ) : (
+                      <pre className="whitespace-pre-wrap font-sans">
+                        {selectedMessage.content || 'No content available'}
+                      </pre>
+                    )}
+                  </div>
+                  
+                  {selectedMessage.ai_summary && (
+                    <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                      <h4 className="font-medium text-blue-900 mb-2">AI Summary</h4>
+                      <p className="text-blue-800">{selectedMessage.ai_summary}</p>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ) : (
               <Card>
-                <CardContent className="flex items-center justify-center h-64">
-                  <p className="text-gray-500">Select a message to view details</p>
+                <CardContent className="flex items-center justify-center h-96">
+                  <div className="text-center">
+                    <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2">Select a message</h3>
+                    <p className="text-gray-600">Choose a message from the list to view its details</p>
+                  </div>
                 </CardContent>
               </Card>
             )}
