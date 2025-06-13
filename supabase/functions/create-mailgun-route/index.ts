@@ -23,6 +23,8 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const body = await req.json();
+    console.log('Request body:', body);
+    
     const { createCatchAll } = body;
 
     if (!createCatchAll) {
@@ -39,11 +41,16 @@ const handler = async (req: Request): Promise<Response> => {
     const mailgunDomain = Deno.env.get('Mailgun_domain');
     const webhookUrl = `https://darirbyisgzrxvavbhox.supabase.co/functions/v1/mailgun-webhook`;
 
+    console.log('Environment check:');
+    console.log('Mailgun API Key:', mailgunApiKey ? 'EXISTS' : 'MISSING');
+    console.log('Mailgun Domain:', mailgunDomain || 'MISSING');
+    console.log('Webhook URL:', webhookUrl);
+
     if (!mailgunApiKey || !mailgunDomain) {
       console.error('Missing Mailgun configuration');
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Mailgun configuration missing' 
+        error: 'Mailgun configuration missing - API key or domain not found' 
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -51,9 +58,9 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log('Creating catch-all route for domain:', mailgunDomain);
-    console.log('Webhook URL:', webhookUrl);
 
     // First, check if a catch-all route already exists
+    console.log('Checking for existing routes...');
     const listRoutesResponse = await fetch(
       `https://api.mailgun.net/v3/routes`,
       {
@@ -66,10 +73,10 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!listRoutesResponse.ok) {
       const errorText = await listRoutesResponse.text();
-      console.error('Error listing routes:', errorText);
+      console.error('Error listing routes:', listRoutesResponse.status, errorText);
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Failed to list existing routes' 
+        error: `Failed to list existing routes: ${listRoutesResponse.status} - ${errorText}` 
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -77,7 +84,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     const routesData = await listRoutesResponse.json();
-    console.log('Existing routes:', routesData);
+    console.log('Existing routes count:', routesData.items?.length || 0);
 
     // Check if catch-all route already exists
     const catchAllExpression = `match_recipient(".*@${mailgunDomain}")`;
@@ -87,7 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     if (existingCatchAll) {
-      console.log('Catch-all route already exists:', existingCatchAll);
+      console.log('Catch-all route already exists:', existingCatchAll.id);
       return new Response(JSON.stringify({ 
         success: true, 
         message: 'Catch-all route already exists',
@@ -97,14 +104,18 @@ const handler = async (req: Request): Promise<Response> => {
       });
     }
 
-    // Create new catch-all route
+    // Create new catch-all route with proper FormData
+    console.log('Creating new catch-all route...');
     const routeData = new FormData();
     routeData.append('priority', '0');
     routeData.append('description', 'Catch-all route for company inbox emails');
     routeData.append('expression', catchAllExpression);
     routeData.append('action', `forward("${webhookUrl}")`);
 
-    console.log('Creating route with expression:', catchAllExpression);
+    console.log('Route creation payload:');
+    console.log('- Priority: 0');
+    console.log('- Expression:', catchAllExpression);
+    console.log('- Action: forward("' + webhookUrl + '")');
 
     const createRouteResponse = await fetch(
       `https://api.mailgun.net/v3/routes`,
@@ -117,13 +128,14 @@ const handler = async (req: Request): Promise<Response> => {
       }
     );
 
+    console.log('Create route response status:', createRouteResponse.status);
+
     if (!createRouteResponse.ok) {
       const errorText = await createRouteResponse.text();
-      console.error('Error creating route:', errorText);
+      console.error('Error creating route:', createRouteResponse.status, errorText);
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Failed to create catch-all route',
-        details: errorText
+        error: `Failed to create catch-all route: ${createRouteResponse.status} - ${errorText}` 
       }), {
         status: 500,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -145,8 +157,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.error('Error in create-mailgun-route function:', error);
     return new Response(JSON.stringify({ 
       success: false, 
-      error: 'Internal server error',
-      details: error.message 
+      error: 'Internal server error: ' + error.message 
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

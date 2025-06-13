@@ -147,12 +147,13 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
   generateEmail: async () => {
     try {
-      console.log('Starting email generation...');
+      console.log('Starting simplified email generation...');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
         return { error: 'User not authenticated' };
       }
 
+      // Get user's profile with company info - simplified approach
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('company_id')
@@ -162,6 +163,21 @@ export const useInboxStore = create<InboxState>((set, get) => ({
       if (profileError || !profile?.company_id) {
         console.error('Error fetching profile or no company_id:', profileError);
         return { error: 'Company not found. Please complete your setup first.' };
+      }
+
+      console.log('User profile found, company_id:', profile.company_id);
+
+      // Check if user already has an inbox email
+      const { data: existingEmail } = await supabase
+        .from('inbox_emails')
+        .select('email_address')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      if (existingEmail) {
+        console.log('User already has email:', existingEmail.email_address);
+        set(state => ({ currentEmail: existingEmail.email_address }));
+        return { error: undefined };
       }
 
       console.log('Calling ensure_company_inbox_email for company:', profile.company_id);
@@ -196,57 +212,33 @@ export const useInboxStore = create<InboxState>((set, get) => ({
         return null;
       }
 
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-
-      if (!profile?.company_id) {
-        console.error('No company_id found for user');
-        return null;
-      }
-
-      console.log('User company_id:', profile.company_id);
-
-      // Check if company already has an email
-      const { data: teamMembers } = await supabase
-        .from('team_members')
-        .select('user_id')
-        .eq('company_id', profile.company_id)
-        .eq('status', 'active');
-
-      if (!teamMembers || teamMembers.length === 0) {
-        console.log('No team members found');
-        return null;
-      }
-
-      const userIds = teamMembers.map(tm => tm.user_id);
-
-      const { data: existingEmails } = await supabase
+      // Simplified approach - check user's own emails first
+      const { data: userEmail } = await supabase
         .from('inbox_emails')
         .select('email_address')
-        .in('user_id', userIds)
-        .limit(1);
+        .eq('user_id', user.id)
+        .maybeSingle();
 
-      if (existingEmails && existingEmails.length > 0) {
-        console.log('Found existing email:', existingEmails[0].email_address);
-        return existingEmails[0].email_address;
+      if (userEmail) {
+        console.log('Found user email:', userEmail.email_address);
+        return userEmail.email_address;
       }
 
-      console.log('No existing email found, generating new one...');
-
-      // Generate email using database function
-      const { data: emailAddress, error: emailError } = await supabase
-        .rpc('ensure_company_inbox_email', { company_uuid: profile.company_id });
-
-      if (emailError) {
-        console.error('Error ensuring company email:', emailError);
+      // If no user email, generate one
+      const generateResult = await get().generateEmail();
+      if (generateResult?.error) {
+        console.error('Failed to generate email:', generateResult.error);
         return null;
       }
 
-      console.log('Successfully ensured company email:', emailAddress);
-      return emailAddress;
+      // Return the newly generated email
+      const { data: newEmail } = await supabase
+        .from('inbox_emails')
+        .select('email_address')
+        .eq('user_id', user.id)
+        .maybeSingle();
+
+      return newEmail?.email_address || null;
     } catch (error) {
       console.error('Error in ensureCompanyEmail:', error);
       return null;
@@ -267,17 +259,26 @@ export const useInboxStore = create<InboxState>((set, get) => ({
     });
 
     try {
-      // Test 1: Mailgun API Connection
+      // Test 1: Mailgun API Connection - use proper parameters
       console.log('Testing Mailgun API connection...');
       const { data: mailgunTest, error: mailgunError } = await supabase.functions.invoke('create-mailgun-route', {
-        body: { action: 'test' }
+        body: { createCatchAll: true }
       });
 
-      if (mailgunError || !mailgunTest?.success) {
-        console.error('Mailgun API test failed:', mailgunError || mailgunTest?.error);
+      console.log('Mailgun test response:', mailgunTest);
+      console.log('Mailgun test error:', mailgunError);
+
+      if (mailgunError) {
+        console.error('Mailgun API test failed with error:', mailgunError);
         set(state => ({
           diagnostics: { ...state.diagnostics, mailgunApiConnection: 'error' },
-          diagnosticMessages: { ...state.diagnosticMessages, mailgunApiConnection: mailgunError?.message || mailgunTest?.error || 'API connection failed' }
+          diagnosticMessages: { ...state.diagnosticMessages, mailgunApiConnection: `Error: ${mailgunError.message}` }
+        }));
+      } else if (!mailgunTest?.success) {
+        console.error('Mailgun API test failed:', mailgunTest?.error);
+        set(state => ({
+          diagnostics: { ...state.diagnostics, mailgunApiConnection: 'error' },
+          diagnosticMessages: { ...state.diagnosticMessages, mailgunApiConnection: mailgunTest?.error || 'API connection failed' }
         }));
       } else {
         console.log('Mailgun API test successful');
@@ -287,36 +288,15 @@ export const useInboxStore = create<InboxState>((set, get) => ({
         }));
       }
 
-      // Test 2: Route Creation
-      console.log('Testing route creation...');
-      const currentEmail = get().currentEmail;
-      if (currentEmail) {
-        const { data: routeTest, error: routeError } = await supabase.functions.invoke('create-mailgun-route', {
-          body: { 
-            action: 'create', 
-            email: currentEmail 
-          }
-        });
-
-        if (routeError || !routeTest?.success) {
-          console.error('Route creation test failed:', routeError || routeTest?.error);
-          set(state => ({
-            diagnostics: { ...state.diagnostics, routeCreation: 'error' },
-            diagnosticMessages: { ...state.diagnosticMessages, routeCreation: routeError?.message || routeTest?.error || 'Route creation failed' }
-          }));
-        } else {
-          console.log('Route creation test successful');
-          set(state => ({
-            diagnostics: { ...state.diagnostics, routeCreation: 'success' },
-            diagnosticMessages: { ...state.diagnosticMessages, routeCreation: 'Route created successfully' }
-          }));
-        }
-      } else {
-        set(state => ({
-          diagnostics: { ...state.diagnostics, routeCreation: 'error' },
-          diagnosticMessages: { ...state.diagnosticMessages, routeCreation: 'No email address found to test route creation' }
-        }));
-      }
+      // Test 2: Route Creation - this is actually covered by the catch-all creation above
+      console.log('Route creation test - covered by catch-all creation');
+      const routeStatus = mailgunTest?.success ? 'success' : 'error';
+      const routeMessage = mailgunTest?.success ? 'Route creation working' : 'Route creation failed';
+      
+      set(state => ({
+        diagnostics: { ...state.diagnostics, routeCreation: routeStatus },
+        diagnosticMessages: { ...state.diagnosticMessages, routeCreation: routeMessage }
+      }));
 
       // Test 3: Email Generation
       console.log('Testing email generation...');
@@ -325,7 +305,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
         console.log('Email generation test successful:', emailGenResult);
         set(state => ({
           diagnostics: { ...state.diagnostics, emailGeneration: 'success' },
-          diagnosticMessages: { ...state.diagnosticMessages, emailGeneration: `Email generated: ${emailGenResult}` }
+          diagnosticMessages: { ...state.diagnosticMessages, emailGeneration: `Email ready: ${emailGenResult}` }
         }));
       } else {
         console.error('Email generation test failed');
@@ -337,6 +317,19 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
     } catch (error) {
       console.error('Error during diagnostics:', error);
+      set(state => ({
+        diagnostics: { 
+          mailgunApiConnection: 'error',
+          routeCreation: 'error', 
+          emailGeneration: 'error',
+          testEmail: 'idle'
+        },
+        diagnosticMessages: { 
+          mailgunApiConnection: 'Diagnostic failed: ' + error.message,
+          routeCreation: 'Diagnostic failed: ' + error.message,
+          emailGeneration: 'Diagnostic failed: ' + error.message
+        }
+      }));
     }
   },
 
