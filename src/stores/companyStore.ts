@@ -11,6 +11,14 @@ type TeamMember = Database['public']['Tables']['team_members']['Row'] & {
 };
 type Branding = Database['public']['Tables']['branding']['Row'];
 
+// Type for our upsert function responses
+interface UpsertResponse {
+  success: boolean;
+  error?: string;
+  message?: string;
+  company_id?: string;
+}
+
 interface CompanyState {
   company: Company | null;
   teamMembers: TeamMember[];
@@ -151,12 +159,13 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
         return { error: error.message };
       }
 
-      if (!data.success) {
-        console.error('Upsert function returned error:', data.error);
-        return { error: data.error };
+      const response = data as UpsertResponse;
+      if (!response.success) {
+        console.error('Upsert function returned error:', response.error);
+        return { error: response.error };
       }
 
-      console.log('Company updated successfully:', data);
+      console.log('Company updated successfully:', response);
       
       // Refresh the company data
       await get().fetchCompany();
@@ -186,12 +195,13 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
         return { error: error.message };
       }
 
-      if (!data.success) {
-        console.error('Upsert function returned error:', data.error);
-        return { error: data.error };
+      const response = data as UpsertResponse;
+      if (!response.success) {
+        console.error('Upsert function returned error:', response.error);
+        return { error: response.error };
       }
 
-      console.log('Profile updated successfully:', data);
+      console.log('Profile updated successfully:', response);
       return {};
     } catch (error) {
       console.error('Error in updateProfile:', error);
@@ -218,12 +228,13 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
         return { error: error.message };
       }
 
-      if (!data.success) {
-        console.error('Upsert function returned error:', data.error);
-        return { error: data.error };
+      const response = data as UpsertResponse;
+      if (!response.success) {
+        console.error('Upsert function returned error:', response.error);
+        return { error: response.error };
       }
 
-      console.log('Branding updated successfully:', data);
+      console.log('Branding updated successfully:', response);
       
       // Refresh the company data to get updated branding
       await get().fetchCompany();
