@@ -159,7 +159,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
         return { error: error.message };
       }
 
-      const response = data as UpsertResponse;
+      const response = data as unknown as UpsertResponse;
       if (!response.success) {
         console.error('Upsert function returned error:', response.error);
         return { error: response.error };
@@ -195,7 +195,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
         return { error: error.message };
       }
 
-      const response = data as UpsertResponse;
+      const response = data as unknown as UpsertResponse;
       if (!response.success) {
         console.error('Upsert function returned error:', response.error);
         return { error: response.error };
@@ -228,7 +228,7 @@ export const useCompanyStore = create<CompanyState>((set, get) => ({
         return { error: error.message };
       }
 
-      const response = data as UpsertResponse;
+      const response = data as unknown as UpsertResponse;
       if (!response.success) {
         console.error('Upsert function returned error:', response.error);
         return { error: response.error };
