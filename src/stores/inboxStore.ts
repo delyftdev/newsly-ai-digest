@@ -26,6 +26,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
   fetchEmails: async () => {
     set({ isLoading: true });
     try {
+      console.log('Fetching inbox emails...');
       const { data, error } = await supabase
         .from('inbox_emails')
         .select('*')
@@ -36,6 +37,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
         return;
       }
 
+      console.log('Fetched emails:', data);
       set({ emails: data || [], currentEmail: data?.[0]?.email_address || null });
     } catch (error) {
       console.error('Error in fetchEmails:', error);
@@ -45,28 +47,8 @@ export const useInboxStore = create<InboxState>((set, get) => ({
   },
 
   fetchMessages: async () => {
-    set({ isLoading: true });
     try {
-      const { data, error } = await supabase
-        .from('inbox_messages')
-        .select('*')
-        .order('received_at', { ascending: false });
-
-      if (error) {
-        console.error('Error fetching messages:', error);
-        return;
-      }
-
-      set({ messages: data || [] });
-    } catch (error) {
-      console.error('Error in fetchMessages:', error);
-    } finally {
-      set({ isLoading: false });
-    }
-  },
-
-  generateEmail: async () => {
-    try {
+      console.log('Fetching inbox messages...');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('company_id')
@@ -75,19 +57,60 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
       if (profileError || !profile?.company_id) {
         console.error('Error fetching profile or no company_id:', profileError);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('inbox_messages')
+        .select('*')
+        .eq('company_id', profile.company_id)
+        .order('received_at', { ascending: false });
+
+      if (error) {
+        console.error('Error fetching messages:', error);
+        return;
+      }
+
+      console.log('Fetched messages:', data);
+      set({ messages: data || [] });
+    } catch (error) {
+      console.error('Error in fetchMessages:', error);
+    }
+  },
+
+  generateEmail: async () => {
+    try {
+      console.log('Starting email generation...');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        return { error: 'User not authenticated' };
+      }
+
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profile?.company_id) {
+        console.error('Error fetching profile or no company_id:', profileError);
         return { error: 'Company not found. Please complete your onboarding first.' };
       }
 
+      console.log('Calling ensure_company_inbox_email for company:', profile.company_id);
+      
       // Use the database function to ensure company email
       const { data: emailAddress, error: emailError } = await supabase
         .rpc('ensure_company_inbox_email', { company_uuid: profile.company_id });
 
       if (emailError) {
         console.error('Error generating email:', emailError);
-        return { error: 'Failed to generate email address' };
+        return { error: 'Failed to generate email address: ' + emailError.message };
       }
 
-      // Refresh emails
+      console.log('Generated email address:', emailAddress);
+
+      // Refresh emails to show the new one
       await get().fetchEmails();
       
       return { error: undefined };
@@ -99,25 +122,42 @@ export const useInboxStore = create<InboxState>((set, get) => ({
 
   ensureCompanyEmail: async () => {
     try {
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (profileError || !profile?.company_id) {
+      console.log('Ensuring company email exists...');
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        console.log('No authenticated user');
         return null;
       }
 
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !profile?.company_id) {
+        console.error('Error fetching profile or no company_id:', profileError);
+        return null;
+      }
+
+      console.log('User company_id:', profile.company_id);
+
       // Check if company already has an email
-      const { data: existingEmails } = await supabase
+      const { data: existingEmails, error: emailsError } = await supabase
         .from('inbox_emails')
         .select('email_address')
         .limit(1);
 
+      if (emailsError) {
+        console.error('Error checking existing emails:', emailsError);
+      }
+
       if (existingEmails && existingEmails.length > 0) {
+        console.log('Found existing email:', existingEmails[0].email_address);
         return existingEmails[0].email_address;
       }
+
+      console.log('No existing email found, generating new one...');
 
       // Generate email using database function
       const { data: emailAddress, error: emailError } = await supabase
@@ -128,6 +168,7 @@ export const useInboxStore = create<InboxState>((set, get) => ({
         return null;
       }
 
+      console.log('Successfully ensured company email:', emailAddress);
       return emailAddress;
     } catch (error) {
       console.error('Error in ensureCompanyEmail:', error);

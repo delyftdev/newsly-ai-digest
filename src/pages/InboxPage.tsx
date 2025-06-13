@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -7,22 +6,24 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Mail, Search, Filter, Copy, Check, Clock } from "lucide-react";
+import { Mail, Search, Filter, Copy, Check, Clock, RefreshCw } from "lucide-react";
 import { useInboxStore } from "@/stores/inboxStore";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 
 const InboxPage = () => {
-  const { messages, emails, currentEmail, isLoading, fetchMessages, fetchEmails, ensureCompanyEmail } = useInboxStore();
+  const { messages, emails, currentEmail, isLoading, fetchMessages, fetchEmails, ensureCompanyEmail, generateEmail } = useInboxStore();
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [selectedMessage, setSelectedMessage] = useState<any>(null);
   const [copiedEmail, setCopiedEmail] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   // Auto-ensure company email on page load
   useEffect(() => {
     const initializeInbox = async () => {
+      console.log('Initializing inbox...');
       await ensureCompanyEmail();
       await fetchEmails();
       await fetchMessages();
@@ -31,20 +32,57 @@ const InboxPage = () => {
     initializeInbox();
   }, [ensureCompanyEmail, fetchEmails, fetchMessages]);
 
-  const { data: inboxEmails } = useQuery({
+  const { data: inboxEmails, refetch: refetchEmails } = useQuery({
     queryKey: ['inbox-emails'],
     queryFn: async () => {
+      console.log('Querying inbox emails...');
       const { data, error } = await supabase
         .from('inbox_emails')
         .select('*')
         .order('created_at', { ascending: false });
       
-      if (error) throw error;
+      if (error) {
+        console.error('Query error:', error);
+        throw error;
+      }
+      console.log('Query result:', data);
       return data;
     },
   });
 
   const displayEmail = currentEmail || inboxEmails?.[0]?.email_address;
+
+  const handleGenerateEmail = async () => {
+    setIsGenerating(true);
+    try {
+      console.log('Manually generating email...');
+      const result = await generateEmail();
+      
+      if (result.error) {
+        toast({
+          title: "Error",
+          description: result.error,
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Success",
+          description: "Company inbox email generated successfully!",
+        });
+        // Refresh the query data
+        await refetchEmails();
+      }
+    } catch (error) {
+      console.error('Error generating email:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate email address",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
 
   const copyEmailToClipboard = async () => {
     if (!displayEmail) return;
@@ -142,9 +180,21 @@ const InboxPage = () => {
               <div className="text-center py-8">
                 <Clock className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Setting up your inbox...</h3>
-                <p className="text-gray-600">
+                <p className="text-gray-600 mb-4">
                   Your company inbox email is being generated automatically.
                 </p>
+                <Button 
+                  onClick={handleGenerateEmail}
+                  disabled={isGenerating}
+                  className="flex items-center gap-2"
+                >
+                  {isGenerating ? (
+                    <RefreshCw className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Mail className="h-4 w-4" />
+                  )}
+                  {isGenerating ? 'Generating...' : 'Generate Email Now'}
+                </Button>
               </div>
             )}
           </CardContent>
