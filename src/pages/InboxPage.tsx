@@ -1,14 +1,13 @@
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Clock, Mail, Play, RefreshCw, Send, Zap } from "lucide-react";
+import { Mail, RefreshCw } from "lucide-react";
 import { useInboxStore } from "@/stores/inboxStore";
-import { useToast } from "@/hooks/use-toast";
 import { formatDistanceToNow } from "date-fns";
 
 const InboxPage = () => {
@@ -17,92 +16,14 @@ const InboxPage = () => {
     messages, 
     isLoading, 
     currentEmail, 
-    diagnostics, 
-    diagnosticMessages,
     fetchEmails, 
-    fetchMessages, 
-    generateEmail,
-    runDiagnostics,
-    sendTestEmail
+    fetchMessages
   } = useInboxStore();
-  const { toast } = useToast();
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [isSendingTest, setIsSendingTest] = useState(false);
 
   useEffect(() => {
     fetchEmails();
     fetchMessages();
   }, [fetchEmails, fetchMessages]);
-
-  const handleGenerateEmail = async () => {
-    setIsGenerating(true);
-    const result = await generateEmail();
-    if (result?.error) {
-      toast({
-        title: "Error",
-        description: result.error,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Success",
-        description: "Email address generated successfully!",
-      });
-    }
-    setIsGenerating(false);
-  };
-
-  const handleRunDiagnostics = async () => {
-    await runDiagnostics();
-    toast({
-      title: "Diagnostics Complete",
-      description: "Email system diagnostics have been completed",
-    });
-  };
-
-  const handleSendTestEmail = async () => {
-    setIsSendingTest(true);
-    const result = await sendTestEmail();
-    if (result?.error) {
-      toast({
-        title: "Test Failed",
-        description: result.error,
-        variant: "destructive",
-      });
-    } else {
-      toast({
-        title: "Test Successful",
-        description: "Test email sent and processed successfully!",
-      });
-    }
-    setIsSendingTest(false);
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case 'success':
-        return <CheckCircle className="h-4 w-4 text-green-500" />;
-      case 'error':
-        return <AlertCircle className="h-4 w-4 text-red-500" />;
-      case 'checking':
-        return <Clock className="h-4 w-4 text-yellow-500" />;
-      default:
-        return <Clock className="h-4 w-4 text-gray-400" />;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'success':
-        return 'bg-green-50 text-green-700 border-green-200';
-      case 'error':
-        return 'bg-red-50 text-red-700 border-red-200';
-      case 'checking':
-        return 'bg-yellow-50 text-yellow-700 border-yellow-200';
-      default:
-        return 'bg-gray-50 text-gray-700 border-gray-200';
-    }
-  };
 
   return (
     <DashboardLayout>
@@ -114,22 +35,15 @@ const InboxPage = () => {
               Manage your company's incoming emails and feedback
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button onClick={handleRunDiagnostics} variant="outline">
-              <Zap className="h-4 w-4 mr-2" />
-              Run Diagnostics
-            </Button>
-            <Button onClick={() => { fetchEmails(); fetchMessages(); }} variant="outline">
-              <RefreshCw className="h-4 w-4 mr-2" />
-              Refresh
-            </Button>
-          </div>
+          <Button onClick={() => { fetchEmails(); fetchMessages(); }} variant="outline">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
         </div>
 
         <Tabs defaultValue="inbox" className="space-y-6">
           <TabsList>
             <TabsTrigger value="inbox">Inbox</TabsTrigger>
-            <TabsTrigger value="diagnostics">Diagnostics</TabsTrigger>
             <TabsTrigger value="settings">Email Settings</TabsTrigger>
           </TabsList>
 
@@ -151,17 +65,9 @@ const InboxPage = () => {
                       </code>
                       <Badge variant="outline">Active</Badge>
                     </div>
-                    <Button onClick={handleSendTestEmail} disabled={isSendingTest}>
-                      {isSendingTest ? (
-                        <Clock className="h-4 w-4 mr-2 animate-spin" />
-                      ) : (
-                        <Send className="h-4 w-4 mr-2" />
-                      )}
-                      Send Test Email
-                    </Button>
                   </div>
                   <p className="text-sm text-gray-500 mt-2">
-                    This email address is automatically configured to receive emails from your customers and forward them to your inbox.
+                    This email address is automatically configured to receive emails from your customers.
                   </p>
                 </CardContent>
               </Card>
@@ -173,18 +79,10 @@ const InboxPage = () => {
                 <CardHeader>
                   <CardTitle>No Email Address Found</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent>
                   <p className="text-gray-600">
-                    You don't have an inbox email address yet. Generate one to start receiving emails.
+                    No inbox email address found. If you just completed onboarding, please refresh the page.
                   </p>
-                  <Button onClick={handleGenerateEmail} disabled={isGenerating}>
-                    {isGenerating ? (
-                      <Clock className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Mail className="h-4 w-4 mr-2" />
-                    )}
-                    Generate Email Address
-                  </Button>
                 </CardContent>
               </Card>
             )}
@@ -247,88 +145,6 @@ const InboxPage = () => {
             </Card>
           </TabsContent>
 
-          <TabsContent value="diagnostics" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Email System Diagnostics</CardTitle>
-                <p className="text-sm text-gray-600">
-                  Check the status of your email system components
-                </p>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Mailgun API Connection */}
-                <div className={`p-4 rounded-lg border ${getStatusColor(diagnostics.mailgunApiConnection)}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {getStatusIcon(diagnostics.mailgunApiConnection)}
-                      <div>
-                        <h4 className="font-medium">Mailgun API Connection</h4>
-                        <p className="text-sm opacity-80">
-                          {diagnosticMessages.mailgunApiConnection || 'Testing connection to Mailgun API...'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Route Creation */}
-                <div className={`p-4 rounded-lg border ${getStatusColor(diagnostics.routeCreation)}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {getStatusIcon(diagnostics.routeCreation)}
-                      <div>
-                        <h4 className="font-medium">Route Creation</h4>
-                        <p className="text-sm opacity-80">
-                          {diagnosticMessages.routeCreation || 'Testing email route creation...'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Email Generation */}
-                <div className={`p-4 rounded-lg border ${getStatusColor(diagnostics.emailGeneration)}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {getStatusIcon(diagnostics.emailGeneration)}
-                      <div>
-                        <h4 className="font-medium">Email Generation</h4>
-                        <p className="text-sm opacity-80">
-                          {diagnosticMessages.emailGeneration || 'Testing email address generation...'}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Test Email */}
-                <div className={`p-4 rounded-lg border ${getStatusColor(diagnostics.testEmail)}`}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      {getStatusIcon(diagnostics.testEmail)}
-                      <div>
-                        <h4 className="font-medium">Test Email Processing</h4>
-                        <p className="text-sm opacity-80">
-                          {diagnosticMessages.testEmail || 'Ready to test email processing...'}
-                        </p>
-                      </div>
-                    </div>
-                    {diagnostics.testEmail === 'idle' && currentEmail && (
-                      <Button onClick={handleSendTestEmail} size="sm" disabled={isSendingTest}>
-                        {isSendingTest ? (
-                          <Clock className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Play className="h-4 w-4 mr-2" />
-                        )}
-                        Test Now
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
           <TabsContent value="settings" className="space-y-6">
             <Card>
               <CardHeader>
@@ -350,24 +166,8 @@ const InboxPage = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-gray-500">No email addresses generated yet</p>
+                      <p className="text-gray-500">No email addresses found</p>
                     )}
-                  </div>
-                  
-                  <Separator />
-                  
-                  <div>
-                    <h4 className="font-medium mb-2">Actions</h4>
-                    <div className="flex gap-2">
-                      <Button onClick={handleGenerateEmail} disabled={isGenerating}>
-                        {isGenerating ? (
-                          <Clock className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Mail className="h-4 w-4 mr-2" />
-                        )}
-                        Generate New Email
-                      </Button>
-                    </div>
                   </div>
                 </div>
               </CardContent>
