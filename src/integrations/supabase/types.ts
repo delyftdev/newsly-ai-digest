@@ -242,45 +242,57 @@ export type Database = {
       inbox_messages: {
         Row: {
           ai_summary: string | null
+          ai_tags: string[] | null
           category: string | null
           company_id: string | null
+          confidence_score: number | null
           content: string | null
           created_at: string | null
+          enhanced_category: string | null
           from_email: string
           from_name: string | null
           html_content: string | null
           id: string
           is_processed: boolean | null
+          processed_by_ai: boolean | null
           received_at: string | null
           subject: string | null
           user_id: string
         }
         Insert: {
           ai_summary?: string | null
+          ai_tags?: string[] | null
           category?: string | null
           company_id?: string | null
+          confidence_score?: number | null
           content?: string | null
           created_at?: string | null
+          enhanced_category?: string | null
           from_email: string
           from_name?: string | null
           html_content?: string | null
           id?: string
           is_processed?: boolean | null
+          processed_by_ai?: boolean | null
           received_at?: string | null
           subject?: string | null
           user_id: string
         }
         Update: {
           ai_summary?: string | null
+          ai_tags?: string[] | null
           category?: string | null
           company_id?: string | null
+          confidence_score?: number | null
           content?: string | null
           created_at?: string | null
+          enhanced_category?: string | null
           from_email?: string
           from_name?: string | null
           html_content?: string | null
           id?: string
           is_processed?: boolean | null
+          processed_by_ai?: boolean | null
           received_at?: string | null
           subject?: string | null
           user_id?: string
@@ -380,6 +392,7 @@ export type Database = {
       }
       releases: {
         Row: {
+          ai_generated: boolean | null
           ai_summary: string | null
           category: string | null
           company_id: string | null
@@ -388,9 +401,13 @@ export type Database = {
           created_by: string | null
           featured_image_url: string | null
           id: string
+          public_slug: string | null
           published_at: string | null
+          published_by: string | null
           release_date: string | null
           release_type: string | null
+          source_document_name: string | null
+          source_document_url: string | null
           source_id: string | null
           source_type: string | null
           status: string | null
@@ -401,6 +418,7 @@ export type Database = {
           visibility: string | null
         }
         Insert: {
+          ai_generated?: boolean | null
           ai_summary?: string | null
           category?: string | null
           company_id?: string | null
@@ -409,9 +427,13 @@ export type Database = {
           created_by?: string | null
           featured_image_url?: string | null
           id?: string
+          public_slug?: string | null
           published_at?: string | null
+          published_by?: string | null
           release_date?: string | null
           release_type?: string | null
+          source_document_name?: string | null
+          source_document_url?: string | null
           source_id?: string | null
           source_type?: string | null
           status?: string | null
@@ -422,6 +444,7 @@ export type Database = {
           visibility?: string | null
         }
         Update: {
+          ai_generated?: boolean | null
           ai_summary?: string | null
           category?: string | null
           company_id?: string | null
@@ -430,9 +453,13 @@ export type Database = {
           created_by?: string | null
           featured_image_url?: string | null
           id?: string
+          public_slug?: string | null
           published_at?: string | null
+          published_by?: string | null
           release_date?: string | null
           release_type?: string | null
+          source_document_name?: string | null
+          source_document_url?: string | null
           source_id?: string | null
           source_type?: string | null
           status?: string | null
@@ -477,6 +504,50 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "subscribers_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      team_activities: {
+        Row: {
+          activity_type: string
+          company_id: string
+          created_at: string
+          description: string
+          entity_id: string | null
+          entity_type: string
+          id: string
+          metadata: Json | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: string
+          company_id: string
+          created_at?: string
+          description: string
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          metadata?: Json | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: string
+          company_id?: string
+          created_at?: string
+          description?: string
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          metadata?: Json | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_activities_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

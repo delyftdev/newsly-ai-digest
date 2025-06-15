@@ -62,7 +62,40 @@ const OnboardingPage = () => {
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(data.companyName && data.teamSize && data.industry && data.fullName);
+        // All fields are required for step 1 - company info is mandatory
+        if (!data.companyName.trim()) {
+          toast({
+            title: "Company Name Required",
+            description: "Please enter your company name. This is required to set up your inbox.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        if (!data.teamSize) {
+          toast({
+            title: "Team Size Required",
+            description: "Please select your team size.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        if (!data.industry) {
+          toast({
+            title: "Industry Required",
+            description: "Please select your industry.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        if (!data.fullName.trim()) {
+          toast({
+            title: "Full Name Required",
+            description: "Please enter your full name.",
+            variant: "destructive",
+          });
+          return false;
+        }
+        return true;
       case 2:
         return true; // Optional step
       case 3:
@@ -74,12 +107,7 @@ const OnboardingPage = () => {
 
   const handleNextStep = async () => {
     if (!validateStep(currentStep)) {
-      toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields",
-        variant: "destructive",
-      });
-      return;
+      return; // Don't proceed if validation fails
     }
 
     if (currentStep < 3) {
@@ -291,6 +319,12 @@ const OnboardingPage = () => {
           <CardContent className="space-y-6">
             {currentStep === 1 ? (
               <>
+                <div className="p-4 bg-blue-50 rounded-lg mb-6">
+                  <h4 className="font-medium text-blue-900 mb-2">Required Information</h4>
+                  <p className="text-sm text-blue-800">
+                    Company information is required to set up your personalized inbox email address and ensure proper email routing.
+                  </p>
+                </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="fullName">Your Full Name *</Label>
@@ -300,6 +334,7 @@ const OnboardingPage = () => {
                       onChange={(e) => updateData({ fullName: e.target.value })}
                       placeholder="John Doe"
                       required
+                      className={!data.fullName.trim() ? "border-red-300" : ""}
                     />
                   </div>
                   <div>
@@ -310,6 +345,7 @@ const OnboardingPage = () => {
                       onChange={(e) => updateData({ companyName: e.target.value })}
                       placeholder="Acme Corp"
                       required
+                      className={!data.companyName.trim() ? "border-red-300" : ""}
                     />
                   </div>
                 </div>
@@ -317,7 +353,7 @@ const OnboardingPage = () => {
                   <div>
                     <Label htmlFor="teamSize">Team Size *</Label>
                     <Select value={data.teamSize} onValueChange={(value) => updateData({ teamSize: value })}>
-                      <SelectTrigger>
+                      <SelectTrigger className={!data.teamSize ? "border-red-300" : ""}>
                         <SelectValue placeholder="Select team size" />
                       </SelectTrigger>
                       <SelectContent>
@@ -332,7 +368,7 @@ const OnboardingPage = () => {
                   <div>
                     <Label htmlFor="industry">Industry *</Label>
                     <Select value={data.industry} onValueChange={(value) => updateData({ industry: value })}>
-                      <SelectTrigger>
+                      <SelectTrigger className={!data.industry ? "border-red-300" : ""}>
                         <SelectValue placeholder="Select industry" />
                       </SelectTrigger>
                       <SelectContent>
