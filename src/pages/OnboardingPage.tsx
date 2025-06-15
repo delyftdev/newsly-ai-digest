@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useRouter } from 'next/router';
+import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from "@/stores/authStore";
 import { useCompanyStore } from "@/stores/companyStore";
 import { useInboxStore } from "@/stores/inboxStore";
@@ -12,7 +12,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 
 const OnboardingPage = () => {
-  const router = useRouter();
   const { user } = useAuthStore();
   const { company, fetchCompany, updateCompany } = useCompanyStore();
   const { emails, fetchEmails, autoGenerateEmailOnOnboarding } = useInboxStore();
@@ -98,7 +97,7 @@ const OnboardingPage = () => {
   };
 
   const handleComplete = () => {
-    router.push('/inbox');
+    navigate('/inbox');
   };
 
   useEffect(() => {
