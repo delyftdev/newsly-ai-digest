@@ -89,10 +89,12 @@ const InboxPage = () => {
     <div className="container mx-auto py-8 px-4">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Inbox</h1>
-        <p className="text-gray-600">Manage your incoming emails and create releases</p>
+        <p className="text-gray-600">
+          Manage your incoming emails and create releases.
+        </p>
       </div>
 
-      {/* Email Address Display */}
+      {/* Always show the inbox email address if it exists */}
       <Card className="mb-6">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -102,25 +104,32 @@ const InboxPage = () => {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            {emails.length > 0 ? emails.map((email) => (
-              <div key={email.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div className="flex-1">
-                  <p className="font-mono text-sm">{email.email_address}</p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Forward emails to this address to have them processed automatically
-                  </p>
-                </div>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => copyEmailToClipboard(email.email_address)}
+            {emails.length > 0 ? (
+              emails.map((email) => (
+                <div
+                  key={email.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
                 >
-                  <Copy className="w-4 h-4 mr-1" />
-                  Copy
-                </Button>
-              </div>
-            )) : (
-              <p className="text-sm text-gray-500">No inbox email has been generated yet.</p>
+                  <div className="flex-1">
+                    <p className="font-mono text-sm">{email.email_address}</p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Forward emails to this address for them to appear here.
+                    </p>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => copyEmailToClipboard(email.email_address)}
+                  >
+                    <Copy className="w-4 h-4 mr-1" />
+                    Copy
+                  </Button>
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-gray-500">
+                No inbox email has been generated yet. Complete onboarding to generate one for your team.
+              </p>
             )}
           </div>
         </CardContent>
