@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
 import RichTextEditor from "@/components/RichTextEditor";
 import ImageUpload from "@/components/ImageUpload";
+import DocumentUpload from "@/components/DocumentUpload";
 
 const ReleaseEditor = () => {
   const { id } = useParams();
@@ -26,6 +27,7 @@ const ReleaseEditor = () => {
   const [featuredImage, setFeaturedImage] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
   const [visibility, setVisibility] = useState("public");
+  const [isProcessingDocument, setIsProcessingDocument] = useState(false);
 
   const isEditing = Boolean(id);
 
@@ -126,6 +128,59 @@ const ReleaseEditor = () => {
     setFeaturedImage(url);
   };
 
+  const handleDocumentUpload = (file: File) => {
+    toast({
+      title: "Document uploaded",
+      description: "Ready for AI processing",
+    });
+  };
+
+  const handleGoogleDriveConnect = () => {
+    toast({
+      title: "Google Drive Integration",
+      description: "Google Drive integration coming soon!",
+    });
+  };
+
+  const handleAIProcess = async (documentContent: string) => {
+    setIsProcessingDocument(true);
+    try {
+      // Simulate AI processing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Mock AI-generated content
+      setTitle("New Feature Release - AI Generated");
+      setContent(`
+        <h2>What's New</h2>
+        <p>We're excited to announce our latest feature updates based on your feedback.</p>
+        
+        <h3>Key Features</h3>
+        <ul>
+          <li>Enhanced user interface for better usability</li>
+          <li>Improved performance and reliability</li>
+          <li>New integration capabilities</li>
+        </ul>
+        
+        <h3>Getting Started</h3>
+        <p>To start using these new features, simply log into your account and explore the updated interface.</p>
+      `);
+      setTags(["feature", "update", "enhancement"]);
+      
+      toast({
+        title: "AI Processing Complete",
+        description: "Your document has been converted to a release draft!",
+      });
+    } catch (error) {
+      toast({
+        title: "Processing Error",
+        description: "Failed to process document with AI",
+        variant: "destructive",
+      });
+    } finally {
+      setIsProcessingDocument(false);
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -162,6 +217,21 @@ const ReleaseEditor = () => {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
           {/* Main Content */}
           <div className="lg:col-span-3 space-y-6">
+            {/* Document Upload */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Upload Documents</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DocumentUpload
+                  onDocumentUpload={handleDocumentUpload}
+                  onGoogleDriveConnect={handleGoogleDriveConnect}
+                  onAIProcess={handleAIProcess}
+                  isProcessing={isProcessingDocument}
+                />
+              </CardContent>
+            </Card>
+
             {/* Featured Image */}
             <Card>
               <CardHeader>
