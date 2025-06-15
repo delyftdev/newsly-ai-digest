@@ -26,7 +26,7 @@ interface OnboardingData {
 const OnboardingPage = () => {
   const { user } = useAuthStore();
   const { updateCompany, updateBranding, fetchCompany } = useCompanyStore();
-  const { ensureCompanyEmail } = useInboxStore();
+  const { autoGenerateEmailOnOnboarding } = useInboxStore();
   const navigate = useNavigate();
   
   const [currentStep, setCurrentStep] = useState(1);
@@ -203,7 +203,7 @@ const OnboardingPage = () => {
       }
 
       // Auto-generate company inbox email
-      await ensureCompanyEmail();
+      await autoGenerateEmailOnOnboarding(companyId);
 
       // Mark onboarding as completed
       await supabase
