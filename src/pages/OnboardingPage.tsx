@@ -1,467 +1,236 @@
-
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useRouter } from 'next/router';
 import { useAuthStore } from "@/stores/authStore";
 import { useCompanyStore } from "@/stores/companyStore";
 import { useInboxStore } from "@/stores/inboxStore";
-import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
-import { Building, Users, Palette, CheckCircle } from "lucide-react";
-
-interface OnboardingData {
-  companyName: string;
-  teamSize: string;
-  industry: string;
-  fullName: string;
-  primaryColor: string;
-  logoUrl: string;
-}
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Progress } from "@/components/ui/progress";
 
 const OnboardingPage = () => {
+  const router = useRouter();
   const { user } = useAuthStore();
-  const { updateCompany, updateBranding, fetchCompany } = useCompanyStore();
-  const { autoGenerateEmailOnOnboarding } = useInboxStore();
-  const navigate = useNavigate();
-  
-  const [currentStep, setCurrentStep] = useState(1);
+  const { company, fetchCompany, updateCompany } = useCompanyStore();
+  const { emails, fetchEmails, autoGenerateEmailOnOnboarding } = useInboxStore();
+
   const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState<OnboardingData>({
-    companyName: "",
+  const [companyData, setCompanyData] = useState({
+    name: "",
+    domain: "",
     teamSize: "",
     industry: "",
-    fullName: "",
-    primaryColor: "#3B82F6",
-    logoUrl: "",
   });
+  const [step, setStep] = useState(1);
+  const totalSteps = 3;
 
   useEffect(() => {
-    if (!user) {
-      navigate('/auth');
+    if (user) {
+      fetchCompany();
+    }
+  }, [user, fetchCompany]);
+
+  useEffect(() => {
+    if (company) {
+      setCompanyData({
+        name: company.name || "",
+        domain: company.domain || "",
+        teamSize: company.team_size || "",
+        industry: company.industry || "",
+      });
+    }
+  }, [company]);
+
+  const canProceed = !!companyData.name && !!companyData.domain && !!companyData.teamSize && !!companyData.industry;
+
+  const handleCompanyUpdate = async () => {
+    if (!canProceed) {
+      toast({
+        title: "Missing Info",
+        description: "Please provide complete company information to continue.",
+        variant: "destructive",
+      });
       return;
     }
-    
-    // Pre-fill user's name if available
-    if (user.user_metadata?.full_name) {
-      setData(prev => ({ ...prev, fullName: user.user_metadata.full_name }));
-    }
-
-    // Load existing company data if available
-    fetchCompany();
-  }, [user, navigate, fetchCompany]);
-
-  const updateData = (updates: Partial<OnboardingData>) => {
-    setData(prev => ({ ...prev, ...updates }));
-  };
-
-  const validateStep = (step: number): boolean => {
-    switch (step) {
-      case 1:
-        // All fields are required for step 1 - company info is mandatory
-        if (!data.companyName.trim()) {
-          toast({
-            title: "Company Name Required",
-            description: "Please enter your company name. This is required to set up your inbox.",
-            variant: "destructive",
-          });
-          return false;
-        }
-        if (!data.teamSize) {
-          toast({
-            title: "Team Size Required",
-            description: "Please select your team size.",
-            variant: "destructive",
-          });
-          return false;
-        }
-        if (!data.industry) {
-          toast({
-            title: "Industry Required",
-            description: "Please select your industry.",
-            variant: "destructive",
-          });
-          return false;
-        }
-        if (!data.fullName.trim()) {
-          toast({
-            title: "Full Name Required",
-            description: "Please enter your full name.",
-            variant: "destructive",
-          });
-          return false;
-        }
-        return true;
-      case 2:
-        return true; // Optional step
-      case 3:
-        return true; // Optional step
-      default:
-        return true;
-    }
-  };
-
-  const handleNextStep = async () => {
-    if (!validateStep(currentStep)) {
-      return; // Don't proceed if validation fails
-    }
-
-    if (currentStep < 3) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      await completeOnboarding();
-    }
-  };
-
-  const completeOnboarding = async () => {
-    if (!user) return;
 
     setIsLoading(true);
     try {
-      // Update profile
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .update({
-          full_name: data.fullName,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', user.id);
+      const { error } = await updateCompany({
+        name: companyData.name,
+        domain: companyData.domain,
+        team_size: companyData.teamSize,
+        industry: companyData.industry,
+      });
 
-      if (profileError) {
-        console.error('Profile update error:', profileError);
+      if (error) {
         toast({
           title: "Error",
-          description: "Failed to update profile",
+          description: error,
           variant: "destructive",
         });
-        setIsLoading(false);
-        return;
-      }
-
-      // Get user's profile to check company_id
-      const { data: profile, error: profileFetchError } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('id', user.id)
-        .single();
-
-      if (profileFetchError) {
-        console.error('Profile fetch error:', profileFetchError);
-        toast({
-          title: "Error",
-          description: "Failed to fetch profile data",
-          variant: "destructive",
-        });
-        setIsLoading(false);
-        return;
-      }
-
-      let companyId = profile?.company_id;
-
-      if (!companyId) {
-        // Create company if it doesn't exist
-        const { data: newCompany, error: companyCreateError } = await supabase
-          .from('companies')
-          .insert({
-            name: data.companyName,
-            team_size: data.teamSize,
-            industry: data.industry,
-            logo_url: data.logoUrl || null,
-            subdomain: `company-${Date.now()}`,
-            primary_color: data.primaryColor,
-          })
-          .select()
-          .single();
-
-        if (companyCreateError || !newCompany) {
-          console.error('Company creation error:', companyCreateError);
-          toast({
-            title: "Error",
-            description: "Failed to create company",
-            variant: "destructive",
-          });
-          setIsLoading(false);
-          return;
-        }
-
-        companyId = newCompany.id;
-
-        // Update profile with company_id
-        await supabase
-          .from('profiles')
-          .update({ company_id: companyId })
-          .eq('id', user.id);
-
-        // Create team member record
-        await supabase
-          .from('team_members')
-          .insert({
-            company_id: companyId,
-            user_id: user.id,
-            role: 'admin',
-            status: 'active',
-            joined_at: new Date().toISOString(),
-          });
-
-        // Create branding record
-        await supabase
-          .from('branding')
-          .insert({
-            company_id: companyId,
-            primary_color: data.primaryColor,
-          });
       } else {
-        // Update existing company
-        await updateCompany({
-          name: data.companyName,
-          team_size: data.teamSize,
-          industry: data.industry,
-          logo_url: data.logoUrl || null,
-          primary_color: data.primaryColor,
+        toast({
+          title: "Success",
+          description: "Company information updated successfully",
         });
-
-        // Update branding
-        await updateBranding({
-          primary_color: data.primaryColor,
-        });
+        if (company?.id) {
+          const { error: emailError } = await autoGenerateEmailOnOnboarding(company.id);
+          if (emailError) {
+            toast({
+              title: "Error",
+              description: emailError,
+              variant: "destructive",
+            });
+          }
+        }
+        setStep(2);
       }
-
-      // Auto-generate company inbox email
-      await autoGenerateEmailOnOnboarding(companyId);
-
-      // Mark onboarding as completed
-      await supabase
-        .from('onboarding_progress')
-        .upsert({
-          user_id: user.id,
-          completed_at: new Date().toISOString(),
-          company_info_completed: true,
-          branding_completed: true,
-          current_step: 4,
-          completed_steps: [1, 2, 3],
-        });
-
-      toast({
-        title: "Welcome aboard!",
-        description: "Your account has been set up successfully",
-      });
-
-      navigate('/dashboard');
-    } catch (error) {
-      console.error('Onboarding completion error:', error);
-      toast({
-        title: "Error",
-        description: "Failed to complete onboarding",
-        variant: "destructive",
-      });
     } finally {
       setIsLoading(false);
     }
   };
 
-  const steps = [
-    { title: "Company Info", icon: Building },
-    { title: "Team Setup", icon: Users },
-    { title: "Branding", icon: Palette },
-  ];
+  const handleSkip = () => {
+    setStep(3);
+  };
 
-  const progress = (currentStep / steps.length) * 100;
+  const handleComplete = () => {
+    router.push('/inbox');
+  };
+
+  useEffect(() => {
+    fetchEmails();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-2xl">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Welcome to Release Hub</h1>
-          <p className="text-gray-600">Let's set up your account in a few simple steps</p>
-        </div>
+    <div className="container mx-auto py-8 px-4">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900">Welcome to the App!</h1>
+        <p className="text-gray-600">Let's set up your company information to get started.</p>
+      </div>
 
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            {steps.map((step, index) => {
-              const IconComponent = step.icon;
-              return (
-                <div key={index} className="flex items-center">
-                  <div className={`flex items-center justify-center w-10 h-10 rounded-full ${
-                    index + 1 <= currentStep ? 'bg-primary text-white' : 'bg-gray-200 text-gray-600'
-                  }`}>
-                    {index + 1 < currentStep ? (
-                      <CheckCircle className="w-5 h-5" />
-                    ) : (
-                      <IconComponent className="w-5 h-5" />
-                    )}
-                  </div>
-                  {index < steps.length - 1 ? (
-                    <div className={`w-16 h-1 mx-2 ${
-                      index + 1 < currentStep ? 'bg-primary' : 'bg-gray-200'
-                    }`} />
-                  ) : null}
-                </div>
-              );
-            })}
-          </div>
-          <Progress value={progress} className="h-2" />
-        </div>
+      <Progress value={(step / totalSteps) * 100} className="mb-4" />
 
+      {step === 1 && (
         <Card>
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {(() => {
-                const IconComponent = steps[currentStep - 1].icon;
-                return <IconComponent className="w-5 h-5" />;
-              })()}
-              Step {currentStep}: {steps[currentStep - 1].title}
-            </CardTitle>
+            <CardTitle>Company Information</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-6">
-            {currentStep === 1 ? (
-              <>
-                <div className="p-4 bg-blue-50 rounded-lg mb-6">
-                  <h4 className="font-medium text-blue-900 mb-2">Required Information</h4>
-                  <p className="text-sm text-blue-800">
-                    Company information is required to set up your personalized inbox email address and ensure proper email routing.
-                  </p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="fullName">Your Full Name *</Label>
-                    <Input
-                      id="fullName"
-                      value={data.fullName}
-                      onChange={(e) => updateData({ fullName: e.target.value })}
-                      placeholder="John Doe"
-                      required
-                      className={!data.fullName.trim() ? "border-red-300" : ""}
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="companyName">Company Name *</Label>
-                    <Input
-                      id="companyName"
-                      value={data.companyName}
-                      onChange={(e) => updateData({ companyName: e.target.value })}
-                      placeholder="Acme Corp"
-                      required
-                      className={!data.companyName.trim() ? "border-red-300" : ""}
-                    />
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="teamSize">Team Size *</Label>
-                    <Select value={data.teamSize} onValueChange={(value) => updateData({ teamSize: value })}>
-                      <SelectTrigger className={!data.teamSize ? "border-red-300" : ""}>
-                        <SelectValue placeholder="Select team size" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="1-5">1-5 people</SelectItem>
-                        <SelectItem value="6-20">6-20 people</SelectItem>
-                        <SelectItem value="21-50">21-50 people</SelectItem>
-                        <SelectItem value="51-200">51-200 people</SelectItem>
-                        <SelectItem value="200+">200+ people</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <Label htmlFor="industry">Industry *</Label>
-                    <Select value={data.industry} onValueChange={(value) => updateData({ industry: value })}>
-                      <SelectTrigger className={!data.industry ? "border-red-300" : ""}>
-                        <SelectValue placeholder="Select industry" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="technology">Technology</SelectItem>
-                        <SelectItem value="saas">SaaS</SelectItem>
-                        <SelectItem value="ecommerce">E-commerce</SelectItem>
-                        <SelectItem value="fintech">Fintech</SelectItem>
-                        <SelectItem value="healthcare">Healthcare</SelectItem>
-                        <SelectItem value="education">Education</SelectItem>
-                        <SelectItem value="other">Other</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </>
-            ) : null}
-
-            {currentStep === 2 ? (
-              <div className="text-center space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-2">Team Collaboration</h3>
-                  <p className="text-gray-600">
-                    You can invite team members later from the settings page. For now, you'll be set up as the admin.
-                  </p>
-                </div>
-                <div className="bg-blue-50 p-4 rounded-lg">
-                  <p className="text-sm text-blue-800">
-                    💡 <strong>Tip:</strong> Invite your team members after completing setup to collaborate on releases and changelogs.
-                  </p>
-                </div>
+          <CardContent className="space-y-4">
+            <div>
+              <Label htmlFor="companyName">Company Name</Label>
+              <Input
+                id="companyName"
+                value={companyData.name}
+                onChange={(e) => setCompanyData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="Your company name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="domain">Domain</Label>
+              <Input
+                id="domain"
+                value={companyData.domain}
+                onChange={(e) => setCompanyData(prev => ({ ...prev, domain: e.target.value }))}
+                placeholder="company.com"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="teamSize">Team Size</Label>
+                <Select value={companyData.teamSize} onValueChange={(value) => setCompanyData(prev => ({ ...prev, teamSize: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select team size" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="1-5">1-5 people</SelectItem>
+                    <SelectItem value="6-20">6-20 people</SelectItem>
+                    <SelectItem value="21-50">21-50 people</SelectItem>
+                    <SelectItem value="51-200">51-200 people</SelectItem>
+                    <SelectItem value="200+">200+ people</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
-            ) : null}
-
-            {currentStep === 3 ? (
-              <>
-                <div>
-                  <Label htmlFor="logoUrl">Company Logo URL (Optional)</Label>
-                  <Input
-                    id="logoUrl"
-                    value={data.logoUrl}
-                    onChange={(e) => updateData({ logoUrl: e.target.value })}
-                    placeholder="https://example.com/logo.png"
-                    type="url"
-                  />
-                  <p className="text-sm text-gray-500 mt-1">
-                    You can upload a logo later or provide a URL to your company logo
-                  </p>
-                </div>
-                <div>
-                  <Label htmlFor="primaryColor">Primary Brand Color</Label>
-                  <div className="flex items-center gap-3">
-                    <Input
-                      id="primaryColor"
-                      type="color"
-                      value={data.primaryColor}
-                      onChange={(e) => updateData({ primaryColor: e.target.value })}
-                      className="w-16 h-10 p-1 rounded"
-                    />
-                    <Input
-                      value={data.primaryColor}
-                      onChange={(e) => updateData({ primaryColor: e.target.value })}
-                      placeholder="#3B82F6"
-                      className="flex-1"
-                    />
-                  </div>
-                </div>
-              </>
-            ) : null}
-
-            <div className="flex justify-between pt-6">
-              <Button
-                variant="outline"
-                onClick={() => setCurrentStep(Math.max(1, currentStep - 1))}
-                disabled={currentStep === 1}
-              >
-                Previous
-              </Button>
-              <Button
-                onClick={handleNextStep}
-                disabled={isLoading}
-              >
-                {isLoading ? (
-                  "Setting up..."
-                ) : currentStep === 3 ? (
-                  "Complete Setup"
-                ) : (
-                  "Next Step"
-                )}
+              <div>
+                <Label htmlFor="industry">Industry</Label>
+                <Select value={companyData.industry} onValueChange={(value) => setCompanyData(prev => ({ ...prev, industry: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select industry" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="technology">Technology</SelectItem>
+                    <SelectItem value="saas">SaaS</SelectItem>
+                    <SelectItem value="ecommerce">E-commerce</SelectItem>
+                    <SelectItem value="fintech">Fintech</SelectItem>
+                    <SelectItem value="healthcare">Healthcare</SelectItem>
+                    <SelectItem value="education">Education</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="flex justify-between">
+              <Button onClick={handleSkip} variant="ghost">Skip</Button>
+              <Button onClick={handleCompanyUpdate} disabled={isLoading || !canProceed}>
+                {isLoading ? "Updating..." : "Next"}
               </Button>
             </div>
           </CardContent>
         </Card>
-      </div>
+      )}
+
+      {step === 2 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Generated Email Address</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <Label>Generated Email Address</Label>
+              <div className="mt-2">
+                {emails.length > 0 ? (
+                  <div className="space-y-2">
+                    {emails.map((email) => (
+                      <div key={email.id} className="p-3 bg-gray-50 rounded-lg">
+                        <p className="font-mono text-sm">{email.email_address}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          Forward emails to this address to have them appear in your inbox
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-gray-500">No inbox email generated yet</p>
+                )}
+              </div>
+            </div>
+            <div className="flex justify-end">
+              <Button onClick={() => setStep(3)}>Next</Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {step === 3 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>All Done!</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p>Your company information has been set up. You're ready to start using the app!</p>
+            {emails.length > 0 && (
+              <div>
+                <Label>Your Inbox Email</Label>
+                <p className="text-sm font-mono">{emails[0]?.email_address}</p>
+              </div>
+            )}
+            <Button onClick={handleComplete}>Go to Inbox</Button>
+          </CardContent>
+        </Card>
+      )}
     </div>
   );
 };

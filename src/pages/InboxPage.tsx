@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useInboxStore } from "@/stores/inboxStore";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,7 +14,7 @@ const InboxPage = () => {
   useEffect(() => {
     fetchEmails();
     fetchMessages();
-  }, [fetchEmails, fetchMessages]);
+  }, []);
 
   const copyEmailToClipboard = (email: string) => {
     navigator.clipboard.writeText(email);
@@ -94,38 +93,38 @@ const InboxPage = () => {
       </div>
 
       {/* Email Address Display */}
-      {emails.length > 0 && (
-        <Card className="mb-6">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Mail className="w-5 h-5" />
-              Your Inbox Email
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              {emails.map((email) => (
-                <div key={email.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex-1">
-                    <p className="font-mono text-sm">{email.email_address}</p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Forward emails to this address to have them processed automatically
-                    </p>
-                  </div>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => copyEmailToClipboard(email.email_address)}
-                  >
-                    <Copy className="w-4 h-4 mr-1" />
-                    Copy
-                  </Button>
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Mail className="w-5 h-5" />
+            Your Inbox Email
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {emails.length > 0 ? emails.map((email) => (
+              <div key={email.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex-1">
+                  <p className="font-mono text-sm">{email.email_address}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Forward emails to this address to have them processed automatically
+                  </p>
                 </div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => copyEmailToClipboard(email.email_address)}
+                >
+                  <Copy className="w-4 h-4 mr-1" />
+                  Copy
+                </Button>
+              </div>
+            )) : (
+              <p className="text-sm text-gray-500">No inbox email has been generated yet.</p>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Category Tabs */}
       <Tabs value={selectedCategory} onValueChange={setSelectedCategory} className="space-y-6">

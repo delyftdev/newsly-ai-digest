@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import type { Database } from '@/integrations/supabase/types';
@@ -25,14 +24,11 @@ export const useTeamActivityStore = create<TeamActivityState>((set, get) => ({
   fetchActivities: async () => {
     set({ isLoading: true });
     try {
-      console.log('Fetching team activities...');
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) {
-        console.log('No authenticated user');
         set({ isLoading: false });
         return;
       }
-
       // Get user's company
       const { data: profile } = await supabase
         .from('profiles')
@@ -70,12 +66,8 @@ export const useTeamActivityStore = create<TeamActivityState>((set, get) => ({
 
   logActivity: async (activity) => {
     try {
-      console.log('Logging activity:', activity);
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        console.error('No authenticated user');
-        return;
-      }
+      if (!user) return;
 
       // Get user's company
       const { data: profile } = await supabase
@@ -84,13 +76,9 @@ export const useTeamActivityStore = create<TeamActivityState>((set, get) => ({
         .eq('id', user.id)
         .single();
 
-      if (!profile?.company_id) {
-        console.error('No company_id found for user');
-        return;
-      }
+      if (!profile?.company_id) return;
 
-      // Insert activity
-      const { error } = await supabase
+      await supabase
         .from('team_activities')
         .insert({
           company_id: profile.company_id,
@@ -102,17 +90,10 @@ export const useTeamActivityStore = create<TeamActivityState>((set, get) => ({
           metadata: activity.metadata || null,
         });
 
-      if (error) {
-        console.error('Error logging activity:', error);
-        return;
-      }
-
-      console.log('Activity logged successfully');
-      
-      // Refresh activities
+      // Optionally refetch
       await get().fetchActivities();
     } catch (error) {
-      console.error('Error in logActivity:', error);
+      // Silently ignore for now
     }
   },
 }));

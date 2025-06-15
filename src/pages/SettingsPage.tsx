@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import { useCompanyStore } from "@/stores/companyStore";
@@ -11,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
 import { Building, Users, Palette, Mail, User } from "lucide-react";
+import { useTeamActivityStore } from "@/stores/teamActivityStore";
 
 const SettingsPage = () => {
   const { user } = useAuthStore();
@@ -42,7 +42,7 @@ const SettingsPage = () => {
   useEffect(() => {
     fetchCompany();
     fetchEmails();
-  }, [fetchCompany, fetchEmails]);
+  }, []);
 
   // Update form data when store data changes
   useEffect(() => {
@@ -75,6 +75,8 @@ const SettingsPage = () => {
     }
   }, [branding]);
 
+  const { logActivity } = useTeamActivityStore();
+
   const handleProfileUpdate = async () => {
     setIsLoading(true);
     try {
@@ -93,6 +95,12 @@ const SettingsPage = () => {
         toast({
           title: "Success",
           description: "Profile updated successfully",
+        });
+        await logActivity({
+          activityType: "profile_updated",
+          entityType: "user",
+          entityId: user.id,
+          description: `Profile updated: ${profileData.fullName}`,
         });
       }
     } finally {
@@ -121,6 +129,12 @@ const SettingsPage = () => {
           title: "Success",
           description: "Company information updated successfully",
         });
+        await logActivity({
+          activityType: "company_updated",
+          entityType: "company",
+          entityId: company?.id,
+          description: `Company updated: ${companyData.name}`,
+        });
       }
     } finally {
       setIsLoading(false);
@@ -147,6 +161,13 @@ const SettingsPage = () => {
           title: "Success",
           description: "Branding updated successfully",
         });
+        await logActivity({
+          activityType: "branding_updated",
+          entityType: "company",
+          entityId: company?.id,
+          description: "Brand settings updated",
+          metadata: { ...brandingData },
+        });
       }
     } finally {
       setIsLoading(false);
@@ -170,6 +191,12 @@ const SettingsPage = () => {
           description: `Invitation sent to ${inviteData.email}`,
         });
         setInviteData({ email: "", role: "viewer" });
+        await logActivity({
+          activityType: "team_member_invited",
+          entityType: "user",
+          description: `Invited ${inviteData.email} as ${inviteData.role}`,
+          metadata: { invitedEmail: inviteData.email, invitedRole: inviteData.role }
+        });
       }
     } finally {
       setIsLoading(false);
