@@ -42,6 +42,8 @@ class GoogleDriveService {
         throw new Error('Google credentials not found in Supabase secrets. Please add GOOGLE_CLIENT_ID and GOOGLE_API_KEY.');
       }
 
+      console.log('Google credentials retrieved successfully');
+
       // Load Google API script
       await this.loadGoogleApi();
       
@@ -84,6 +86,7 @@ class GoogleDriveService {
           discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
           scope: 'https://www.googleapis.com/auth/drive.readonly'
         }).then(() => {
+          console.log('Google API client initialized successfully');
           resolve();
         }).catch((error: any) => {
           console.error('Failed to initialize Google client:', error);
@@ -107,10 +110,11 @@ class GoogleDriveService {
       if (!isSignedIn) {
         console.log('Starting Google sign-in...');
         const user = await authInstance.signIn();
-        console.log('Google sign-in successful:', user.isSignedIn());
+        console.log('Google sign-in successful');
         return user.isSignedIn();
       }
       
+      console.log('User already signed in to Google');
       return true;
     } catch (error) {
       console.error('Google Drive authentication failed:', error);
@@ -120,11 +124,13 @@ class GoogleDriveService {
 
   async openFilePicker(): Promise<GoogleDriveFile | null> {
     try {
+      console.log('Authenticating with Google Drive...');
       const isAuthenticated = await this.authenticate();
       if (!isAuthenticated) {
         throw new Error('Google Drive authentication failed');
       }
 
+      console.log('Loading Google Picker...');
       // Load picker API
       await new Promise((resolve, reject) => {
         this.gapi.load('picker', () => {
@@ -136,6 +142,7 @@ class GoogleDriveService {
         });
       });
 
+      console.log('Opening Google Drive file picker...');
       return new Promise((resolve) => {
         const authToken = this.gapi.auth2.getAuthInstance().currentUser.get().getAuthResponse().access_token;
         
@@ -147,8 +154,10 @@ class GoogleDriveService {
           .setOAuthToken(authToken)
           .setDeveloperKey(this.apiKey)
           .setCallback((data: any) => {
+            console.log('Picker callback received:', data);
             if (data.action === window.google.picker.Action.PICKED) {
               const file = data.docs[0];
+              console.log('File selected:', file);
               resolve({
                 id: file.id,
                 name: file.name,
@@ -156,7 +165,8 @@ class GoogleDriveService {
                 size: file.sizeBytes,
                 webViewLink: file.url
               });
-            } else {
+            } else if (data.action === window.google.picker.Action.CANCEL) {
+              console.log('File picker cancelled');
               resolve(null);
             }
           })
@@ -166,12 +176,13 @@ class GoogleDriveService {
       });
     } catch (error) {
       console.error('Failed to open Google Drive picker:', error);
-      return null;
+      throw error;
     }
   }
 
   async downloadFile(fileId: string): Promise<Blob | null> {
     try {
+      console.log('Downloading file from Google Drive:', fileId);
       const response = await this.gapi.client.drive.files.get({
         fileId: fileId,
         alt: 'media'
@@ -179,6 +190,7 @@ class GoogleDriveService {
       
       // Convert response to blob
       const blob = new Blob([response.body], { type: 'application/octet-stream' });
+      console.log('File downloaded successfully');
       return blob;
     } catch (error) {
       console.error('Failed to download file from Google Drive:', error);
