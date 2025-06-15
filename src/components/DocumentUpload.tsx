@@ -4,17 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Upload, FileText, X, Sparkles } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import GoogleDrivePicker from "./GoogleDrivePicker";
 
 interface DocumentUploadProps {
   onDocumentUpload: (file: File) => void;
-  onGoogleDriveConnect?: () => void;
   onAIProcess?: (content: string) => void;
   isProcessing?: boolean;
 }
 
 const DocumentUpload = ({ 
   onDocumentUpload, 
-  onGoogleDriveConnect, 
   onAIProcess,
   isProcessing = false 
 }: DocumentUploadProps) => {
@@ -112,14 +111,10 @@ const DocumentUpload = ({
               <Upload className="h-4 w-4 mr-2" />
               Choose File
             </Button>
-            {onGoogleDriveConnect && (
-              <Button type="button" variant="outline" onClick={onGoogleDriveConnect}>
-                <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
-                  <path fill="currentColor" d="M6.28 11L8.85 6.5H15.15L17.72 11M12 13.5L9.43 18H14.57L12 13.5M12 6.5L9.43 11H14.57L12 6.5Z"/>
-                </svg>
-                Google Drive
-              </Button>
-            )}
+            <GoogleDrivePicker 
+              onFileSelected={handleFileUpload}
+              disabled={isProcessing}
+            />
           </div>
           <input
             ref={fileInputRef}

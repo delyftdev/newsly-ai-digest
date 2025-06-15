@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -225,7 +224,6 @@ const ReleaseEditor = () => {
               <CardContent>
                 <DocumentUpload
                   onDocumentUpload={handleDocumentUpload}
-                  onGoogleDriveConnect={handleGoogleDriveConnect}
                   onAIProcess={handleAIProcess}
                   isProcessing={isProcessingDocument}
                 />
