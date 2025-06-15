@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from "@/stores/authStore";
@@ -12,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Progress } from "@/components/ui/progress";
 
 const OnboardingPage = () => {
+  const navigate = useNavigate(); // <-- FIXED: define navigate here
   const { user } = useAuthStore();
   const { company, fetchCompany, updateCompany } = useCompanyStore();
   const { emails, fetchEmails, autoGenerateEmailOnOnboarding } = useInboxStore();
