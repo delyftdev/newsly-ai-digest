@@ -16,9 +16,12 @@ const GoogleDrivePicker = ({ onFileSelected, disabled = false }: GoogleDrivePick
     setIsLoading(true);
     
     try {
+      console.log('Starting Google Drive file selection...');
       const selectedFile = await googleDriveService.openFilePicker();
       
       if (selectedFile) {
+        console.log('File selected from Google Drive:', selectedFile.name);
+        
         // Download the file content
         const blob = await googleDriveService.downloadFile(selectedFile.id);
         
@@ -35,14 +38,25 @@ const GoogleDrivePicker = ({ onFileSelected, disabled = false }: GoogleDrivePick
             description: `${selectedFile.name} has been imported successfully.`,
           });
         } else {
-          throw new Error('Failed to download file');
+          throw new Error('Failed to download file content');
         }
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Google Drive integration error:', error);
+      
+      let errorMessage = "Failed to import file from Google Drive. Please try again.";
+      
+      if (error.message?.includes('credentials not configured')) {
+        errorMessage = "Google Drive is not configured. Please contact support to set up Google Drive integration.";
+      } else if (error.message?.includes('popup_blocked_by_browser')) {
+        errorMessage = "Popup was blocked. Please allow popups for this site and try again.";
+      } else if (error.message?.includes('User not authenticated')) {
+        errorMessage = "Please sign in to use Google Drive integration.";
+      }
+      
       toast({
         title: "Google Drive Error",
-        description: "Failed to import file from Google Drive. Please try again or contact support.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
