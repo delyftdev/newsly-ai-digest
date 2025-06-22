@@ -1,10 +1,10 @@
-
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Mail, FileText, Users, Zap, ArrowRight, Star, Globe, Target, MessageSquare, BookOpen, TrendingUp, Clock, BarChart3, Lightbulb, AlertCircle, Rocket, Brain, Bot, Workflow, Settings, Send, Menu, X } from "lucide-react";
 import WaitlistForm from "@/components/WaitlistForm";
+import DelyftLogo from "@/components/DelyftLogo";
 import { useState } from "react";
 
 const Index = () => {
@@ -25,13 +25,7 @@ const Index = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
-                <div className="w-8 h-8 rounded-lg flex items-center justify-center">
-                  <img 
-                    src="/lovable-uploads/d58d60de-7962-401c-bec7-3cc8e0001892.png" 
-                    alt="Delyft Logo" 
-                    className="w-8 h-8 brightness-0 invert"
-                  />
-                </div>
+                <DelyftLogo size={32} className="text-white" />
                 <span className="ml-3 text-xl font-bold text-white">Delyft</span>
               </div>
             </div>
@@ -287,13 +281,7 @@ const Index = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <div className="w-6 h-6 rounded-lg flex items-center justify-center">
-                <img 
-                  src="/lovable-uploads/d58d60de-7962-401c-bec7-3cc8e0001892.png" 
-                  alt="Delyft Logo" 
-                  className="w-6 h-6 brightness-0 invert"
-                />
-              </div>
+              <DelyftLogo size={24} className="text-white" />
               <span className="ml-3 text-lg font-bold text-white">Delyft</span>
             </div>
             <p className="text-muted-foreground text-sm">

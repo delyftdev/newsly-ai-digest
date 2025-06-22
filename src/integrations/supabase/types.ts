@@ -485,6 +485,7 @@ export type Database = {
           confirmed: boolean | null
           email: string
           id: string
+          metadata: Json | null
           subscribed_at: string | null
         }
         Insert: {
@@ -492,6 +493,7 @@ export type Database = {
           confirmed?: boolean | null
           email: string
           id?: string
+          metadata?: Json | null
           subscribed_at?: string | null
         }
         Update: {
@@ -499,6 +501,7 @@ export type Database = {
           confirmed?: boolean | null
           email?: string
           id?: string
+          metadata?: Json | null
           subscribed_at?: string | null
         }
         Relationships: [
