@@ -4,7 +4,7 @@ import { Users } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 
 const SocialProofCounter = () => {
-  const [subscriberCount, setSubscriberCount] = useState(1247); // Starting with a higher number for social proof
+  const [subscriberCount, setSubscriberCount] = useState(30); // Starting with 30 for realistic social proof
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -15,8 +15,8 @@ const SocialProofCounter = () => {
           .select('*', { count: 'exact', head: true });
         
         if (count !== null) {
-          // Add some base number for social proof
-          setSubscriberCount(Math.max(count + 1200, 1247));
+          // Add base number for social proof (starting at 30)
+          setSubscriberCount(Math.max(count + 30, 30));
         }
       } catch (error) {
         console.error('Error fetching subscriber count:', error);
@@ -50,14 +50,26 @@ const SocialProofCounter = () => {
 
   const generateAvatars = () => {
     const avatars = [];
+    const avatarImages = [
+      'https://images.unsplash.com/photo-1649972904349-6e44c42644a7?w=64&h=64&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=64&h=64&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=64&h=64&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=face',
+      'https://images.unsplash.com/photo-1494790108755-2616b332c1ad?w=64&h=64&fit=crop&crop=face'
+    ];
+
     for (let i = 0; i < 5; i++) {
       avatars.push(
         <div
           key={i}
-          className="w-8 h-8 rounded-full bg-gradient-to-br from-primary/80 to-cyan-400/80 border-2 border-white flex items-center justify-center text-white text-xs font-semibold"
+          className="w-8 h-8 rounded-full border-2 border-white overflow-hidden"
           style={{ marginLeft: i > 0 ? '-8px' : '0' }}
         >
-          {String.fromCharCode(65 + i)}
+          <img
+            src={avatarImages[i]}
+            alt={`User ${i + 1}`}
+            className="w-full h-full object-cover"
+          />
         </div>
       );
     }

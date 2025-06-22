@@ -100,7 +100,7 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
           }
         ]);
 
-      // If referred by someone, update their credits
+      // If referred by someone, update their credits - ENSURE 10 CREDITS ARE AWARDED
       if (referredBy) {
         const { data: referrerData } = await supabase
           .from('referrals')
@@ -112,7 +112,7 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
           await supabase
             .from('referrals')
             .update({
-              total_credits: referrerData.total_credits + 10,
+              total_credits: referrerData.total_credits + 10, // Explicitly award 10 credits
               total_referrals: referrerData.total_referrals + 1,
               updated_at: new Date().toISOString()
             })

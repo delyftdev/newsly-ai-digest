@@ -21,7 +21,7 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-white/[0.08] backdrop-blur-xl bg-background/80 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center">
             <div className="flex items-center space-x-3">
               <img 
                 src="/lovable-uploads/842d1d9c-3d9f-4b78-83b6-f4b58c1e6a89.png" 
@@ -33,9 +33,6 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">AI GTM Squad</p>
               </div>
             </div>
-            <Button variant="ghost" className="text-white hover:bg-white/10">
-              Login
-            </Button>
           </div>
         </div>
       </header>
@@ -51,15 +48,15 @@ const Index = () => {
           <SocialProofCounter />
           
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight">
-            The AI Copilot That Helps{" "}
+            Deploy Your AI GTM Squad:{" "}
             <span className="bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">
-              GTM Teams
+              4 Specialized Agents
             </span>{" "}
-            Become 10X Faster
+            That Launch Features 10X Faster
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-            From Planning to Personalized Comms. Cut campaign time from weeks to hours with AI agents that understand your product, market, and customers.
+            Content, publishing, personalization and feedback automation - working in sync while you sleep
           </p>
 
           <WaitlistForm onSuccess={handleWaitlistSuccess} />
@@ -86,10 +83,10 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              AI Agents that turn product specs into personalized comms, enablement & analytics
+              4 Specialized Agents Working in Perfect Sync
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              One workflow. Multiple specialized agents. Infinite possibilities.
+              Each agent handles a specific part of your GTM workflow, seamlessly passing work to the next.
             </p>
           </div>
 
@@ -97,23 +94,23 @@ const Index = () => {
             {[
               {
                 icon: Bot,
-                title: "PMM Agent",
-                description: "Transforms product specs into compelling messaging, positioning, and launch materials"
+                title: "Content Agent",
+                description: "From spec to polished changelog in 90 seconds"
               },
               {
                 icon: Target,
-                title: "Personalization Agent", 
-                description: "Creates tailored content for different personas, segments, and channels automatically"
+                title: "Publish Agent", 
+                description: "Customer-branded widgets that deploy with 1 click"
               },
               {
                 icon: Zap,
-                title: "Enablement Agent",
-                description: "Generates sales materials, training content, and competitive battlecards from your docs"
+                title: "Outreach Agent",
+                description: "CRM-powered emails drafted before your coffee brews"
               },
               {
                 icon: TrendingUp,
-                title: "Analytics Agent",
-                description: "Tracks campaign performance and provides insights for optimization"
+                title: "Feedback Agent",
+                description: "Automated Jira tickets with customer notifications built-in"
               }
             ].map((feature, index) => (
               <div key={index} className="glass-card p-6 border-white/[0.08] hover:border-primary/30 transition-all duration-300 group">
