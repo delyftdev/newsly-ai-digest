@@ -30,6 +30,12 @@ const ReferralSystem = ({ email, onReferralGenerated }: ReferralSystemProps) => 
       
       setReferralCode(code);
       
+      // Create referral record immediately when code is generated
+      if (!email) {
+        // Pre-create the referral record even without email
+        await createReferralRecord('', code);
+      }
+      
       if (email) {
         await fetchOrCreateReferralData(email, code);
       }
@@ -47,12 +53,37 @@ const ReferralSystem = ({ email, onReferralGenerated }: ReferralSystemProps) => 
     return result;
   };
 
+  const createReferralRecord = async (userEmail: string, code: string) => {
+    try {
+      console.log('Creating referral record for code:', code);
+      const { error } = await supabase
+        .from('referrals')
+        .upsert([{
+          referral_code: code,
+          referrer_email: userEmail || 'pending@temp.com',
+          total_credits: 0,
+          total_referrals: 0
+        }]);
+
+      if (error && error.code !== '23505') { // Ignore duplicate key errors
+        console.error('Error creating referral record:', error);
+      } else {
+        console.log('Successfully created referral record');
+      }
+    } catch (error) {
+      console.error('Error in createReferralRecord:', error);
+    }
+  };
+
   const fetchOrCreateReferralData = async (userEmail: string, code: string) => {
     try {
+      console.log('Fetching referral data for:', userEmail, code);
+      
+      // Try to find existing referral by email or code
       const { data, error } = await supabase
         .from('referrals')
         .select('*')
-        .eq('referrer_email', userEmail)
+        .or(`referrer_email.eq.${userEmail},referral_code.eq.${code}`)
         .single();
 
       if (error && error.code === 'PGRST116') {
@@ -69,11 +100,23 @@ const ReferralSystem = ({ email, onReferralGenerated }: ReferralSystemProps) => 
         if (!insertError) {
           setCredits(0);
           setTotalReferrals(0);
+          console.log('Created new referral record');
+        } else {
+          console.error('Error creating referral record:', insertError);
         }
       } else if (data) {
+        // Update existing record with email if it was pending
+        if (data.referrer_email === 'pending@temp.com') {
+          await supabase
+            .from('referrals')
+            .update({ referrer_email: userEmail })
+            .eq('referral_code', code);
+        }
+        
         setCredits(data.total_credits);
         setTotalReferrals(data.total_referrals);
         setReferralCode(data.referral_code);
+        console.log('Found existing referral data:', data);
       }
     } catch (error) {
       console.error('Error handling referral data:', error);

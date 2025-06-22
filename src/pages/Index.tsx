@@ -16,6 +16,13 @@ const Index = () => {
     setSubmittedReferralCode(referralCode);
   };
 
+  const scrollToForm = () => {
+    const formElement = document.querySelector('#waitlist-form');
+    if (formElement) {
+      formElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
       {/* Header */}
@@ -23,11 +30,6 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center">
             <div className="flex items-center space-x-3">
-              <img 
-                src="/lovable-uploads/842d1d9c-3d9f-4b78-83b6-f4b58c1e6a89.png" 
-                alt="Delyft Logo" 
-                className="h-8 w-8 object-contain"
-              />
               <div>
                 <h1 className="text-xl font-bold text-white">Delyft</h1>
                 <p className="text-xs text-muted-foreground">AI GTM Squad</p>
@@ -59,7 +61,9 @@ const Index = () => {
             Content, publishing, personalization and feedback automation - working in sync while you sleep
           </p>
 
-          <WaitlistForm onSuccess={handleWaitlistSuccess} />
+          <div id="waitlist-form">
+            <WaitlistForm onSuccess={handleWaitlistSuccess} />
+          </div>
 
           <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center space-x-2">
@@ -145,7 +149,11 @@ const Index = () => {
               Join thousands of GTM professionals building their AI squad. Get early access, exclusive rewards, and start earning credits today.
             </p>
             {!submittedEmail && (
-              <Button size="lg" className="button-glow bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90 border-0">
+              <Button 
+                size="lg" 
+                className="button-glow bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90 border-0"
+                onClick={scrollToForm}
+              >
                 <span className="mr-2">Join the Waitlist</span>
                 <ArrowRight className="h-5 w-5" />
               </Button>
@@ -159,11 +167,6 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <img 
-                src="/lovable-uploads/842d1d9c-3d9f-4b78-83b6-f4b58c1e6a89.png" 
-                alt="Delyft Logo" 
-                className="h-6 w-6 object-contain"
-              />
               <div>
                 <span className="text-white font-semibold">Delyft</span>
                 <p className="text-xs text-muted-foreground">AI GTM Squad</p>

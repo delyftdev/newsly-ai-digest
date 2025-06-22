@@ -26,6 +26,7 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
     const refCode = urlParams.get('ref');
     if (refCode) {
       setReferredBy(refCode);
+      console.log('Referral code detected from URL:', refCode);
     }
 
     // Get or generate user's own referral code
@@ -61,6 +62,29 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
     setIsLoading(true);
 
     try {
+      console.log('Starting waitlist signup process...');
+      console.log('Email:', email);
+      console.log('User referral code:', userReferralCode);
+      console.log('Referred by:', referredBy);
+
+      // Create referral record for the new user FIRST
+      const { error: newUserReferralError } = await supabase
+        .from('referrals')
+        .upsert([
+          {
+            referral_code: userReferralCode,
+            referrer_email: email.toLowerCase().trim(),
+            total_credits: 0,
+            total_referrals: 0
+          }
+        ]);
+
+      if (newUserReferralError) {
+        console.error('Failed to create referral record for new user:', newUserReferralError);
+      } else {
+        console.log('Successfully created referral record for new user');
+      }
+
       // Insert subscriber with referral tracking
       const { error: subscriberError } = await supabase
         .from('subscribers')
@@ -88,35 +112,43 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
         }
       }
 
-      // Create or update referral record for the new user
-      await supabase
-        .from('referrals')
-        .upsert([
-          {
-            referral_code: userReferralCode,
-            referrer_email: email.toLowerCase().trim(),
-            total_credits: 0,
-            total_referrals: 0
-          }
-        ]);
+      console.log('Successfully added subscriber to waitlist');
 
-      // If referred by someone, update their credits - ENSURE 10 CREDITS ARE AWARDED
+      // If referred by someone, award them credits
       if (referredBy) {
-        const { data: referrerData } = await supabase
+        console.log('Processing referral credit for:', referredBy);
+        
+        // First check if the referrer exists
+        const { data: referrerData, error: referrerCheckError } = await supabase
           .from('referrals')
           .select('*')
           .eq('referral_code', referredBy)
           .single();
 
-        if (referrerData) {
-          await supabase
+        if (referrerCheckError) {
+          console.error('Referrer not found or error checking referrer:', referrerCheckError);
+          toast({
+            title: "Invalid referral code",
+            description: "The referral code you used is not valid, but you've still been added to the waitlist!",
+          });
+        } else if (referrerData) {
+          console.log('Found referrer:', referrerData);
+          
+          // Award 10 credits to the referrer
+          const { error: creditError } = await supabase
             .from('referrals')
             .update({
-              total_credits: referrerData.total_credits + 10, // Explicitly award 10 credits
+              total_credits: referrerData.total_credits + 10,
               total_referrals: referrerData.total_referrals + 1,
               updated_at: new Date().toISOString()
             })
             .eq('referral_code', referredBy);
+
+          if (creditError) {
+            console.error('Failed to award credits to referrer:', creditError);
+          } else {
+            console.log('Successfully awarded 10 credits to referrer');
+          }
         }
       }
 
