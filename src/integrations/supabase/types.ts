@@ -390,6 +390,36 @@ export type Database = {
           },
         ]
       }
+      referrals: {
+        Row: {
+          created_at: string | null
+          id: string
+          referral_code: string
+          referrer_email: string
+          total_credits: number | null
+          total_referrals: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          referral_code: string
+          referrer_email: string
+          total_credits?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          referral_code?: string
+          referrer_email?: string
+          total_credits?: number | null
+          total_referrals?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       releases: {
         Row: {
           ai_generated: boolean | null
@@ -486,6 +516,8 @@ export type Database = {
           email: string
           id: string
           metadata: Json | null
+          referral_code: string | null
+          referred_by: string | null
           subscribed_at: string | null
         }
         Insert: {
@@ -494,6 +526,8 @@ export type Database = {
           email: string
           id?: string
           metadata?: Json | null
+          referral_code?: string | null
+          referred_by?: string | null
           subscribed_at?: string | null
         }
         Update: {
@@ -502,6 +536,8 @@ export type Database = {
           email?: string
           id?: string
           metadata?: Json | null
+          referral_code?: string | null
+          referred_by?: string | null
           subscribed_at?: string | null
         }
         Relationships: [

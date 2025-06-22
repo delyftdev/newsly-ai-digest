@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -18,7 +19,6 @@ import { useAuthStore } from "@/stores/authStore";
 import { useCompanyStore } from "@/stores/companyStore";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
-import DelyftLogo from "@/components/DelyftLogo";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -64,7 +64,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
           <div className="flex items-center justify-between">
             {!sidebarCollapsed && (
               <div className="flex items-center">
-                <DelyftLogo size={32} className="text-gray-900 mr-3" />
+                <img 
+                  src="/lovable-uploads/842d1d9c-3d9f-4b78-83b6-f4b58c1e6a89.png" 
+                  alt="Delyft Logo" 
+                  className="h-8 w-8 object-contain mr-3"
+                />
                 <div>
                   <h1 className="text-lg font-bold text-gray-900">Delyft</h1>
                   <p className="text-sm text-gray-600">AI GTM Squad</p>
@@ -72,7 +76,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               </div>
             )}
             {sidebarCollapsed && (
-              <DelyftLogo size={32} className="text-gray-900" />
+              <img 
+                src="/lovable-uploads/842d1d9c-3d9f-4b78-83b6-f4b58c1e6a89.png" 
+                alt="Delyft Logo" 
+                className="h-8 w-8 object-contain"
+              />
             )}
             <Button
               variant="ghost"
