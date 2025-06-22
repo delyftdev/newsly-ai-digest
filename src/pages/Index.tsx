@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle, Mail, FileText, Users, Zap, ArrowRight, Star, Globe } from "lucide-react";
+import WaitlistForm from "@/components/WaitlistForm";
 
 const Index = () => {
   return (
@@ -18,17 +19,11 @@ const Index = () => {
                 <span className="ml-2 text-xl font-bold text-gray-900">Release Hub</span>
               </div>
             </div>
+            {/* Authentication buttons hidden for waitlist mode */}
             <div className="flex items-center space-x-4">
-              <Link to="/auth">
-                <Button variant="ghost" className="text-gray-600 hover:text-gray-900">
-                  Sign In
-                </Button>
-              </Link>
-              <Link to="/auth">
-                <Button className="bg-blue-600 hover:bg-blue-700">
-                  Get Started
-                </Button>
-              </Link>
+              <Badge variant="secondary" className="bg-blue-100 text-blue-800">
+                Coming Soon
+              </Badge>
             </div>
           </div>
         </div>
@@ -48,20 +43,13 @@ const Index = () => {
                   Transform your newsletter emails and product updates into professional release notes and changelogs. Automate your communication workflow with AI-powered organization.
                 </p>
                 <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
-                  <div className="rounded-md shadow">
-                    <Link to="/auth">
-                      <Button size="lg" className="w-full bg-blue-600 hover:bg-blue-700">
-                        Start Organizing Now
-                        <ArrowRight className="ml-2 h-4 w-4" />
-                      </Button>
-                    </Link>
-                  </div>
-                  <div className="mt-3 sm:mt-0 sm:ml-3">
-                    <Button variant="outline" size="lg" className="w-full">
-                      Watch Demo
-                    </Button>
+                  <div className="w-full sm:max-w-md">
+                    <WaitlistForm />
                   </div>
                 </div>
+                <p className="mt-3 text-sm text-gray-500 sm:text-center lg:text-left">
+                  Be the first to know when we launch. No spam, ever.
+                </p>
               </div>
             </main>
           </div>
@@ -202,16 +190,11 @@ const Index = () => {
         <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
           <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
             <span className="block">Ready to get organized?</span>
-            <span className="block text-blue-200">Start your free trial today.</span>
+            <span className="block text-blue-200">Join our waitlist today.</span>
           </h2>
           <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
             <div className="inline-flex rounded-md shadow">
-              <Link to="/auth">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
-                  Get Started
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+              <WaitlistForm />
             </div>
           </div>
         </div>
