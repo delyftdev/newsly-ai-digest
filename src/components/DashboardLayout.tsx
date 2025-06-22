@@ -63,11 +63,27 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         <div className="p-4 border-b border-gray-200">
           <div className="flex items-center justify-between">
             {!sidebarCollapsed && (
-              <div>
-                <h1 className="text-lg font-bold text-gray-900">
-                  {company?.name || 'Release Hub'}
-                </h1>
-                <p className="text-sm text-gray-600">Release Management</p>
+              <div className="flex items-center">
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center mr-3">
+                  <img 
+                    src="/lovable-uploads/d58d60de-7962-401c-bec7-3cc8e0001892.png" 
+                    alt="Delyft Logo" 
+                    className="w-8 h-8"
+                  />
+                </div>
+                <div>
+                  <h1 className="text-lg font-bold text-gray-900">Delyft</h1>
+                  <p className="text-sm text-gray-600">AI GTM Squad</p>
+                </div>
+              </div>
+            )}
+            {sidebarCollapsed && (
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                <img 
+                  src="/lovable-uploads/d58d60de-7962-401c-bec7-3cc8e0001892.png" 
+                  alt="Delyft Logo" 
+                  className="w-8 h-8"
+                />
               </div>
             )}
             <Button

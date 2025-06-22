@@ -25,10 +25,14 @@ const Index = () => {
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
-                <div className="w-8 h-8 bg-gradient-to-br from-primary to-cyan-400 rounded-lg flex items-center justify-center">
-                  <Rocket className="h-5 w-5 text-white" />
+                <div className="w-8 h-8 rounded-lg flex items-center justify-center">
+                  <img 
+                    src="/lovable-uploads/d58d60de-7962-401c-bec7-3cc8e0001892.png" 
+                    alt="Delyft Logo" 
+                    className="w-8 h-8 brightness-0 invert"
+                  />
                 </div>
-                <span className="ml-3 text-xl font-bold gradient-text">Delyft</span>
+                <span className="ml-3 text-xl font-bold text-white">Delyft</span>
               </div>
             </div>
             
@@ -283,10 +287,14 @@ const Index = () => {
         <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <div className="w-6 h-6 bg-gradient-to-br from-primary to-cyan-400 rounded-lg flex items-center justify-center">
-                <Rocket className="h-4 w-4 text-white" />
+              <div className="w-6 h-6 rounded-lg flex items-center justify-center">
+                <img 
+                  src="/lovable-uploads/d58d60de-7962-401c-bec7-3cc8e0001892.png" 
+                  alt="Delyft Logo" 
+                  className="w-6 h-6 brightness-0 invert"
+                />
               </div>
-              <span className="ml-3 text-lg font-bold gradient-text">Delyft</span>
+              <span className="ml-3 text-lg font-bold text-white">Delyft</span>
             </div>
             <p className="text-muted-foreground text-sm">
               © 2024 Delyft. All rights reserved.
