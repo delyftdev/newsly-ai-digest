@@ -19,30 +19,29 @@ const ReferralSystem = ({ email, onReferralGenerated }: ReferralSystemProps) => 
   const { toast } = useToast();
 
   useEffect(() => {
-    const initializeReferral = async () => {
-      let code = localStorage.getItem('delyft_referral_code');
-      
-      if (!code) {
-        // Generate new referral code
-        code = generateReferralCode();
-        localStorage.setItem('delyft_referral_code', code);
-      }
-      
-      setReferralCode(code);
-      
-      // Create referral record immediately when code is generated
-      if (!email) {
-        // Pre-create the referral record even without email
-        await createReferralRecord('', code);
-      }
-      
-      if (email) {
-        await fetchOrCreateReferralData(email, code);
-      }
-    };
-
-    initializeReferral();
+    // Only initialize referral system if user has joined waitlist (has email)
+    if (email) {
+      initializeReferral();
+    }
   }, [email]);
+
+  const initializeReferral = async () => {
+    if (!email) return;
+
+    let code = localStorage.getItem('delyft_referral_code');
+    
+    if (!code) {
+      // Generate new referral code
+      code = generateReferralCode();
+      localStorage.setItem('delyft_referral_code', code);
+    }
+    
+    setReferralCode(code);
+    onReferralGenerated?.(code);
+    
+    // Fetch or create referral data for the user
+    await fetchOrCreateReferralData(email, code);
+  };
 
   const generateReferralCode = () => {
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -51,28 +50,6 @@ const ReferralSystem = ({ email, onReferralGenerated }: ReferralSystemProps) => 
       result += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     return result;
-  };
-
-  const createReferralRecord = async (userEmail: string, code: string) => {
-    try {
-      console.log('Creating referral record for code:', code);
-      const { error } = await supabase
-        .from('referrals')
-        .upsert([{
-          referral_code: code,
-          referrer_email: userEmail || 'pending@temp.com',
-          total_credits: 0,
-          total_referrals: 0
-        }]);
-
-      if (error && error.code !== '23505') { // Ignore duplicate key errors
-        console.error('Error creating referral record:', error);
-      } else {
-        console.log('Successfully created referral record');
-      }
-    } catch (error) {
-      console.error('Error in createReferralRecord:', error);
-    }
   };
 
   const fetchOrCreateReferralData = async (userEmail: string, code: string) => {
@@ -157,40 +134,65 @@ const ReferralSystem = ({ email, onReferralGenerated }: ReferralSystemProps) => 
     window.open(urls[platform as keyof typeof urls], '_blank', 'width=600,height=400');
   };
 
-  if (!referralCode) return null;
+  // Don't show referral system if user hasn't joined waitlist
+  if (!email || !referralCode) {
+    return (
+      <section className="py-16 px-4">
+        <div className="max-w-4xl mx-auto text-center">
+          <div className="glass-card p-8 border-primary/20">
+            <h2 className="text-2xl md:text-3xl font-bold text-white mb-4">
+              Share & Earn Credits
+            </h2>
+            <p className="text-muted-foreground mb-6">
+              Join the waitlist first to get your unique referral code and start earning credits!
+            </p>
+            <Button 
+              onClick={() => {
+                const formElement = document.querySelector('#waitlist-form');
+                if (formElement) {
+                  formElement.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
+              className="bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90"
+            >
+              Join Waitlist to Get Your Code
+            </Button>
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <section className="py-16 px-4">
       <div className="max-w-4xl mx-auto">
         <div className="text-center mb-8">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-            Tell Your Friends & Earn Credits
+            🎉 Welcome to Your AI Squad!
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-6">
             Share your referral link and earn 10 credits for each friend who joins. 
             Credits = future savings on your Delyft subscription!
           </p>
         </div>
 
         {/* Stats Display */}
-        {email && (
-          <div className="flex justify-center space-x-8 mb-8">
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-2 mb-2">
-                <Coins className="h-5 w-5 text-yellow-400" />
-                <span className="text-2xl font-bold text-white">{credits}</span>
-              </div>
-              <p className="text-sm text-muted-foreground">Credits Earned</p>
+        <div className="flex justify-center space-x-8 mb-8">
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <Coins className="h-5 w-5 text-yellow-400" />
+              <span className="text-2xl font-bold text-white">{credits}</span>
             </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center space-x-2 mb-2">
-                <Share2 className="h-5 w-5 text-primary" />
-                <span className="text-2xl font-bold text-white">{totalReferrals}</span>
-              </div>
-              <p className="text-sm text-muted-foreground">Friends Referred</p>
-            </div>
+            <p className="text-sm text-muted-foreground">Credits Earned</p>
           </div>
-        )}
+          <div className="text-center">
+            <div className="flex items-center justify-center space-x-2 mb-2">
+              <Share2 className="h-5 w-5 text-primary" />
+              <span className="text-2xl font-bold text-white">{totalReferrals}</span>
+            </div>
+            <p className="text-sm text-muted-foreground">Friends Referred</p>
+          </div>
+        </div>
 
         <div className="glass-card p-8 border-primary/20 max-w-2xl mx-auto">
           {/* Referral Link */}
@@ -252,14 +254,6 @@ const ReferralSystem = ({ email, onReferralGenerated }: ReferralSystemProps) => 
               </Button>
             </div>
           </div>
-
-          {!email && (
-            <div className="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-lg">
-              <p className="text-sm text-center text-primary">
-                💡 Join the waitlist to track your referrals and credits!
-              </p>
-            </div>
-          )}
         </div>
       </div>
     </section>

@@ -6,14 +6,30 @@ import WaitlistForm from "@/components/WaitlistForm";
 import SocialProofCounter from "@/components/SocialProofCounter";
 import WhyJoinWaitlist from "@/components/WhyJoinWaitlist";
 import ReferralSystem from "@/components/ReferralSystem";
+import Leaderboard from "@/components/Leaderboard";
 
 const Index = () => {
   const [submittedEmail, setSubmittedEmail] = useState<string>('');
   const [submittedReferralCode, setSubmittedReferralCode] = useState<string>('');
+  const [showConfetti, setShowConfetti] = useState(false);
 
   const handleWaitlistSuccess = (email: string, referralCode: string) => {
     setSubmittedEmail(email);
     setSubmittedReferralCode(referralCode);
+    setShowConfetti(true);
+    
+    // Hide confetti after 3 seconds
+    setTimeout(() => {
+      setShowConfetti(false);
+    }, 3000);
+
+    // Scroll to referral section
+    setTimeout(() => {
+      const referralElement = document.querySelector('#referral-section');
+      if (referralElement) {
+        referralElement.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 500);
   };
 
   const scrollToForm = () => {
@@ -32,12 +48,33 @@ const Index = () => {
             <div className="flex items-center space-x-3">
               <div>
                 <h1 className="text-xl font-bold text-white">Delyft</h1>
-                <p className="text-xs text-muted-foreground">AI GTM Squad</p>
               </div>
             </div>
           </div>
         </div>
       </header>
+
+      {/* Confetti Effect */}
+      {showConfetti && (
+        <div className="fixed inset-0 pointer-events-none z-50">
+          <div className="confetti-animation">
+            {[...Array(50)].map((_, i) => (
+              <div
+                key={i}
+                className="confetti-piece"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  animationDelay: `${Math.random() * 3}s`,
+                  backgroundColor: `hsl(${Math.random() * 360}, 70%, 60%)`
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Leaderboard Section */}
+      <Leaderboard />
 
       {/* Hero Section */}
       <section className="relative py-20 px-4 overflow-hidden">
@@ -133,10 +170,12 @@ const Index = () => {
       <WhyJoinWaitlist />
 
       {/* Referral System */}
-      <ReferralSystem 
-        email={submittedEmail} 
-        onReferralGenerated={(code) => setSubmittedReferralCode(code)}
-      />
+      <div id="referral-section">
+        <ReferralSystem 
+          email={submittedEmail} 
+          onReferralGenerated={(code) => setSubmittedReferralCode(code)}
+        />
+      </div>
 
       {/* CTA Section */}
       <section className="py-20 px-4">
@@ -169,7 +208,6 @@ const Index = () => {
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
               <div>
                 <span className="text-white font-semibold">Delyft</span>
-                <p className="text-xs text-muted-foreground">AI GTM Squad</p>
               </div>
             </div>
             <div className="text-center md:text-right">
@@ -183,6 +221,32 @@ const Index = () => {
           </div>
         </div>
       </footer>
+
+      <style jsx>{`
+        .confetti-animation {
+          position: relative;
+          width: 100%;
+          height: 100%;
+        }
+        
+        .confetti-piece {
+          position: absolute;
+          width: 10px;
+          height: 10px;
+          animation: confetti-fall 3s linear forwards;
+        }
+        
+        @keyframes confetti-fall {
+          0% {
+            transform: translateY(-100vh) rotate(0deg);
+            opacity: 1;
+          }
+          100% {
+            transform: translateY(100vh) rotate(720deg);
+            opacity: 0;
+          }
+        }
+      `}</style>
     </div>
   );
 };

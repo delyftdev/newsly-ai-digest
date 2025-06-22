@@ -28,14 +28,6 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
       setReferredBy(refCode);
       console.log('Referral code detected from URL:', refCode);
     }
-
-    // Get or generate user's own referral code
-    let code = localStorage.getItem('delyft_referral_code');
-    if (!code) {
-      code = generateReferralCode();
-      localStorage.setItem('delyft_referral_code', code);
-    }
-    setUserReferralCode(code);
   }, []);
 
   const generateReferralCode = () => {
@@ -64,26 +56,11 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
     try {
       console.log('Starting waitlist signup process...');
       console.log('Email:', email);
-      console.log('User referral code:', userReferralCode);
       console.log('Referred by:', referredBy);
 
-      // Create referral record for the new user FIRST
-      const { error: newUserReferralError } = await supabase
-        .from('referrals')
-        .upsert([
-          {
-            referral_code: userReferralCode,
-            referrer_email: email.toLowerCase().trim(),
-            total_credits: 0,
-            total_referrals: 0
-          }
-        ]);
-
-      if (newUserReferralError) {
-        console.error('Failed to create referral record for new user:', newUserReferralError);
-      } else {
-        console.log('Successfully created referral record for new user');
-      }
+      // Generate referral code only after successful signup
+      const newUserReferralCode = generateReferralCode();
+      console.log('Generated referral code:', newUserReferralCode);
 
       // Insert subscriber with referral tracking
       const { error: subscriberError } = await supabase
@@ -94,7 +71,7 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
             company_id: null,
             confirmed: false,
             metadata: role ? { role } : null,
-            referral_code: userReferralCode,
+            referral_code: newUserReferralCode,
             referred_by: referredBy,
           }
         ]);
@@ -102,7 +79,7 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
       if (subscriberError) {
         if (subscriberError.code === '23505') {
           toast({
-            title: "Already in the squad!",
+            title: "Already in the squa d!",
             description: "You're already on our waitlist. We'll notify you when your AI agents are ready!",
           });
           setIsSubmitted(true);
@@ -113,6 +90,27 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
       }
 
       console.log('Successfully added subscriber to waitlist');
+
+      // Create referral record for the new user AFTER successful signup
+      const { error: newUserReferralError } = await supabase
+        .from('referrals')
+        .upsert([
+          {
+            referral_code: newUserReferralCode,
+            referrer_email: email.toLowerCase().trim(),
+            total_credits: 0,
+            total_referrals: 0
+          }
+        ]);
+
+      if (newUserReferralError) {
+        console.error('Failed to create referral record for new user:', newUserReferralError);
+      } else {
+        console.log('Successfully created referral record for new user');
+        // Store the referral code in localStorage
+        localStorage.setItem('delyft_referral_code', newUserReferralCode);
+        setUserReferralCode(newUserReferralCode);
+      }
 
       // If referred by someone, award them credits
       if (referredBy) {
@@ -160,7 +158,7 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
           : "We'll be in touch soon with early access to your specialized agents.",
       });
 
-      onSuccess?.(email, userReferralCode);
+      onSuccess?.(email, newUserReferralCode);
 
     } catch (error) {
       console.error('Waitlist signup error:', error);
@@ -193,8 +191,8 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
               </div>
             </div>
           )}
-          <p className="text-sm text-muted-foreground">
-            Don't forget to share your referral link with friends to earn credits!
+          <p className="text-sm text-primary font-medium">
+            🎉 Your referral code is ready! Scroll down to start sharing and earning credits.
           </p>
         </div>
       </div>
