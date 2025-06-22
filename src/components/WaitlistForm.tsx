@@ -43,8 +43,8 @@ const WaitlistForm = () => {
       if (error) {
         if (error.code === '23505') {
           toast({
-            title: "Already subscribed!",
-            description: "You're already on our waitlist. We'll notify you when we launch!",
+            title: "Already in the squad!",
+            description: "You're already on our waitlist. We'll notify you when your AI agents are ready!",
           });
         } else {
           throw error;
@@ -52,8 +52,8 @@ const WaitlistForm = () => {
       } else {
         setIsSubmitted(true);
         toast({
-          title: "Welcome to the private beta!",
-          description: "We'll be in touch soon with early access details.",
+          title: "Welcome to your AI GTM squad!",
+          description: "We'll be in touch soon with early access to your specialized agents.",
         });
       }
     } catch (error) {
@@ -72,9 +72,9 @@ const WaitlistForm = () => {
     return (
       <div className="flex flex-col items-center justify-center p-8 bg-green-50 rounded-lg border border-green-200">
         <CheckCircle className="h-12 w-12 text-green-600 mb-4" />
-        <h3 className="text-lg font-semibold text-green-800 mb-2">You're in the private beta!</h3>
+        <h3 className="text-lg font-semibold text-green-800 mb-2">Your AI squad is assembling!</h3>
         <p className="text-green-700 text-center">
-          We'll send you early access details and use cases for your role soon.
+          We'll send you early access details and agent use cases for your role soon.
         </p>
       </div>
     );
@@ -101,6 +101,7 @@ const WaitlistForm = () => {
             <SelectItem value="csm">Customer Success Manager</SelectItem>
             <SelectItem value="content">Content Creator</SelectItem>
             <SelectItem value="pm">Product Manager</SelectItem>
+            <SelectItem value="product-ops">Product Operations</SelectItem>
             <SelectItem value="other">Other</SelectItem>
           </SelectContent>
         </Select>
@@ -112,10 +113,10 @@ const WaitlistForm = () => {
         className="bg-blue-600 hover:bg-blue-700 w-full"
       >
         {isLoading ? (
-          "Joining Private Beta..."
+          "Building Your AI Squad..."
         ) : (
           <>
-            Join Private Beta
+            Build Your AI Squad
             <ArrowRight className="ml-2 h-4 w-4" />
           </>
         )}
