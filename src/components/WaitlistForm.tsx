@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowRight, CheckCircle } from "lucide-react";
+import { ArrowRight, CheckCircle, Sparkles } from "lucide-react";
 
 const WaitlistForm = () => {
   const [email, setEmail] = useState('');
@@ -70,57 +70,68 @@ const WaitlistForm = () => {
 
   if (isSubmitted) {
     return (
-      <div className="flex flex-col items-center justify-center p-8 bg-green-50 rounded-lg border border-green-200">
-        <CheckCircle className="h-12 w-12 text-green-600 mb-4" />
-        <h3 className="text-lg font-semibold text-green-800 mb-2">Your AI squad is assembling!</h3>
-        <p className="text-green-700 text-center">
-          We'll send you early access details and agent use cases for your role soon.
-        </p>
+      <div className="glass-card p-8 border-green-500/20 max-w-md mx-auto">
+        <div className="text-center">
+          <div className="w-16 h-16 bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <CheckCircle className="h-8 w-8 text-green-400" />
+          </div>
+          <h3 className="text-xl font-semibold text-green-400 mb-2">Your AI squad is assembling!</h3>
+          <p className="text-muted-foreground">
+            We'll send you early access details and agent use cases for your role soon.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3 max-w-md w-full">
-      <div className="flex flex-col sm:flex-row gap-3">
-        <Input
-          type="email"
-          placeholder="Enter your email address"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          className="flex-1"
+    <form onSubmit={handleSubmit} className="glass-card p-6 max-w-md mx-auto border-primary/20">
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row gap-3">
+          <Input
+            type="email"
+            placeholder="Enter your email address"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="flex-1 bg-background/50 border-white/[0.08] focus:border-primary/50 transition-colors"
+            disabled={isLoading}
+            required
+          />
+          <Select value={role} onValueChange={setRole}>
+            <SelectTrigger className="w-full sm:w-[180px] bg-background/50 border-white/[0.08] focus:border-primary/50">
+              <SelectValue placeholder="Your role" />
+            </SelectTrigger>
+            <SelectContent className="bg-background border-white/[0.08]">
+              <SelectItem value="pmm">Product Marketing Manager</SelectItem>
+              <SelectItem value="csm">Customer Success Manager</SelectItem>
+              <SelectItem value="content">Content Creator</SelectItem>
+              <SelectItem value="pm">Product Manager</SelectItem>
+              <SelectItem value="product-ops">Product Operations</SelectItem>
+              <SelectItem value="other">Other</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        
+        <Button 
+          type="submit" 
+          size="lg" 
           disabled={isLoading}
-          required
-        />
-        <Select value={role} onValueChange={setRole}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Your role" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pmm">Product Marketing Manager</SelectItem>
-            <SelectItem value="csm">Customer Success Manager</SelectItem>
-            <SelectItem value="content">Content Creator</SelectItem>
-            <SelectItem value="pm">Product Manager</SelectItem>
-            <SelectItem value="product-ops">Product Operations</SelectItem>
-            <SelectItem value="other">Other</SelectItem>
-          </SelectContent>
-        </Select>
+          className="w-full button-glow bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90 border-0 font-semibold transition-all duration-300"
+        >
+          {isLoading ? (
+            <div className="flex items-center">
+              <Sparkles className="mr-2 h-4 w-4 animate-spin" />
+              Building Your AI Squad...
+            </div>
+          ) : (
+            <div className="flex items-center">
+              <Sparkles className="mr-2 h-4 w-4" />
+              Build Your AI Squad
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </div>
+          )}
+        </Button>
       </div>
-      <Button 
-        type="submit" 
-        size="lg" 
-        disabled={isLoading}
-        className="bg-blue-600 hover:bg-blue-700 w-full"
-      >
-        {isLoading ? (
-          "Building Your AI Squad..."
-        ) : (
-          <>
-            Build Your AI Squad
-            <ArrowRight className="ml-2 h-4 w-4" />
-          </>
-        )}
-      </Button>
     </form>
   );
 };

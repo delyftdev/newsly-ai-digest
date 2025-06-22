@@ -3,402 +3,292 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle, Mail, FileText, Users, Zap, ArrowRight, Star, Globe, Target, MessageSquare, BookOpen, TrendingUp, Clock, BarChart3, Lightbulb, AlertCircle, Rocket, Brain, Bot, Workflow, Settings, Send } from "lucide-react";
+import { CheckCircle, Mail, FileText, Users, Zap, ArrowRight, Star, Globe, Target, MessageSquare, BookOpen, TrendingUp, Clock, BarChart3, Lightbulb, AlertCircle, Rocket, Brain, Bot, Workflow, Settings, Send, Menu, X } from "lucide-react";
 import WaitlistForm from "@/components/WaitlistForm";
+import { useState } from "react";
 
 const Index = () => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background Elements */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/20 rounded-full blur-3xl animate-pulse-slow"></div>
+        <div className="absolute top-1/2 -left-40 w-80 h-80 bg-cyan-500/10 rounded-full blur-3xl animate-float"></div>
+        <div className="absolute bottom-0 right-1/3 w-60 h-60 bg-purple-500/10 rounded-full blur-3xl"></div>
+      </div>
+
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b">
+      <nav className="glass-nav fixed w-full top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between h-16">
+          <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
               <div className="flex-shrink-0 flex items-center">
-                <Rocket className="h-8 w-8 text-blue-600" />
-                <span className="ml-2 text-xl font-bold text-gray-900">Delyft</span>
+                <div className="w-8 h-8 bg-gradient-to-br from-primary to-cyan-400 rounded-lg flex items-center justify-center">
+                  <Rocket className="h-5 w-5 text-white" />
+                </div>
+                <span className="ml-3 text-xl font-bold gradient-text">Delyft</span>
               </div>
             </div>
+            
+            {/* Desktop Menu */}
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-8">
+                <a href="#agents" className="text-foreground/80 hover:text-primary transition-colors duration-200 text-sm font-medium">Agents</a>
+                <a href="#features" className="text-foreground/80 hover:text-primary transition-colors duration-200 text-sm font-medium">Features</a>
+                <a href="#pricing" className="text-foreground/80 hover:text-primary transition-colors duration-200 text-sm font-medium">Pricing</a>
+              </div>
+            </div>
+
             <div className="flex items-center space-x-4">
-              <Badge variant="secondary" className="bg-green-100 text-green-800">
+              <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
                 Private Beta
               </Badge>
+              
+              {/* Mobile menu button */}
+              <button
+                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                className="md:hidden text-foreground/80 hover:text-primary transition-colors"
+              >
+                {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
             </div>
           </div>
+
+          {/* Mobile Menu */}
+          {mobileMenuOpen && (
+            <div className="md:hidden glass-card mt-2 p-4 space-y-2">
+              <a href="#agents" className="block text-foreground/80 hover:text-primary transition-colors py-2">Agents</a>
+              <a href="#features" className="block text-foreground/80 hover:text-primary transition-colors py-2">Features</a>
+              <a href="#pricing" className="block text-foreground/80 hover:text-primary transition-colors py-2">Pricing</a>
+            </div>
+          )}
         </div>
       </nav>
 
       {/* Hero Section */}
-      <div className="relative overflow-hidden">
+      <section className="hero-gradient relative pt-32 pb-20 px-4 sm:px-6 lg:px-8">
         <div className="max-w-7xl mx-auto">
-          <div className="relative z-10 pb-8 bg-transparent sm:pb-16 md:pb-20 lg:max-w-2xl lg:w-full lg:pb-28 xl:pb-32">
-            <main className="mt-10 mx-auto max-w-7xl px-4 sm:mt-12 sm:px-6 md:mt-16 lg:mt-20 lg:px-8 xl:mt-28">
-              <div className="sm:text-center lg:text-left">
-                <h1 className="text-4xl tracking-tight font-extrabold text-gray-900 sm:text-5xl md:text-6xl">
-                  <span className="block xl:inline">Deploy Your AI GTM Squad:</span>{' '}
-                  <span className="block text-blue-600 xl:inline">4 Specialized Agents That Launch Features 10X Faster</span>
-                </h1>
-                <p className="mt-3 text-base text-gray-500 sm:mt-5 sm:text-lg sm:max-w-xl sm:mx-auto md:mt-5 md:text-xl lg:mx-0">
-                  Content, publishing, personalization and feedback automation - working in sync while you sleep.
-                  AI agents as specialized teammates, not just tools.
-                </p>
-                <div className="mt-5 sm:mt-8 sm:flex sm:justify-center lg:justify-start">
-                  <div className="w-full sm:max-w-md">
-                    <WaitlistForm />
-                  </div>
-                </div>
-                <p className="mt-3 text-sm text-gray-500 sm:text-center lg:text-left">
-                  Join early squad leaders from Series A-C SaaS companies. No spam, ever.
-                </p>
-              </div>
-            </main>
+          <div className="text-center">
+            <div className="mb-6">
+              <Badge className="bg-primary/20 text-primary border-primary/30 text-sm px-4 py-2">
+                🚀 AI GTM Squad - Now in Private Beta
+              </Badge>
+            </div>
+            
+            <h1 className="text-5xl md:text-7xl font-bold tracking-tight mb-8 text-balance">
+              Deploy Your AI{' '}
+              <span className="gradient-text">GTM Squad</span>
+              <br />
+              <span className="text-4xl md:text-6xl text-muted-foreground">Launch Features 10X Faster</span>
+            </h1>
+            
+            <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto mb-12 leading-relaxed">
+              4 Specialized AI agents that handle content, publishing, personalization and feedback automation - 
+              working in sync while you focus on strategy.
+            </p>
+            
+            <div className="flex flex-col items-center space-y-6">
+              <WaitlistForm />
+              <p className="text-sm text-muted-foreground">
+                Join squad leaders from Series A-C SaaS companies • No spam, ever
+              </p>
+            </div>
           </div>
         </div>
-        <div className="lg:absolute lg:inset-y-0 lg:right-0 lg:w-1/2">
-          <img
-            className="h-56 w-full object-cover sm:h-72 md:h-96 lg:w-full lg:h-full"
-            src="https://images.unsplash.com/photo-1600880292203-757bb62b4baf?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2340&q=80"
-            alt="AI GTM squad collaboration"
-          />
-        </div>
-      </div>
+      </section>
 
       {/* Problem Statement */}
-      <div className="py-12 bg-red-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
-            Manual GTM Processes Slow Launches & Drain Strategic Capacity
-          </h2>
-          <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-            Product-led growth teams waste <span className="font-bold text-red-600">weeks on execution</span> instead of focusing on strategy and growth
-          </p>
-          <p className="text-sm text-gray-500 mt-2">Speed is now a competitive necessity for SaaS teams shipping features weekly</p>
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-7xl mx-auto text-center">
+          <div className="glass-card p-8 md:p-12 border-red-500/20">
+            <AlertCircle className="h-16 w-16 text-red-400 mx-auto mb-6" />
+            <h2 className="text-3xl md:text-4xl font-bold mb-6">
+              Manual GTM Processes Slow Launches & Drain Strategic Capacity
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
+              Product-led growth teams waste <span className="text-red-400 font-semibold">weeks on execution</span> instead of focusing on strategy and growth. 
+              <br />
+              <span className="text-sm mt-4 block">Speed is now a competitive necessity for SaaS teams shipping features weekly</span>
+            </p>
+          </div>
         </div>
-      </div>
+      </section>
 
       {/* AI Agent Showcase */}
-      <div className="py-16 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-gray-900 mb-4">
-              Meet Your AI GTM Squad: Specialized Agents Working as Teammates
+      <section id="agents" className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Meet Your AI GTM Squad
             </h2>
-            <p className="text-xl text-gray-600">
-              Each agent handles entire workflows while you focus on strategy
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Specialized agents working as teammates, handling entire workflows while you focus on strategy
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="bg-blue-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Bot className="h-8 w-8 text-blue-600" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Content Generator Agent</h3>
-              <p className="text-gray-600 mb-4">From spec to polished changelog in 90 seconds</p>
-              <div className="mt-4 bg-gray-100 rounded-lg p-4 text-left text-sm">
-                <FileText className="h-6 w-6 text-blue-500 mb-2" />
-                <div className="text-xs text-gray-500">Multi-format templating</div>
-                <div className="text-xs">• Changelog • Blog • Newsletter</div>
-                <div className="text-xs">• Brand voice control</div>
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-green-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Send className="h-8 w-8 text-green-600" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Omni-Publish Agent</h3>
-              <p className="text-gray-600 mb-4">Customer-branded widgets that deploy with 1 click</p>
-              <div className="mt-4 bg-gray-100 rounded-lg p-4 text-left text-sm">
-                <Globe className="h-6 w-6 text-green-500 mb-2" />
-                <div className="text-xs text-gray-500">Channel-specific publishing</div>
-                <div className="text-xs">• Web • Email • Embeds</div>
-                <div className="text-xs">• White-label branding</div>
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-purple-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <MessageSquare className="h-8 w-8 text-purple-600" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Outreach Agent</h3>
-              <p className="text-gray-600 mb-4">CRM-powered emails drafted before your coffee brews</p>
-              <div className="mt-4 bg-gray-100 rounded-lg p-4 text-left text-sm">
-                <Users className="h-6 w-6 text-purple-500 mb-2" />
-                <div className="text-xs text-gray-500">Hyper-personalized comms</div>
-                <div className="text-xs">• CRM integration</div>
-                <div className="text-xs">• Behavior-triggered messaging</div>
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="bg-orange-100 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4">
-                <Workflow className="h-8 w-8 text-orange-600" />
-              </div>
-              <h3 className="text-lg font-semibold mb-2">Feedback-Roadmap Agent</h3>
-              <p className="text-gray-600 mb-4">Automated Jira tickets with customer notifications built-in</p>
-              <div className="mt-4 bg-gray-100 rounded-lg p-4 text-left text-sm">
-                <BarChart3 className="h-6 w-6 text-orange-500 mb-2" />
-                <div className="text-xs text-gray-500">Feedback-to-roadmap pipeline</div>
-                <div className="text-xs">• Multi-source ingestion</div>
-                <div className="text-xs">• Sentiment-prioritized sync</div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Agent-Specific Pain Points → Solutions */}
-      <div className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-extrabold text-gray-900">
-              Each Agent Solves Core GTM Pain Points
-            </h2>
-            <p className="text-xl text-gray-600 mt-4">Modular "pay for what you automate" approach</p>
-          </div>
-
-          <div className="space-y-12">
             {/* Content Generator Agent */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-                <div className="text-center lg:text-left">
-                  <Bot className="h-12 w-12 text-blue-500 mx-auto lg:mx-0 mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Content Generator Agent</h3>
-                  <p className="text-gray-600 mb-4">
-                    <span className="text-red-600 font-semibold">Pain:</span> Manual repurposing, brand inconsistency
-                  </p>
-                  <p className="text-gray-600">
-                    <span className="text-green-600 font-semibold">Solution:</span> Instant, on-brand content generation
-                  </p>
-                </div>
-                <div className="lg:col-span-2">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center">
-                          <FileText className="h-5 w-5 mr-2 text-blue-500" />
-                          Multi-Format Templating
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600">Generates changelog, blog posts, and newsletter content from single product spec</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center">
-                          <Settings className="h-5 w-5 mr-2 text-purple-500" />
-                          Brand Voice Control
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600">Compliance guardrails ensure consistent brand voice across all generated content</p>
-                      </CardContent>
-                    </Card>
-                  </div>
+            <div className="glass-card p-6 group hover:scale-105 transition-all duration-300">
+              <div className="bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:from-blue-500/30 group-hover:to-blue-600/20 transition-all duration-300">
+                <Bot className="h-8 w-8 text-blue-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-center">Content Generator</h3>
+              <p className="text-muted-foreground mb-6 text-center">From spec to polished changelog in 90 seconds</p>
+              
+              <div className="glass-card p-4 border-blue-500/20">
+                <FileText className="h-6 w-6 text-blue-400 mb-3" />
+                <div className="text-sm space-y-2">
+                  <div className="text-muted-foreground">Multi-format templating</div>
+                  <div className="text-xs text-blue-400">• Changelog • Blog • Newsletter</div>
+                  <div className="text-xs text-blue-400">• Brand voice control</div>
                 </div>
               </div>
             </div>
-
+            
             {/* Omni-Publish Agent */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-                <div className="text-center lg:text-left">
-                  <Send className="h-12 w-12 text-green-500 mx-auto lg:mx-0 mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Omni-Publish Agent</h3>
-                  <p className="text-gray-600 mb-4">
-                    <span className="text-red-600 font-semibold">Pain:</span> Fragmented publishing, manual customization
-                  </p>
-                  <p className="text-gray-600">
-                    <span className="text-green-600 font-semibold">Solution:</span> 1-click publishing with customer branding
-                  </p>
-                </div>
-                <div className="lg:col-span-2">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center">
-                          <Globe className="h-5 w-5 mr-2 text-green-500" />
-                          Channel-Specific Auto-Publish
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600">Automatically formats and publishes to web, email, and embed channels</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center">
-                          <Star className="h-5 w-5 mr-2 text-cyan-500" />
-                          White-Label Embeds
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600">Custom CSS injection for perfect brand integration in customer-facing widgets</p>
-                      </CardContent>
-                    </Card>
-                  </div>
+            <div className="glass-card p-6 group hover:scale-105 transition-all duration-300">
+              <div className="bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:from-green-500/30 group-hover:to-green-600/20 transition-all duration-300">
+                <Send className="h-8 w-8 text-green-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-center">Omni-Publish</h3>
+              <p className="text-muted-foreground mb-6 text-center">Customer-branded widgets that deploy with 1 click</p>
+              
+              <div className="glass-card p-4 border-green-500/20">
+                <Globe className="h-6 w-6 text-green-400 mb-3" />
+                <div className="text-sm space-y-2">
+                  <div className="text-muted-foreground">Channel-specific publishing</div>
+                  <div className="text-xs text-green-400">• Web • Email • Embeds</div>
+                  <div className="text-xs text-green-400">• White-label branding</div>
                 </div>
               </div>
             </div>
-
+            
             {/* Outreach Agent */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-                <div className="text-center lg:text-left">
-                  <MessageSquare className="h-12 w-12 text-purple-500 mx-auto lg:mx-0 mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Outreach Agent</h3>
-                  <p className="text-gray-600 mb-4">
-                    <span className="text-red-600 font-semibold">Pain:</span> Generic mass emails, manual personalization
-                  </p>
-                  <p className="text-gray-600">
-                    <span className="text-green-600 font-semibold">Solution:</span> Hyper-personalized comms at scale
-                  </p>
-                </div>
-                <div className="lg:col-span-2">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center">
-                          <Users className="h-5 w-5 mr-2 text-purple-500" />
-                          CRM-Integrated Draft Generator
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600">Pulls customer data to generate personalized outreach drafts automatically</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center">
-                          <TrendingUp className="h-5 w-5 mr-2 text-indigo-500" />
-                          Behavior-Triggered Messaging
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600">Usage-based messaging that responds to customer behavior patterns</p>
-                      </CardContent>
-                    </Card>
-                  </div>
+            <div className="glass-card p-6 group hover:scale-105 transition-all duration-300">
+              <div className="bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:from-purple-500/30 group-hover:to-purple-600/20 transition-all duration-300">
+                <MessageSquare className="h-8 w-8 text-purple-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-center">Outreach Agent</h3>
+              <p className="text-muted-foreground mb-6 text-center">CRM-powered emails drafted before your coffee brews</p>
+              
+              <div className="glass-card p-4 border-purple-500/20">
+                <Users className="h-6 w-6 text-purple-400 mb-3" />
+                <div className="text-sm space-y-2">
+                  <div className="text-muted-foreground">Hyper-personalized comms</div>
+                  <div className="text-xs text-purple-400">• CRM integration</div>
+                  <div className="text-xs text-purple-400">• Behavior-triggered messaging</div>
                 </div>
               </div>
             </div>
-
+            
             {/* Feedback-Roadmap Agent */}
-            <div className="bg-white rounded-lg shadow-lg p-8">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-center">
-                <div className="text-center lg:text-left">
-                  <Workflow className="h-12 w-12 text-orange-500 mx-auto lg:mx-0 mb-4" />
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">Feedback-Roadmap Agent</h3>
-                  <p className="text-gray-600 mb-4">
-                    <span className="text-red-600 font-semibold">Pain:</span> Slow feedback aggregation, poor visibility
-                  </p>
-                  <p className="text-gray-600">
-                    <span className="text-green-600 font-semibold">Solution:</span> Automated feedback-to-roadmap pipeline
-                  </p>
-                </div>
-                <div className="lg:col-span-2">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center">
-                          <BarChart3 className="h-5 w-5 mr-2 text-orange-500" />
-                          Multi-Source Ingestion
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600">Aggregates feedback from Gong, Grain, Zendesk and other sources automatically</p>
-                      </CardContent>
-                    </Card>
-                    <Card>
-                      <CardHeader className="pb-3">
-                        <CardTitle className="text-lg flex items-center">
-                          <Lightbulb className="h-5 w-5 mr-2 text-yellow-500" />
-                          Sentiment-Prioritized Jira Sync
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-gray-600">Auto-creates prioritized Jira tickets with customer notifications when items ship</p>
-                      </CardContent>
-                    </Card>
-                  </div>
+            <div className="glass-card p-6 group hover:scale-105 transition-all duration-300">
+              <div className="bg-gradient-to-br from-orange-500/20 to-orange-600/10 rounded-2xl w-16 h-16 flex items-center justify-center mx-auto mb-6 group-hover:from-orange-500/30 group-hover:to-orange-600/20 transition-all duration-300">
+                <Workflow className="h-8 w-8 text-orange-400" />
+              </div>
+              <h3 className="text-xl font-semibold mb-3 text-center">Feedback-Roadmap</h3>
+              <p className="text-muted-foreground mb-6 text-center">Automated Jira tickets with customer notifications built-in</p>
+              
+              <div className="glass-card p-4 border-orange-500/20">
+                <BarChart3 className="h-6 w-6 text-orange-400 mb-3" />
+                <div className="text-sm space-y-2">
+                  <div className="text-muted-foreground">Feedback-to-roadmap pipeline</div>
+                  <div className="text-xs text-orange-400">• Multi-source ingestion</div>
+                  <div className="text-xs text-orange-400">• Sentiment-prioritized sync</div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Results & Benefits */}
-      <div className="py-16 bg-blue-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-extrabold text-white mb-8">
-            Launch Features 10X Faster with 50% Less Team Effort
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <Clock className="h-12 w-12 text-blue-200 mx-auto mb-4" />
-              <div className="text-4xl font-bold text-white mb-2">3 Weeks → 2 Days</div>
-              <p className="text-blue-200">Launch Operations Timeline</p>
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-7xl mx-auto">
+          <div className="glass-card p-12 border-primary/20">
+            <div className="text-center mb-12">
+              <h2 className="text-4xl md:text-5xl font-bold mb-6 gradient-text">
+                Launch Features 10X Faster with 50% Less Team Effort
+              </h2>
+              <p className="text-xl text-muted-foreground">
+                Transform your GTM operations from weeks to days
+              </p>
             </div>
-            <div className="text-center">
-              <TrendingUp className="h-12 w-12 text-blue-200 mx-auto mb-4" />
-              <div className="text-4xl font-bold text-white mb-2">50%</div>
-              <p className="text-blue-200">Less Manual Team Effort</p>
-            </div>
-            <div className="text-center">
-              <Zap className="h-12 w-12 text-blue-200 mx-auto mb-4" />
-              <div className="text-4xl font-bold text-white mb-2">10X</div>
-              <p className="text-blue-200">Faster Feature Launches</p>
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="text-center">
+                <div className="glass-card p-6 border-cyan-500/20">
+                  <Clock className="h-12 w-12 text-cyan-400 mx-auto mb-4" />
+                  <div className="text-4xl font-bold text-cyan-400 mb-2">3 Weeks → 2 Days</div>
+                  <p className="text-muted-foreground">Launch Operations Timeline</p>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="glass-card p-6 border-green-500/20">
+                  <TrendingUp className="h-12 w-12 text-green-400 mx-auto mb-4" />
+                  <div className="text-4xl font-bold text-green-400 mb-2">50%</div>
+                  <p className="text-muted-foreground">Less Manual Team Effort</p>
+                </div>
+              </div>
+              <div className="text-center">
+                <div className="glass-card p-6 border-primary/20">
+                  <Zap className="h-12 w-12 text-primary mx-auto mb-4" />
+                  <div className="text-4xl font-bold text-primary mb-2">10X</div>
+                  <p className="text-muted-foreground">Faster Feature Launches</p>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Social Proof */}
-      <div className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-2xl font-bold text-gray-900 mb-8">
+      <section className="py-20 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-12">
             Join Early Squad Leaders from Leading SaaS Companies
           </h2>
-          <div className="flex justify-center items-center space-x-8 opacity-60">
-            <div className="text-2xl font-bold text-gray-400">Series A</div>
-            <div className="text-2xl font-bold text-gray-400">Series B</div>
-            <div className="text-2xl font-bold text-gray-400">Series C</div>
-            <div className="text-2xl font-bold text-gray-400">Growth Stage</div>
+          <div className="flex justify-center items-center space-x-12 opacity-60">
+            <div className="text-2xl font-bold text-muted-foreground">Series A</div>
+            <div className="text-2xl font-bold text-muted-foreground">Series B</div>
+            <div className="text-2xl font-bold text-muted-foreground">Series C</div>
+            <div className="text-2xl font-bold text-muted-foreground">Growth Stage</div>
           </div>
-          <p className="mt-4 text-gray-600">
+          <p className="mt-6 text-muted-foreground">
             Trusted by product-led growth teams shipping features weekly
           </p>
         </div>
-      </div>
+      </section>
 
       {/* Final CTA Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8 lg:flex lg:items-center lg:justify-between">
-          <h2 className="text-3xl font-extrabold tracking-tight text-white sm:text-4xl">
-            <span className="block">Ready to build your AI GTM squad?</span>
-            <span className="block text-blue-200">Deploy specialized agents that work while you sleep.</span>
-          </h2>
-          <div className="mt-8 flex lg:mt-0 lg:flex-shrink-0">
-            <div className="inline-flex rounded-md shadow">
-              <WaitlistForm />
-            </div>
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-4xl mx-auto">
+          <div className="glass-card p-12 text-center border-primary/20">
+            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              Ready to build your{' '}
+              <span className="gradient-text">AI GTM squad?</span>
+            </h2>
+            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Deploy specialized agents that work while you sleep. Transform your product launches from manual processes to automated excellence.
+            </p>
+            <WaitlistForm />
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Footer */}
-      <footer className="bg-white">
-        <div className="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:px-8">
+      <footer className="glass-nav border-t border-white/[0.08] py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto">
           <div className="flex justify-between items-center">
             <div className="flex items-center">
-              <Rocket className="h-6 w-6 text-blue-600" />
-              <span className="ml-2 text-lg font-bold text-gray-900">Delyft</span>
+              <div className="w-6 h-6 bg-gradient-to-br from-primary to-cyan-400 rounded-lg flex items-center justify-center">
+                <Rocket className="h-4 w-4 text-white" />
+              </div>
+              <span className="ml-3 text-lg font-bold gradient-text">Delyft</span>
             </div>
-            <p className="text-gray-500 text-sm">
+            <p className="text-muted-foreground text-sm">
               © 2024 Delyft. All rights reserved.
             </p>
           </div>
