@@ -151,7 +151,7 @@ const Index = () => {
               {
                 icon: TrendingUp,
                 title: "Feedback Agent",
-                description: "Automated Jira tickets with customer notifications built-in"
+                description: "AI powered sentiment analysis on feedback"
               }
             ].map((feature, index) => (
               <div key={index} className="glass-card p-6 border-white/[0.08] hover:border-primary/30 transition-all duration-300 group">
@@ -222,7 +222,7 @@ const Index = () => {
         </div>
       </footer>
 
-      <style jsx>{`
+      <style>{`
         .confetti-animation {
           position: relative;
           width: 100%;
