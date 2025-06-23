@@ -1,17 +1,18 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Bot, Zap, Target, TrendingUp, CheckCircle } from "lucide-react";
+import { ArrowRight, Bot, Zap, Target, TrendingUp, CheckCircle, Trophy } from "lucide-react";
 import WaitlistForm from "@/components/WaitlistForm";
 import SocialProofCounter from "@/components/SocialProofCounter";
 import WhyJoinWaitlist from "@/components/WhyJoinWaitlist";
 import ReferralSystem from "@/components/ReferralSystem";
-import Leaderboard from "@/components/Leaderboard";
+import LeaderboardPanel from "@/components/LeaderboardPanel";
 
 const Index = () => {
   const [submittedEmail, setSubmittedEmail] = useState<string>('');
   const [submittedReferralCode, setSubmittedReferralCode] = useState<string>('');
   const [showConfetti, setShowConfetti] = useState(false);
+  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const handleWaitlistSuccess = (email: string, referralCode: string) => {
     setSubmittedEmail(email);
@@ -44,15 +45,26 @@ const Index = () => {
       {/* Header */}
       <header className="border-b border-white/[0.08] backdrop-blur-xl bg-background/80 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <div>
                 <h1 className="text-xl font-bold text-white">Delyft</h1>
               </div>
             </div>
+            <Button
+              variant="ghost"
+              onClick={() => setShowLeaderboard(true)}
+              className="text-white hover:bg-white/[0.05] flex items-center space-x-2"
+            >
+              <Trophy className="h-4 w-4" />
+              <span>Top Referrers</span>
+            </Button>
           </div>
         </div>
       </header>
+
+      {/* Leaderboard Panel */}
+      <LeaderboardPanel open={showLeaderboard} onOpenChange={setShowLeaderboard} />
 
       {/* Confetti Effect */}
       {showConfetti && (
@@ -72,9 +84,6 @@ const Index = () => {
           </div>
         </div>
       )}
-
-      {/* Leaderboard Section */}
-      <Leaderboard />
 
       {/* Hero Section */}
       <section className="relative py-20 px-4 overflow-hidden">
