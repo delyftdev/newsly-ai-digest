@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Bot, Zap, Target, TrendingUp, CheckCircle, Trophy } from "lucide-react";
@@ -7,6 +6,7 @@ import SocialProofCounter from "@/components/SocialProofCounter";
 import WhyJoinWaitlist from "@/components/WhyJoinWaitlist";
 import ReferralSystem from "@/components/ReferralSystem";
 import LeaderboardPanel from "@/components/LeaderboardPanel";
+import DelyftLogo from "@/components/DelyftLogo";
 
 const Index = () => {
   const [submittedEmail, setSubmittedEmail] = useState<string>('');
@@ -47,9 +47,7 @@ const Index = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div>
-                <h1 className="text-xl font-bold text-white">Delyft</h1>
-              </div>
+              <DelyftLogo width={120} height={34} className="h-8" />
             </div>
             <Button
               variant="ghost"
@@ -215,9 +213,7 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col md:flex-row items-center justify-between">
             <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <div>
-                <span className="text-white font-semibold">Delyft</span>
-              </div>
+              <DelyftLogo width={80} height={23} className="h-6" />
             </div>
             <div className="text-center md:text-right">
               <p className="text-muted-foreground text-sm">
