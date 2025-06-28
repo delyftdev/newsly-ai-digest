@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Bot, Zap, Target, TrendingUp, CheckCircle, Trophy } from "lucide-react";
+import { ArrowRight, Inbox, Edit, MessageCircle, BarChart3, CheckCircle, Trophy } from "lucide-react";
 import WaitlistForm from "@/components/WaitlistForm";
 import SocialProofCounter from "@/components/SocialProofCounter";
 import WhyJoinWaitlist from "@/components/WhyJoinWaitlist";
@@ -94,15 +94,14 @@ const Index = () => {
           <SocialProofCounter />
           
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight">
-            Deploy Your AI GTM Squad:{" "}
+            Your shortcut to{" "}
             <span className="bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">
-              4 Specialized Agents
-            </span>{" "}
-            That Launch Features 10X Faster
+              customer-focused releases
+            </span>
           </h1>
           
           <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-            Content, publishing, personalization and feedback automation - working in sync while you sleep
+            Create feedback loops, personalized changelogs, and track engagement — all in one place
           </p>
 
           <div id="waitlist-form">
@@ -131,42 +130,58 @@ const Index = () => {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              4 Specialized Agents Working in Perfect Sync
+              Everything you need for customer-focused releases
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Each agent handles a specific part of your GTM workflow, seamlessly passing work to the next.
+              Stop losing great ideas, sending robotic updates, and guessing what resonates with your customers.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                icon: Bot,
-                title: "Content Agent",
-                description: "From spec to polished changelog in 90 seconds"
+                icon: Inbox,
+                title: "Smart Inbox for All Customer Updates",
+                benefit: "Find what you need instantly. Stop losing great ideas.",
+                problem: "Teams spend time organizing content buried across docs, emails, and chats.",
+                solution: "Auto-organize every release note, announcement, or idea in one searchable inbox."
               },
               {
-                icon: Target,
-                title: "Publish Agent", 
-                description: "Customer-branded widgets that deploy with 1 click"
+                icon: Edit,
+                title: "AI Editor for On-Brand Content", 
+                benefit: "Send updates customers actually read. No more robotic emails.",
+                problem: "Your releases sound generic, not like you.",
+                solution: "Tweak drafts to match your brand's voice and customer's tone — then publish as changelogs or widgets."
               },
               {
-                icon: Zap,
-                title: "Outreach Agent",
-                description: "CRM-powered emails drafted before your coffee brews"
+                icon: MessageCircle,
+                title: "Feedback Hub with Public Voting",
+                benefit: "Close the loop faster. Show customers you're listening.",
+                problem: "Feedback vanishes into spreadsheets or Slack threads.",
+                solution: "Let customers and teammates submit, vote, and see how ideas are progressing."
               },
               {
-                icon: TrendingUp,
-                title: "Feedback Agent",
-                description: "AI powered sentiment analysis on feedback"
+                icon: BarChart3,
+                title: "Content Insights Dashboard",
+                benefit: "See what's working. Stop wasting time on what's not.",
+                problem: "You're guessing if releases even resonate.",
+                solution: "Check open rates, clicks, and reactions for every update you send."
               }
             ].map((feature, index) => (
               <div key={index} className="glass-card p-6 border-white/[0.08] hover:border-primary/30 transition-all duration-300 group">
                 <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-cyan-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
                   <feature.icon className="h-6 w-6 text-primary" />
                 </div>
-                <h3 className="text-lg font-semibold text-white mb-2">{feature.title}</h3>
-                <p className="text-muted-foreground text-sm">{feature.description}</p>
+                <h3 className="text-lg font-semibold text-white mb-3">{feature.title}</h3>
+                <p className="text-primary font-medium text-sm mb-3">{feature.benefit}</p>
+                <div className="opacity-70 group-hover:opacity-100 transition-opacity">
+                  <p className="text-muted-foreground text-xs mb-2">
+                    <span className="text-red-400">Problem:</span> {feature.problem}
+                  </p>
+                  <p className="text-muted-foreground text-xs">
+                    <span className="text-green-400">Solution:</span> {feature.solution}
+                  </p>
+                </div>
               </div>
             ))}
           </div>
@@ -189,10 +204,10 @@ const Index = () => {
         <div className="max-w-4xl mx-auto text-center">
           <div className="glass-card p-12 border-primary/20">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Ready to 10X Your GTM Velocity?
+              Ready to create releases customers love?
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of GTM professionals building their AI squad. Get early access, exclusive rewards, and start earning credits today.
+              Join thousands of teams building better customer relationships. Get early access, exclusive rewards, and start creating meaningful feedback loops today.
             </p>
             {!submittedEmail && (
               <Button 
@@ -220,7 +235,7 @@ const Index = () => {
                 © 2024 Delyft. All rights reserved.
               </p>
               <p className="text-muted-foreground text-xs mt-1">
-                Building the future of AI-powered GTM workflows
+                Building customer-focused release workflows
               </p>
             </div>
           </div>
