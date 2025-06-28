@@ -264,7 +264,7 @@ const AnalyticsDashboard = () => {
                   />
                 </BarChart>
               </ChartContainer>
-            </Card>
+            </CardContent>
           </Card>
         </TabsContent>
 
