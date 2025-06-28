@@ -1,68 +1,46 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Inbox, Edit, MessageCircle, BarChart3, CheckCircle, Trophy } from "lucide-react";
-import WaitlistForm from "@/components/WaitlistForm";
-import SocialProofCounter from "@/components/SocialProofCounter";
-import WhyJoinWaitlist from "@/components/WhyJoinWaitlist";
-import ReferralSystem from "@/components/ReferralSystem";
-import LeaderboardPanel from "@/components/LeaderboardPanel";
+import { ArrowRight, CheckCircle } from "lucide-react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
+import ValuePropsSection from "@/components/ValuePropsSection";
+import IntegrationsSection from "@/components/IntegrationsSection";
+import WaitlistSection from "@/components/WaitlistSection";
 import DelyftLogo from "@/components/DelyftLogo";
 
 const Index = () => {
   const [submittedEmail, setSubmittedEmail] = useState<string>('');
   const [submittedReferralCode, setSubmittedReferralCode] = useState<string>('');
   const [showConfetti, setShowConfetti] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   const handleWaitlistSuccess = (email: string, referralCode: string) => {
     setSubmittedEmail(email);
     setSubmittedReferralCode(referralCode);
     setShowConfetti(true);
     
-    // Hide confetti after 3 seconds
     setTimeout(() => {
       setShowConfetti(false);
     }, 3000);
 
-    // Scroll to referral section
     setTimeout(() => {
-      const referralElement = document.querySelector('#referral-section');
-      if (referralElement) {
-        referralElement.scrollIntoView({ behavior: 'smooth' });
+      const waitlistElement = document.querySelector('#waitlist-section');
+      if (waitlistElement) {
+        waitlistElement.scrollIntoView({ behavior: 'smooth' });
       }
     }, 500);
   };
 
-  const scrollToForm = () => {
-    const formElement = document.querySelector('#waitlist-form');
-    if (formElement) {
-      formElement.scrollIntoView({ behavior: 'smooth' });
+  const scrollToWaitlist = () => {
+    const waitlistElement = document.querySelector('#waitlist-section');
+    if (waitlistElement) {
+      waitlistElement.scrollIntoView({ behavior: 'smooth' });
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-      {/* Header */}
-      <header className="border-b border-white/[0.08] backdrop-blur-xl bg-background/80 sticky top-0 z-50">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <DelyftLogo width={120} height={34} className="h-8" />
-            </div>
-            <Button
-              variant="ghost"
-              onClick={() => setShowLeaderboard(true)}
-              className="text-white hover:bg-white/[0.05] flex items-center space-x-2"
-            >
-              <Trophy className="h-4 w-4" />
-              <span>Top Referrers</span>
-            </Button>
-          </div>
-        </div>
-      </header>
-
-      {/* Leaderboard Panel */}
-      <LeaderboardPanel open={showLeaderboard} onOpenChange={setShowLeaderboard} />
+    <div className="min-h-screen bg-background">
+      <Header />
 
       {/* Confetti Effect */}
       {showConfetti && (
@@ -85,17 +63,14 @@ const Index = () => {
 
       {/* Hero Section */}
       <section className="relative py-20 px-4 overflow-hidden">
-        {/* Background Effects */}
-        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-cyan-500/10" />
+        <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10" />
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-        <div className="absolute bottom-10 right-10 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-pulse delay-1000" />
+        <div className="absolute bottom-10 right-10 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse delay-1000" />
         
         <div className="relative max-w-4xl mx-auto text-center">
-          <SocialProofCounter />
-          
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-white mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-6 leading-tight">
             Your shortcut to{" "}
-            <span className="bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               customer-focused releases
             </span>
           </h1>
@@ -104,143 +79,46 @@ const Index = () => {
             Create feedback loops, personalized changelogs, and track engagement — all in one place
           </p>
 
-          <div id="waitlist-form">
-            <WaitlistForm onSuccess={handleWaitlistSuccess} />
-          </div>
+          <Button 
+            size="lg" 
+            className="bg-primary hover:bg-primary/90 mb-8"
+            onClick={scrollToWaitlist}
+          >
+            <span className="mr-2">Get Early Access</span>
+            <ArrowRight className="h-5 w-5" />
+          </Button>
 
-          <div className="mt-8 flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-400" />
+              <CheckCircle className="h-4 w-4 text-primary" />
               <span>No credit card required</span>
             </div>
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-400"  />
+              <CheckCircle className="h-4 w-4 text-primary" />
               <span>Early access guaranteed</span>
             </div>
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-green-400" />
+              <CheckCircle className="h-4 w-4 text-primary" />
               <span>Cancel anytime</span>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Everything you need for customer-focused releases
-            </h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Stop losing great ideas, sending robotic updates, and guessing what resonates with your customers.
-            </p>
-          </div>
+      {/* Value Propositions Section */}
+      <ValuePropsSection />
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                icon: Inbox,
-                title: "Smart Inbox for All Customer Updates",
-                benefit: "Find what you need instantly. Stop losing great ideas.",
-                problem: "Teams spend time organizing content buried across docs, emails, and chats.",
-                solution: "Auto-organize every release note, announcement, or idea in one searchable inbox."
-              },
-              {
-                icon: Edit,
-                title: "AI Editor for On-Brand Content", 
-                benefit: "Send updates customers actually read. No more robotic emails.",
-                problem: "Your releases sound generic, not like you.",
-                solution: "Tweak drafts to match your brand's voice and customer's tone — then publish as changelogs or widgets."
-              },
-              {
-                icon: MessageCircle,
-                title: "Feedback Hub with Public Voting",
-                benefit: "Close the loop faster. Show customers you're listening.",
-                problem: "Feedback vanishes into spreadsheets or Slack threads.",
-                solution: "Let customers and teammates submit, vote, and see how ideas are progressing."
-              },
-              {
-                icon: BarChart3,
-                title: "Content Insights Dashboard",
-                benefit: "See what's working. Stop wasting time on what's not.",
-                problem: "You're guessing if releases even resonate.",
-                solution: "Check open rates, clicks, and reactions for every update you send."
-              }
-            ].map((feature, index) => (
-              <div key={index} className="glass-card p-6 border-white/[0.08] hover:border-primary/30 transition-all duration-300 group">
-                <div className="w-12 h-12 bg-gradient-to-br from-primary/20 to-cyan-500/10 rounded-xl flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                  <feature.icon className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="text-lg font-semibold text-white mb-3">{feature.title}</h3>
-                <p className="text-primary font-medium text-sm mb-3">{feature.benefit}</p>
-                <div className="opacity-70 group-hover:opacity-100 transition-opacity">
-                  <p className="text-muted-foreground text-xs mb-2">
-                    <span className="text-red-400">Problem:</span> {feature.problem}
-                  </p>
-                  <p className="text-muted-foreground text-xs">
-                    <span className="text-green-400">Solution:</span> {feature.solution}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
+      {/* Integrations Section */}
+      <IntegrationsSection />
 
-      {/* Why Join Waitlist Section */}
-      <WhyJoinWaitlist />
+      {/* Waitlist Section */}
+      <WaitlistSection 
+        submittedEmail={submittedEmail}
+        submittedReferralCode={submittedReferralCode}
+        onWaitlistSuccess={handleWaitlistSuccess}
+      />
 
-      {/* Referral System */}
-      <div id="referral-section">
-        <ReferralSystem 
-          email={submittedEmail} 
-          onReferralGenerated={(code) => setSubmittedReferralCode(code)}
-        />
-      </div>
-
-      {/* CTA Section */}
-      <section className="py-20 px-4">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="glass-card p-12 border-primary/20">
-            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">
-              Ready to create releases customers love?
-            </h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Join thousands of teams building better customer relationships. Get early access, exclusive rewards, and start creating meaningful feedback loops today.
-            </p>
-            {!submittedEmail && (
-              <Button 
-                size="lg" 
-                className="button-glow bg-gradient-to-r from-primary to-cyan-500 hover:from-primary/90 hover:to-cyan-500/90 border-0"
-                onClick={scrollToForm}
-              >
-                <span className="mr-2">Join the Waitlist</span>
-                <ArrowRight className="h-5 w-5" />
-              </Button>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer */}
-      <footer className="border-t border-white/[0.08] py-8 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="flex flex-col md:flex-row items-center justify-between">
-            <div className="flex items-center space-x-3 mb-4 md:mb-0">
-              <DelyftLogo width={80} height={23} className="h-6" />
-            </div>
-            <div className="text-center md:text-right">
-              <p className="text-muted-foreground text-sm">
-                © 2024 Delyft. All rights reserved.
-              </p>
-              <p className="text-muted-foreground text-xs mt-1">
-                Building customer-focused release workflows
-              </p>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <Footer />
 
       <style>{`
         .confetti-animation {

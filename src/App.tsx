@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -40,76 +41,78 @@ const App = () => {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/glossary/:userId" element={<PublicGlossary />} />
-            <Route path="/public/:companySlug" element={<PublicChangelog />} />
-            
-            {/* Auth routes */}
-            <Route 
-              path="/auth" 
-              element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} 
-            />
-            
-            {/* Onboarding route */}
-            <Route 
-              path="/onboarding" 
-              element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} 
-            />
-            
-            {/* Protected routes */}
-            <Route 
-              path="/dashboard" 
-              element={user ? <DashboardPage /> : <Navigate to="/auth" replace />} 
-            />
-            <Route 
-              path="/releases" 
-              element={user ? <Releases /> : <Navigate to="/auth" replace />} 
-            />
-            <Route 
-              path="/releases/new" 
-              element={user ? <ReleaseEditor /> : <Navigate to="/auth" replace />} 
-            />
-            <Route 
-              path="/releases/:id/edit" 
-              element={user ? <ReleaseEditor /> : <Navigate to="/auth" replace />} 
-            />
-            <Route 
-              path="/inbox" 
-              element={user ? <InboxPage /> : <Navigate to="/auth" replace />} 
-            />
-            <Route 
-              path="/changelogs" 
-              element={user ? <Changelogs /> : <Navigate to="/auth" replace />} 
-            />
-            <Route 
-              path="/settings" 
-              element={user ? <SettingsPage /> : <Navigate to="/auth" replace />} 
-            />
-            <Route 
-              path="/feedback" 
-              element={user ? <Feedback /> : <Navigate to="/auth" replace />} 
-            />
-            <Route 
-              path="/roadmap" 
-              element={user ? <Roadmap /> : <Navigate to="/auth" replace />} 
-            />
-            
-            {/* Landing page */}
-            <Route 
-              path="/" 
-              element={user ? <Navigate to="/dashboard" replace /> : <Index />} 
-            />
-            
-            {/* Catch all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </BrowserRouter>
-      </TooltipProvider>
+      <ThemeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/glossary/:userId" element={<PublicGlossary />} />
+              <Route path="/public/:companySlug" element={<PublicChangelog />} />
+              
+              {/* Auth routes */}
+              <Route 
+                path="/auth" 
+                element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} 
+              />
+              
+              {/* Onboarding route */}
+              <Route 
+                path="/onboarding" 
+                element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} 
+              />
+              
+              {/* Protected routes */}
+              <Route 
+                path="/dashboard" 
+                element={user ? <DashboardPage /> : <Navigate to="/auth" replace />} 
+              />
+              <Route 
+                path="/releases" 
+                element={user ? <Releases /> : <Navigate to="/auth" replace />} 
+              />
+              <Route 
+                path="/releases/new" 
+                element={user ? <ReleaseEditor /> : <Navigate to="/auth" replace />} 
+              />
+              <Route 
+                path="/releases/:id/edit" 
+                element={user ? <ReleaseEditor /> : <Navigate to="/auth" replace />} 
+              />
+              <Route 
+                path="/inbox" 
+                element={user ? <InboxPage /> : <Navigate to="/auth" replace />} 
+              />
+              <Route 
+                path="/changelogs" 
+                element={user ? <Changelogs /> : <Navigate to="/auth" replace />} 
+              />
+              <Route 
+                path="/settings" 
+                element={user ? <SettingsPage /> : <Navigate to="/auth" replace />} 
+              />
+              <Route 
+                path="/feedback" 
+                element={user ? <Feedback /> : <Navigate to="/auth" replace />} 
+              />
+              <Route 
+                path="/roadmap" 
+                element={user ? <Roadmap /> : <Navigate to="/auth" replace />} 
+              />
+              
+              {/* Landing page */}
+              <Route 
+                path="/" 
+                element={user ? <Navigate to="/dashboard" replace /> : <Index />} 
+              />
+              
+              {/* Catch all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 };

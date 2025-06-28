@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -53,20 +54,20 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   };
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       {/* Sidebar */}
       <div className={cn(
-        "bg-white border-r border-gray-200 transition-all duration-300 flex flex-col",
+        "bg-card border-r border-border transition-all duration-300 flex flex-col",
         sidebarCollapsed ? "w-16" : "w-64"
       )}>
         {/* Header */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-border">
           <div className="flex items-center justify-between">
             {!sidebarCollapsed && (
               <div className="flex items-center">
                 <DelyftLogo width={120} height={34} className="h-8 mr-3" />
                 <div>
-                  <p className="text-sm text-gray-600">AI GTM Squad</p>
+                  <p className="text-sm text-muted-foreground">delyft</p>
                 </div>
               </div>
             )}
@@ -95,7 +96,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
               {item.children ? (
                 <div className="space-y-1">
                   <div className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium text-gray-700",
+                    "flex items-center px-3 py-2 text-sm font-medium text-muted-foreground",
                     sidebarCollapsed && "justify-center"
                   )}>
                     <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
@@ -108,8 +109,8 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                           key={child.name}
                           to={child.href}
                           className={cn(
-                            "flex items-center px-3 py-2 text-sm text-gray-600 rounded-md hover:bg-gray-100",
-                            location.pathname === child.href && "bg-primary-50 text-primary-700"
+                            "flex items-center px-3 py-2 text-sm text-muted-foreground rounded-md hover:bg-accent",
+                            location.pathname === child.href && "bg-accent text-foreground"
                           )}
                         >
                           <child.icon className="h-4 w-4 mr-2 flex-shrink-0" />
@@ -123,10 +124,10 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
                 <Link
                   to={item.href}
                   className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-gray-100",
+                    "flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent",
                     location.pathname === item.href 
-                      ? "bg-primary-50 text-primary-700" 
-                      : "text-gray-700",
+                      ? "bg-accent text-foreground" 
+                      : "text-muted-foreground",
                     sidebarCollapsed && "justify-center"
                   )}
                 >
@@ -139,11 +140,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </nav>
 
         {/* User Menu */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-border">
           {!sidebarCollapsed && (
             <div className="mb-3">
-              <p className="text-sm font-medium text-gray-900">{user?.email}</p>
-              <p className="text-xs text-gray-500">Administrator</p>
+              <p className="text-sm font-medium text-foreground">{user?.email}</p>
+              <p className="text-xs text-muted-foreground">Administrator</p>
             </div>
           )}
           <Button
@@ -151,7 +152,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             size="sm"
             onClick={handleLogout}
             className={cn(
-              "w-full justify-start text-gray-700 hover:text-gray-900",
+              "w-full justify-start text-muted-foreground hover:text-foreground",
               sidebarCollapsed && "justify-center px-0"
             )}
           >
@@ -164,9 +165,9 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
-        <header className="bg-white border-b border-gray-200 px-6 py-4">
+        <header className="bg-card border-b border-border px-6 py-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-xl font-semibold text-gray-900">
+            <h2 className="text-xl font-semibold text-foreground">
               {location.pathname === '/dashboard' && 'Dashboard'}
               {location.pathname === '/inbox' && 'Inbox'}
               {location.pathname.includes('/releases') && 'Release Notes'}
@@ -193,7 +194,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-auto p-6">
+        <main className="flex-1 overflow-auto p-6 bg-background">
           {children}
         </main>
       </div>
