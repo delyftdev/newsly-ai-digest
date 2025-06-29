@@ -561,7 +561,7 @@ const ChangelogEditor = () => {
         </Dialog>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .editor-container, .rich-text-editor, .ql-editor {
           direction: ltr !important;
           text-align: left !important;
