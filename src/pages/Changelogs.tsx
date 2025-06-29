@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Plus, ExternalLink, Edit, Eye, Calendar, Tag } from "lucide-react";
@@ -33,22 +33,11 @@ const Changelogs = () => {
     }
   };
 
-  const publishedCount = changelogs.filter(c => c.status === 'published').length;
-  const draftCount = changelogs.filter(c => c.status === 'draft').length;
-  const thisMonthCount = changelogs.filter(c => {
-    const created = new Date(c.created_at);
-    const now = new Date();
-    return created.getMonth() === now.getMonth() && created.getFullYear() === now.getFullYear();
-  }).length;
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Changelogs</h1>
-            <p className="text-gray-600">Manage your public changelog and customer communications</p>
-          </div>
+          <div className="flex-1" />
           <div className="flex space-x-2">
             <Button variant="outline">
               <ExternalLink className="h-4 w-4 mr-2" />
@@ -57,58 +46,13 @@ const Changelogs = () => {
             <Link to="/changelogs/new">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
-                New Entry
+                New
               </Button>
             </Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Published Entries</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-blue-600">{publishedCount}</div>
-              <p className="text-sm text-gray-500">Live changelogs</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Draft Entries</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-orange-600">{draftCount}</div>
-              <p className="text-sm text-gray-500">Work in progress</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">This Month</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-green-600">{thisMonthCount}</div>
-              <p className="text-sm text-gray-500">New this month</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg">Engagement</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-purple-600">--</div>
-              <p className="text-sm text-gray-500">Coming soon</p>
-            </CardContent>
-          </Card>
-        </div>
-
         <Card>
-          <CardHeader>
-            <CardTitle>Changelog Entries</CardTitle>
-          </CardHeader>
           <CardContent>
             {loading ? (
               <div className="text-center py-8 text-gray-500">

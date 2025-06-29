@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -153,14 +152,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </h2>
             
             <div className="flex items-center space-x-4">
-              {location.pathname === '/changelogs' && (
-                <Link to="/changelogs/new">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    New Changelog
-                  </Button>
-                </Link>
-              )}
               <Button variant="ghost" size="sm">
                 <Bell className="h-4 w-4" />
               </Button>
