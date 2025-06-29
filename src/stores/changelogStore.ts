@@ -1,8 +1,5 @@
-
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuthStore } from './authStore';
-import { useCompanyStore } from './companyStore';
 
 export interface Changelog {
   id: string;
@@ -57,6 +54,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
   autoSaveTimeout: null,
 
   fetchChangelogs: async () => {
+    console.log('=== FETCHING CHANGELOGS ===');
     set({ loading: true });
     try {
       const { data, error } = await supabase
@@ -64,11 +62,14 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .select('*')
         .order('created_at', { ascending: false });
 
+      console.log('Fetch changelogs result:', { data, error });
       if (error) {
         console.error('Fetch changelogs error:', error);
         throw error;
       }
-      set({ changelogs: (data || []).map(transformDbRow) });
+      const transformedData = (data || []).map(transformDbRow);
+      console.log('Transformed changelogs:', transformedData);
+      set({ changelogs: transformedData });
     } catch (error) {
       console.error('Error fetching changelogs:', error);
     } finally {
@@ -77,6 +78,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
   },
 
   fetchChangelog: async (id: string) => {
+    console.log('=== FETCHING SINGLE CHANGELOG ===', id);
     set({ loading: true });
     try {
       const { data, error } = await supabase
@@ -85,11 +87,14 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .eq('id', id)
         .single();
 
+      console.log('Fetch single changelog result:', { data, error });
       if (error) {
         console.error('Fetch changelog error:', error);
         throw error;
       }
-      set({ currentChangelog: transformDbRow(data) });
+      const transformedData = transformDbRow(data);
+      console.log('Transformed changelog:', transformedData);
+      set({ currentChangelog: transformedData });
     } catch (error) {
       console.error('Error fetching changelog:', error);
       set({ currentChangelog: null });
@@ -100,76 +105,112 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
 
   createChangelog: async (changelogData: Partial<Changelog>) => {
     try {
-      console.log('Creating changelog with data:', changelogData);
+      console.log('=== CREATE CHANGELOG START ===');
+      console.log('Input data:', JSON.stringify(changelogData, null, 2));
       
-      // Get current user
+      // Step 1: Check authentication
+      console.log('Step 1: Checking authentication...');
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log('Current user:', user, 'Auth error:', authError);
+      console.log('Auth check result:', { user: user?.id, authError });
       
-      if (authError || !user) {
+      if (authError) {
         console.error('Authentication error:', authError);
-        return { error: 'User not authenticated' };
+        return { error: `Authentication failed: ${authError.message}` };
+      }
+      
+      if (!user) {
+        console.error('No authenticated user found');
+        return { error: 'User not authenticated - please log in' };
       }
 
-      // Get user's company from profile
+      // Step 2: Get user's company
+      console.log('Step 2: Getting user company...');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('company_id')
         .eq('id', user.id)
         .single();
       
-      console.log('User profile:', profile, 'Profile error:', profileError);
+      console.log('Profile query result:', { profile, profileError });
 
-      if (profileError || !profile?.company_id) {
-        console.error('Profile/company error:', profileError);
-        return { error: 'No company found for user' };
+      if (profileError) {
+        console.error('Profile error:', profileError);
+        return { error: `Profile error: ${profileError.message}` };
+      }
+      
+      if (!profile?.company_id) {
+        console.error('No company found for user');
+        return { error: 'No company found for user - please complete onboarding' };
       }
 
+      // Step 3: Prepare insert data
+      console.log('Step 3: Preparing insert data...');
       const insertData = {
         title: changelogData.title || '',
         content: changelogData.content,
-        category: changelogData.category,
-        status: changelogData.status,
-        visibility: changelogData.visibility,
+        category: changelogData.category || 'announcement',
+        status: changelogData.status || 'draft',
+        visibility: changelogData.visibility || 'public',
         featured_image_url: changelogData.featured_image_url,
         video_url: changelogData.video_url,
-        tags: changelogData.tags,
+        tags: changelogData.tags || [],
         company_id: profile.company_id,
         created_by: user.id,
       };
 
-      console.log('Insert data:', insertData);
+      console.log('Final insert data:', JSON.stringify(insertData, null, 2));
 
+      // Step 4: Insert into database
+      console.log('Step 4: Inserting into database...');
       const { data, error } = await supabase
         .from('changelogs')
         .insert(insertData)
         .select()
         .single();
 
-      console.log('Insert result:', { data, error });
+      console.log('Database insert result:', { data, error });
 
       if (error) {
-        console.error('Database insert error:', error);
-        throw error;
+        console.error('Database insert error details:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code
+        });
+        return { error: `Database error: ${error.message}` };
       }
 
+      if (!data) {
+        console.error('No data returned from insert');
+        return { error: 'No data returned from database' };
+      }
+
+      // Step 5: Transform and update state
+      console.log('Step 5: Updating state...');
       const transformedData = transformDbRow(data);
+      console.log('Transformed data:', transformedData);
+      
       set(state => ({
         changelogs: [transformedData, ...state.changelogs],
         currentChangelog: transformedData
       }));
 
-      console.log('Successfully created changelog:', transformedData);
+      console.log('=== CREATE CHANGELOG SUCCESS ===');
       return { data: transformedData };
+      
     } catch (error: any) {
-      console.error('Error creating changelog:', error);
-      return { error: error.message || 'Failed to create changelog' };
+      console.error('=== CREATE CHANGELOG ERROR ===');
+      console.error('Unexpected error:', error);
+      console.error('Error stack:', error.stack);
+      return { error: `Unexpected error: ${error.message}` };
     }
   },
 
   updateChangelog: async (id: string, updateData: Partial<Changelog>) => {
     try {
-      console.log('Updating changelog:', id, 'with data:', updateData);
+      console.log('=== UPDATE CHANGELOG START ===');
+      console.log('Updating changelog ID:', id);
+      console.log('Update data:', JSON.stringify(updateData, null, 2));
 
       const { data, error } = await supabase
         .from('changelogs')
@@ -192,7 +233,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
 
       if (error) {
         console.error('Database update error:', error);
-        throw error;
+        return { error: `Update failed: ${error.message}` };
       }
 
       const transformedData = transformDbRow(data);
@@ -201,11 +242,12 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         currentChangelog: state.currentChangelog?.id === id ? transformedData : state.currentChangelog
       }));
 
-      console.log('Successfully updated changelog:', transformedData);
+      console.log('=== UPDATE CHANGELOG SUCCESS ===');
       return {};
     } catch (error: any) {
-      console.error('Error updating changelog:', error);
-      return { error: error.message || 'Failed to update changelog' };
+      console.error('=== UPDATE CHANGELOG ERROR ===');
+      console.error('Unexpected update error:', error);
+      return { error: `Unexpected error: ${error.message}` };
     }
   },
 
