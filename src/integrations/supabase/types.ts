@@ -278,6 +278,115 @@ export type Database = {
           },
         ]
       }
+      feedback_comments: {
+        Row: {
+          content: string
+          created_at: string
+          feedback_id: string
+          id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          feedback_id: string
+          id?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_comments_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedback_ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      feedback_ideas: {
+        Row: {
+          category: string
+          company_id: string
+          created_at: string
+          description: string | null
+          id: string
+          is_private: boolean | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          user_id: string
+          vote_count: number
+        }
+        Insert: {
+          category?: string
+          company_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_private?: boolean | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          user_id: string
+          vote_count?: number
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_private?: boolean | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          vote_count?: number
+        }
+        Relationships: []
+      }
+      feedback_votes: {
+        Row: {
+          created_at: string
+          feedback_id: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback_id: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback_id?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "feedback_votes_feedback_id_fkey"
+            columns: ["feedback_id"]
+            isOneToOne: false
+            referencedRelation: "feedback_ideas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       inbox_emails: {
         Row: {
           created_at: string | null
