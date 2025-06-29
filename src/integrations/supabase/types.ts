@@ -47,6 +47,69 @@ export type Database = {
           },
         ]
       }
+      changelogs: {
+        Row: {
+          ai_generated: boolean | null
+          auto_saved_at: string | null
+          category: string
+          company_id: string
+          content: Json | null
+          created_at: string
+          created_by: string
+          featured_image_url: string | null
+          id: string
+          public_slug: string | null
+          published_at: string | null
+          published_by: string | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          video_url: string | null
+          visibility: string
+        }
+        Insert: {
+          ai_generated?: boolean | null
+          auto_saved_at?: string | null
+          category?: string
+          company_id: string
+          content?: Json | null
+          created_at?: string
+          created_by: string
+          featured_image_url?: string | null
+          id?: string
+          public_slug?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          video_url?: string | null
+          visibility?: string
+        }
+        Update: {
+          ai_generated?: boolean | null
+          auto_saved_at?: string | null
+          category?: string
+          company_id?: string
+          content?: Json | null
+          created_at?: string
+          created_by?: string
+          featured_image_url?: string | null
+          id?: string
+          public_slug?: string | null
+          published_at?: string | null
+          published_by?: string | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          video_url?: string | null
+          visibility?: string
+        }
+        Relationships: []
+      }
       companies: {
         Row: {
           banner_url: string | null
@@ -686,6 +749,10 @@ export type Database = {
     Functions: {
       ensure_company_inbox_email: {
         Args: { company_uuid: string }
+        Returns: string
+      }
+      generate_changelog_slug: {
+        Args: { title: string; company_id: string }
         Returns: string
       }
       get_user_company_from_team_members: {

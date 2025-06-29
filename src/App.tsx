@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -21,10 +20,12 @@ import Feedback from "./pages/Feedback";
 import Roadmap from "./pages/Roadmap";
 import PublicGlossary from "./pages/PublicGlossary";
 import NotFound from "./pages/NotFound";
+import ChangelogEditor from "./pages/ChangelogEditor";
+import PublicChangelogEntry from "./pages/PublicChangelogEntry";
 
 const queryClient = new QueryClient();
 
-const App = () => {
+function App() {
   const { user, isLoading, initialize } = useAuthStore();
 
   useEffect(() => {
@@ -89,6 +90,18 @@ const App = () => {
                 element={user ? <Changelogs /> : <Navigate to="/auth" replace />} 
               />
               <Route 
+                path="/changelogs/new" 
+                element={<ChangelogEditor />} 
+              />
+              <Route 
+                path="/changelogs/:id/edit" 
+                element={<ChangelogEditor />} 
+              />
+              <Route 
+                path="/changelog/:slug" 
+                element={<PublicChangelogEntry />} 
+              />
+              <Route 
                 path="/settings" 
                 element={user ? <SettingsPage /> : <Navigate to="/auth" replace />} 
               />
@@ -115,6 +128,6 @@ const App = () => {
       </ThemeProvider>
     </QueryClientProvider>
   );
-};
+}
 
 export default App;
