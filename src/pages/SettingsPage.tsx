@@ -1,4 +1,6 @@
+
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/stores/authStore";
 import { useCompanyStore } from "@/stores/companyStore";
 import { useInboxStore } from "@/stores/inboxStore";
@@ -6,17 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "@/components/ui/use-toast";
-import { Building, Users, Palette, Mail, User } from "lucide-react";
+import { ArrowLeft, Building, Users, Palette, Mail, User, Bell, Settings as SettingsIcon } from "lucide-react";
 import { useTeamActivityStore } from "@/stores/teamActivityStore";
+import DashboardLayout from "@/components/DashboardLayout";
 
 const SettingsPage = () => {
+  const navigate = useNavigate();
   const { user } = useAuthStore();
   const { company, branding, teamMembers, fetchCompany, updateCompany, updateBranding, updateProfile, inviteTeamMember } = useCompanyStore();
   const { emails, fetchEmails } = useInboxStore();
   
+  const [activeTab, setActiveTab] = useState("profile");
   const [isLoading, setIsLoading] = useState(false);
   const [profileData, setProfileData] = useState({
     fullName: "",
@@ -38,6 +42,15 @@ const SettingsPage = () => {
     role: "viewer",
   });
 
+  const sidebarItems = [
+    { id: "profile", label: "Profile", icon: User },
+    { id: "company", label: "Company", icon: Building },
+    { id: "team", label: "Team", icon: Users },
+    { id: "branding", label: "Branding", icon: Palette },
+    { id: "inbox", label: "Inbox", icon: Mail },
+    { id: "notifications", label: "Notifications", icon: Bell },
+  ];
+
   // Load data on mount and when company/branding changes
   useEffect(() => {
     fetchCompany();
@@ -49,7 +62,7 @@ const SettingsPage = () => {
     if (user) {
       setProfileData({
         fullName: user.user_metadata?.full_name || "",
-        role: "admin", // Default for now, can be enhanced later
+        role: "admin",
       });
     }
   }, [user]);
@@ -203,31 +216,12 @@ const SettingsPage = () => {
     }
   };
 
-  return (
-    <div className="container mx-auto py-8 px-4">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600">Manage your account and company settings</p>
-      </div>
-
-      <Tabs defaultValue="profile" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="profile">Profile</TabsTrigger>
-          <TabsTrigger value="company">Company</TabsTrigger>
-          <TabsTrigger value="team">Team</TabsTrigger>
-          <TabsTrigger value="branding">Branding</TabsTrigger>
-          <TabsTrigger value="inbox">Inbox</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="profile">
+  const renderContent = () => {
+    switch (activeTab) {
+      case "profile":
+        return (
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Profile Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-6 space-y-4">
               <div>
                 <Label htmlFor="fullName">Full Name</Label>
                 <Input
@@ -244,25 +238,21 @@ const SettingsPage = () => {
                   value={user?.email || ""}
                   disabled
                   placeholder="Your email address"
+                  className="bg-muted"
                 />
-                <p className="text-sm text-gray-500 mt-1">Email cannot be changed</p>
+                <p className="text-sm text-muted-foreground mt-1">Email cannot be changed</p>
               </div>
               <Button onClick={handleProfileUpdate} disabled={isLoading}>
                 {isLoading ? "Updating..." : "Update Profile"}
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
+        );
 
-        <TabsContent value="company">
+      case "company":
+        return (
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Building className="w-5 h-5" />
-                Company Information
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-6 space-y-4">
               <div>
                 <Label htmlFor="companyName">Company Name</Label>
                 <Input
@@ -288,7 +278,7 @@ const SettingsPage = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select team size" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-popover">
                       <SelectItem value="1-5">1-5 people</SelectItem>
                       <SelectItem value="6-20">6-20 people</SelectItem>
                       <SelectItem value="21-50">21-50 people</SelectItem>
@@ -303,7 +293,7 @@ const SettingsPage = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select industry" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-popover">
                       <SelectItem value="technology">Technology</SelectItem>
                       <SelectItem value="saas">SaaS</SelectItem>
                       <SelectItem value="ecommerce">E-commerce</SelectItem>
@@ -320,32 +310,30 @@ const SettingsPage = () => {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
+        );
 
-        <TabsContent value="team">
+      case "team":
+        return (
           <div className="space-y-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Users className="w-5 h-5" />
-                  Team Members
-                </CardTitle>
+                <CardTitle>Team Members</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {teamMembers.map((member) => (
                     <div key={member.id} className="flex items-center justify-between p-3 border rounded-lg">
                       <div>
-                        <p className="font-medium">{member.profiles?.full_name || "Unknown User"}</p>
-                        <p className="text-sm text-gray-500 capitalize">{member.role}</p>
+                        <p className="font-medium text-foreground">{member.profiles?.full_name || "Unknown User"}</p>
+                        <p className="text-sm text-muted-foreground capitalize">{member.role}</p>
                       </div>
-                      <div className="text-sm text-gray-500">
+                      <div className="text-sm text-muted-foreground">
                         {member.status === 'active' ? 'Active' : 'Pending'}
                       </div>
                     </div>
                   ))}
                   {teamMembers.length === 0 && (
-                    <p className="text-gray-500 text-center py-4">No team members found</p>
+                    <p className="text-muted-foreground text-center py-4">No team members found</p>
                   )}
                 </div>
               </CardContent>
@@ -372,7 +360,7 @@ const SettingsPage = () => {
                     <SelectTrigger>
                       <SelectValue placeholder="Select role" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-popover">
                       <SelectItem value="admin">Admin</SelectItem>
                       <SelectItem value="editor">Editor</SelectItem>
                       <SelectItem value="viewer">Viewer</SelectItem>
@@ -385,17 +373,12 @@ const SettingsPage = () => {
               </CardContent>
             </Card>
           </div>
-        </TabsContent>
+        );
 
-        <TabsContent value="branding">
+      case "branding":
+        return (
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Palette className="w-5 h-5" />
-                Brand Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="p-6 space-y-4">
               <div>
                 <Label htmlFor="primaryColor">Primary Color</Label>
                 <div className="flex items-center gap-3">
@@ -438,7 +421,7 @@ const SettingsPage = () => {
                   <SelectTrigger>
                     <SelectValue placeholder="Select font" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="bg-popover">
                     <SelectItem value="Inter">Inter</SelectItem>
                     <SelectItem value="Roboto">Roboto</SelectItem>
                     <SelectItem value="Open Sans">Open Sans</SelectItem>
@@ -452,49 +435,106 @@ const SettingsPage = () => {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
+        );
 
-        <TabsContent value="inbox">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mail className="w-5 h-5" />
-                Inbox Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label>Generated Email Address</Label>
-                <div className="mt-2">
-                  {emails.length > 0 ? (
-                    <div className="space-y-2">
-                      {emails.map((email) => (
-                        <div key={email.id} className="p-3 bg-gray-50 rounded-lg">
-                          <p className="font-mono text-sm">{email.email_address}</p>
-                          <p className="text-xs text-gray-500 mt-1">
-                            Forward emails to this address to have them appear in your inbox
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-gray-500">No inbox email generated yet</p>
-                  )}
+      case "inbox":
+        return (
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Mail className="w-5 h-5" />
+                  Inbox Settings
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label className="text-foreground">Generated Email Address</Label>
+                  <div className="mt-2">
+                    {emails.length > 0 ? (
+                      <div className="space-y-2">
+                        {emails.map((email) => (
+                          <div key={email.id} className="p-3 bg-muted rounded-lg">
+                            <p className="font-mono text-sm text-foreground">{email.email_address}</p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Forward emails to this address to have them appear in your inbox
+                            </p>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-muted-foreground">No inbox email generated yet</p>
+                    )}
+                  </div>
                 </div>
-              </div>
-              <div className="p-4 bg-blue-50 rounded-lg">
-                <h4 className="font-medium text-blue-900 mb-2">How to use your inbox email:</h4>
-                <ul className="text-sm text-blue-800 space-y-1">
-                  <li>• Forward newsletters, product briefs, and updates to this email</li>
-                  <li>• Our AI will automatically categorize and summarize the content</li>
-                  <li>• Use the "Create Release" button to turn emails into releases</li>
-                </ul>
-              </div>
+                <div className="p-4 bg-blue-50 dark:bg-blue-950 rounded-lg">
+                  <h4 className="font-medium text-blue-900 dark:text-blue-100 mb-2">How to use your inbox email:</h4>
+                  <ul className="text-sm text-blue-800 dark:text-blue-200 space-y-1">
+                    <li>• Forward newsletters, product briefs, and updates to this email</li>
+                    <li>• Our AI will automatically categorize and summarize the content</li>
+                    <li>• Use the "Create Release" button to turn emails into releases</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        );
+
+      case "notifications":
+        return (
+          <Card>
+            <CardContent className="p-6 space-y-4">
+              <p className="text-muted-foreground">Notification settings will be available soon.</p>
             </CardContent>
           </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+        );
+
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <DashboardLayout>
+      <div className="flex h-full">
+        {/* Left Sidebar */}
+        <div className="w-64 border-r border-border bg-card">
+          <div className="p-4 border-b border-border">
+            <div className="flex items-center gap-3 mb-4">
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => navigate('/dashboard')}
+                className="h-8 w-8 p-0"
+              >
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+              <h1 className="text-xl font-semibold text-foreground">Settings</h1>
+            </div>
+            <p className="text-sm text-muted-foreground">Manage your account and company settings</p>
+          </div>
+          
+          <nav className="p-4 space-y-1">
+            {sidebarItems.map((item) => (
+              <Button
+                key={item.id}
+                variant={activeTab === item.id ? "secondary" : "ghost"}
+                className="w-full justify-start"
+                onClick={() => setActiveTab(item.id)}
+              >
+                <item.icon className="h-4 w-4 mr-3" />
+                {item.label}
+              </Button>
+            ))}
+          </nav>
+        </div>
+
+        {/* Main Content */}
+        <div className="flex-1 p-6">
+          {renderContent()}
+        </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

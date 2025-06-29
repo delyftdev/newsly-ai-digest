@@ -1,222 +1,154 @@
-import { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Plus, X } from 'lucide-react';
-import { toast } from 'sonner';
+
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { X } from "lucide-react";
 
 interface SubmitIdeaModalProps {
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSubmit?: (idea: {
-    title: string;
-    description: string;
-    category: string;
-    tags: string[];
-    status: string;
-    is_private: boolean;
-  }) => Promise<void>;
-  children?: React.ReactNode;
+  isOpen: boolean;
+  onClose: () => void;
+  onSubmit: (idea: any) => Promise<void>;
 }
 
-const SubmitIdeaModal = ({ open, onOpenChange, onSubmit, children }: SubmitIdeaModalProps) => {
+const SubmitIdeaModal = ({ isOpen, onClose, onSubmit }: SubmitIdeaModalProps) => {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState("feature");
+  const [tags, setTags] = useState<string[]>([]);
+  const [newTag, setNewTag] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    category: 'improvement',
-    tags: [] as string[],
-    is_private: false
-  });
-  const [newTag, setNewTag] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    if (!formData.title.trim()) {
-      toast.error('Please enter a title for your idea');
-      return;
-    }
-
-    if (!onSubmit) {
-      toast.error('Submit function not provided');
-      return;
-    }
+    if (!title.trim()) return;
 
     setIsSubmitting(true);
-    
     try {
       await onSubmit({
-        ...formData,
-        status: 'under-review'
+        title: title.trim(),
+        description: description.trim() || null,
+        category,
+        status: 'open',
+        tags,
+        is_private: false,
       });
       
-      toast.success('Your idea has been submitted successfully!');
-      onOpenChange(false);
-      setFormData({
-        title: '',
-        description: '',
-        category: 'improvement',
-        tags: [],
-        is_private: false
-      });
+      // Reset form
+      setTitle("");
+      setDescription("");
+      setCategory("feature");
+      setTags([]);
+      setNewTag("");
+      onClose();
     } catch (error) {
-      toast.error('Failed to submit idea. Please try again.');
+      console.error('Error submitting idea:', error);
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const addTag = () => {
-    if (newTag.trim() && !formData.tags.includes(newTag.trim())) {
-      setFormData(prev => ({
-        ...prev,
-        tags: [...prev.tags, newTag.trim()]
-      }));
-      setNewTag('');
+    if (newTag.trim() && !tags.includes(newTag.trim())) {
+      setTags([...tags, newTag.trim()]);
+      setNewTag("");
     }
   };
 
   const removeTag = (tagToRemove: string) => {
-    setFormData(prev => ({
-      ...prev,
-      tags: prev.tags.filter(tag => tag !== tagToRemove)
-    }));
+    setTags(tags.filter(tag => tag !== tagToRemove));
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+    if (e.key === 'Enter') {
       e.preventDefault();
       addTag();
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        {children || (
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            Submit Idea
-          </Button>
-        )}
-      </DialogTrigger>
-      
-      <DialogContent className="sm:max-w-[600px] dark:bg-gray-800 dark:border-gray-700">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="bg-popover max-w-md">
         <DialogHeader>
-          <DialogTitle className="text-xl font-semibold dark:text-gray-100">
-            Submit a New Idea
-          </DialogTitle>
+          <DialogTitle>Submit New Idea</DialogTitle>
         </DialogHeader>
-        
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="space-y-2">
-            <Label htmlFor="title" className="dark:text-gray-200">
-              Title *
-            </Label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <Label htmlFor="title">Title *</Label>
             <Input
               id="title"
-              value={formData.title}
-              onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
-              placeholder="What's your idea?"
-              className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Describe your idea in a few words"
               required
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="description" className="dark:text-gray-200">
-              Description
-            </Label>
+
+          <div>
+            <Label htmlFor="description">Description</Label>
             <Textarea
               id="description"
-              value={formData.description}
-              onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
-              placeholder="Describe your idea in detail..."
-              className="min-h-[100px] dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Provide more details about your idea"
+              rows={3}
             />
           </div>
-          
-          <div className="space-y-2">
-            <Label htmlFor="category" className="dark:text-gray-200">
-              Category
-            </Label>
-            <Select
-              value={formData.category}
-              onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}
-            >
-              <SelectTrigger className="dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100">
-                <SelectValue placeholder="Select a category" />
+
+          <div>
+            <Label htmlFor="category">Category</Label>
+            <Select value={category} onValueChange={setCategory}>
+              <SelectTrigger>
+                <SelectValue />
               </SelectTrigger>
-              <SelectContent className="dark:bg-gray-700 dark:border-gray-600">
+              <SelectContent className="bg-popover">
                 <SelectItem value="feature">Feature Request</SelectItem>
                 <SelectItem value="improvement">Improvement</SelectItem>
                 <SelectItem value="bug">Bug Report</SelectItem>
-                <SelectItem value="integration">Integration</SelectItem>
-                <SelectItem value="styling">Styling</SelectItem>
-                <SelectItem value="welcome">Welcome</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          
-          <div className="space-y-2">
-            <Label className="dark:text-gray-200">Tags</Label>
-            <div className="flex gap-2">
+
+          <div>
+            <Label htmlFor="tags">Tags</Label>
+            <div className="flex gap-2 mb-2">
               <Input
+                id="tags"
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 onKeyPress={handleKeyPress}
-                placeholder="Add a tag..."
-                className="flex-1 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
+                placeholder="Add a tag and press Enter"
               />
               <Button type="button" onClick={addTag} variant="outline" size="sm">
                 Add
               </Button>
             </div>
-            {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {formData.tags.map((tag, index) => (
-                  <Badge key={index} variant="secondary" className="dark:bg-gray-700 dark:text-gray-300">
+            {tags.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {tags.map((tag) => (
+                  <Badge key={tag} variant="secondary" className="flex items-center gap-1">
                     {tag}
-                    <button
-                      type="button"
+                    <X 
+                      className="h-3 w-3 cursor-pointer" 
                       onClick={() => removeTag(tag)}
-                      className="ml-1 hover:text-red-500"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                    />
                   </Badge>
                 ))}
               </div>
             )}
           </div>
-          
-          <div className="flex items-center justify-between pt-4 border-t dark:border-gray-700">
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="private"
-                checked={formData.is_private}
-                onChange={(e) => setFormData(prev => ({ ...prev, is_private: e.target.checked }))}
-                className="rounded"
-              />
-              <Label htmlFor="private" className="text-sm dark:text-gray-200">
-                Keep this idea private
-              </Label>
-            </div>
-            
-            <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? 'Submitting...' : 'Submit Idea'}
-              </Button>
-            </div>
+
+          <div className="flex justify-end gap-2 pt-4">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" disabled={!title.trim() || isSubmitting}>
+              {isSubmitting ? "Submitting..." : "Submit Idea"}
+            </Button>
           </div>
         </form>
       </DialogContent>

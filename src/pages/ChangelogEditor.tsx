@@ -34,8 +34,6 @@ const ChangelogEditor = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [showVideoDialog, setShowVideoDialog] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
-  const [showPlusMenu, setShowPlusMenu] = useState(false);
-  const [showFormattingToolbar, setShowFormattingToolbar] = useState(false);
 
   const editorRef = useRef<HTMLDivElement>(null);
   const isEditing = Boolean(id);
@@ -77,6 +75,17 @@ const ChangelogEditor = () => {
       setLastSaved(new Date());
     }
   }, [title, content, category, featuredImage, videoUrl, visibility]);
+
+  // Fix text direction on editor mount
+  useEffect(() => {
+    if (editorRef.current) {
+      const editor = editorRef.current;
+      editor.style.direction = 'ltr';
+      editor.style.textAlign = 'left';
+      editor.style.unicodeBidi = 'normal';
+      editor.setAttribute('dir', 'ltr');
+    }
+  }, []);
 
   const handleSave = async () => {
     console.log('=== SAVE CLICKED ===');
@@ -184,8 +193,12 @@ const ChangelogEditor = () => {
     const success = document.execCommand(command, false, value);
     console.log('Command execution result:', success);
     
-    // Update content state
-    setContent(editorRef.current.innerHTML);
+    // Update content state and ensure LTR
+    if (editorRef.current) {
+      editorRef.current.style.direction = 'ltr';
+      editorRef.current.style.textAlign = 'left';
+      setContent(editorRef.current.innerHTML);
+    }
   };
 
   const insertVideo = () => {
@@ -235,7 +248,6 @@ const ChangelogEditor = () => {
       setContent(editorRef.current.innerHTML);
       setVideoUrl('');
       setShowVideoDialog(false);
-      setShowFormattingToolbar(false);
       console.log('Video inserted successfully');
     }
   };
@@ -252,7 +264,6 @@ const ChangelogEditor = () => {
     
     setFeaturedImage(imageUrl);
     setShowImageDialog(false);
-    setShowFormattingToolbar(false);
   };
 
   const insertImage = () => {
@@ -261,41 +272,16 @@ const ChangelogEditor = () => {
       const imageHtml = `<img src="${featuredImage}" alt="Image" style="max-width: 100%; height: auto; margin: 16px 0;" />`;
       editorRef.current.innerHTML += imageHtml;
       setContent(editorRef.current.innerHTML);
-      setShowFormattingToolbar(false);
     }
   };
 
   const handleEditorInput = (e: React.FormEvent<HTMLDivElement>) => {
     console.log('Editor input event');
     if (editorRef.current) {
+      // Ensure LTR direction is maintained
+      editorRef.current.style.direction = 'ltr';
+      editorRef.current.style.textAlign = 'left';
       setContent(editorRef.current.innerHTML);
-    }
-  };
-
-  const handleEditorFocus = () => {
-    console.log('Editor focused - showing plus menu');
-    setShowPlusMenu(true);
-  };
-
-  const handleEditorBlur = (e: React.FocusEvent<HTMLDivElement>) => {
-    console.log('Editor blur event');
-    // Only hide menus if not clicking on toolbar buttons
-    const relatedTarget = e.relatedTarget as HTMLElement;
-    if (!relatedTarget || !relatedTarget.closest('.editor-toolbar')) {
-      setTimeout(() => {
-        setShowPlusMenu(false);
-        setShowFormattingToolbar(false);
-      }, 200);
-    }
-  };
-
-  const handlePlusClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    console.log('Plus button clicked - toggling toolbar');
-    setShowFormattingToolbar(!showFormattingToolbar);
-    if (editorRef.current) {
-      editorRef.current.focus();
     }
   };
 
@@ -384,130 +370,116 @@ const ChangelogEditor = () => {
             />
           </div>
 
-          {/* Content Editor */}
-          <div className="relative editor-container">
-            {/* Plus Button - Always visible when editor is focused */}
-            {showPlusMenu && (
-              <div className="absolute -left-12 top-4 z-20">
+          {/* Always Visible Formatting Toolbar */}
+          <div className="mb-4 p-3 border rounded-md bg-muted/30">
+            <div className="flex items-center space-x-1">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => executeCommand('bold')}
+                className="h-8 w-8 p-0"
+                title="Bold"
+              >
+                <Bold className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => executeCommand('italic')}
+                className="h-8 w-8 p-0"
+                title="Italic"
+              >
+                <Italic className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => executeCommand('formatBlock', 'h1')}
+                className="h-8 w-8 p-0"
+                title="Heading 1"
+              >
+                <Heading1 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => executeCommand('formatBlock', 'h2')}
+                className="h-8 w-8 p-0"
+                title="Heading 2"
+              >
+                <Heading2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => executeCommand('insertUnorderedList')}
+                className="h-8 w-8 p-0"
+                title="Bullet List"
+              >
+                <List className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => executeCommand('insertOrderedList')}
+                className="h-8 w-8 p-0"
+                title="Numbered List"
+              >
+                <ListOrdered className="h-4 w-4" />
+              </Button>
+              
+              <div className="w-px h-6 bg-border mx-2" />
+              
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setShowImageDialog(true)}
+                title="Add Image"
+              >
+                <ImageIcon className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 w-8 p-0"
+                onClick={() => setShowVideoDialog(true)}
+                title="Add Video"
+              >
+                <Video className="h-4 w-4" />
+              </Button>
+              {featuredImage && (
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-8 w-8 p-0 hover:bg-muted"
-                  onClick={handlePlusClick}
+                  className="h-8 w-8 p-0"
+                  onClick={insertImage}
+                  title="Insert Featured Image"
                 >
-                  <Plus className="h-4 w-4" />
+                  <ImageIcon className="h-4 w-4" />
                 </Button>
-                
-                {/* Formatting Toolbar - Shows when plus is clicked */}
-                {showFormattingToolbar && (
-                  <div className="absolute left-10 top-0 flex items-center space-x-1 p-2 border rounded-md bg-popover shadow-lg z-30 editor-toolbar">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => executeCommand('bold')}
-                      className="h-8 w-8 p-0"
-                      title="Bold"
-                    >
-                      <Bold className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => executeCommand('italic')}
-                      className="h-8 w-8 p-0"
-                      title="Italic"
-                    >
-                      <Italic className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => executeCommand('formatBlock', 'h1')}
-                      className="h-8 w-8 p-0"
-                      title="Heading 1"
-                    >
-                      <Heading1 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => executeCommand('formatBlock', 'h2')}
-                      className="h-8 w-8 p-0"
-                      title="Heading 2"
-                    >
-                      <Heading2 className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => executeCommand('insertUnorderedList')}
-                      className="h-8 w-8 p-0"
-                      title="Bullet List"
-                    >
-                      <List className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => executeCommand('insertOrderedList')}
-                      className="h-8 w-8 p-0"
-                      title="Numbered List"
-                    >
-                      <ListOrdered className="h-4 w-4" />
-                    </Button>
-                    
-                    <div className="w-px h-6 bg-border mx-2" />
-                    
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => setShowImageDialog(true)}
-                      title="Add Image"
-                    >
-                      <ImageIcon className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="h-8 w-8 p-0"
-                      onClick={() => setShowVideoDialog(true)}
-                      title="Add Video"
-                    >
-                      <Video className="h-4 w-4" />
-                    </Button>
-                    {featuredImage && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-8 w-8 p-0"
-                        onClick={insertImage}
-                        title="Insert Featured Image"
-                      >
-                        <ImageIcon className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
+          </div>
 
+          {/* Content Editor */}
+          <div className="relative">
             <div
               ref={editorRef}
               contentEditable
               suppressContentEditableWarning={true}
               onInput={handleEditorInput}
-              onFocus={handleEditorFocus}
-              onBlur={handleEditorBlur}
-              className="prose prose-lg max-w-none dark:prose-invert min-h-[400px] focus:outline-none text-foreground"
+              className="prose prose-lg max-w-none dark:prose-invert min-h-[400px] focus:outline-none text-foreground border rounded-lg p-4"
               style={{ 
-                whiteSpace: 'pre-wrap'
+                direction: 'ltr',
+                textAlign: 'left',
+                unicodeBidi: 'normal'
               }}
               dangerouslySetInnerHTML={{ __html: content }}
             />
             
-            {!content && !showPlusMenu && (
-              <div className="absolute top-0 left-0 text-muted-foreground/50 pointer-events-none">
+            {!content && (
+              <div className="absolute top-6 left-6 text-muted-foreground/50 pointer-events-none">
                 Tell your story...
               </div>
             )}
