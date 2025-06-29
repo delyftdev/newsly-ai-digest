@@ -40,7 +40,7 @@ const PublicChangelogView = () => {
       setLoading(true);
       
       // Fetch the published changelog with company info
-      const { data, error } = await supabase
+      const { data, error: fetchError } = await supabase
         .from('changelogs')
         .select(`
           id,
@@ -63,8 +63,13 @@ const PublicChangelogView = () => {
         .eq('visibility', 'public')
         .single();
 
-      if (error) {
-        console.error('Error fetching changelog:', error);
+      if (fetchError) {
+        console.error('Error fetching changelog:', fetchError);
+        setError('Changelog not found');
+        return;
+      }
+
+      if (!data) {
         setError('Changelog not found');
         return;
       }
@@ -73,8 +78,8 @@ const PublicChangelogView = () => {
         ...data,
         company: data.companies
       });
-    } catch (error) {
-      console.error('Error:', error);
+    } catch (err) {
+      console.error('Error:', err);
       setError('Failed to load changelog');
     } finally {
       setLoading(false);
