@@ -3,16 +3,20 @@ import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ThumbsUp, MessageSquare } from "lucide-react";
+import { Plus, ThumbsUp, MessageSquare, Share } from "lucide-react";
 import { useFeedbackStore } from "@/stores/feedbackStore";
+import { useCompanyStore } from "@/stores/companyStore";
 import { useToast } from "@/hooks/use-toast";
 import SubmitIdeaModal from "@/components/feedback/SubmitIdeaModal";
 import FilterDropdown from "@/components/feedback/FilterDropdown";
 import DashboardLayout from "@/components/DashboardLayout";
+import ShareDialog from "@/components/ShareDialog";
 
 const Feedback = () => {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const { ideas, isLoading, error, sortBy, filterBy, fetchIdeas, setSortBy, setFilterBy, createIdea, voteIdea, unvoteIdea } = useFeedbackStore();
+  const { company } = useCompanyStore();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -56,6 +60,16 @@ const Feedback = () => {
     }
   };
 
+  const generateFeedbackShareUrl = () => {
+    const baseUrl = window.location.origin;
+    const companySlug = company?.subdomain || company?.slug || 'company';
+    return `${baseUrl}/feedback/public/${companySlug}`;
+  };
+
+  const handleShareFeedback = () => {
+    setShareDialogOpen(true);
+  };
+
   if (isLoading) {
     return (
       <DashboardLayout>
@@ -72,12 +86,18 @@ const Feedback = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header - Removed redundant title and description */}
+        {/* Header */}
         <div className="flex items-center justify-between">
-          <Button onClick={() => setIsSubmitModalOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Submit Idea
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setIsSubmitModalOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Submit Idea
+            </Button>
+            <Button variant="outline" onClick={handleShareFeedback}>
+              <Share className="h-4 w-4 mr-2" />
+              Share
+            </Button>
+          </div>
         </div>
 
         {/* Filters and Sorting */}
@@ -189,6 +209,14 @@ const Feedback = () => {
           isOpen={isSubmitModalOpen} 
           onClose={() => setIsSubmitModalOpen(false)}
           onSubmit={createIdea}
+        />
+
+        <ShareDialog
+          isOpen={shareDialogOpen}
+          onClose={() => setShareDialogOpen(false)}
+          title="Feedback Portal"
+          shareUrl={generateFeedbackShareUrl()}
+          type="feedback"
         />
       </div>
     </DashboardLayout>

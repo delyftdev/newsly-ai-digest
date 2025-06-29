@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -95,7 +96,7 @@ const AnalyticsDashboard = () => {
 
   return (
     <div className="space-y-6 p-6 bg-black min-h-screen">
-      {/* Header */}
+      {/* Header with Time Filters */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
@@ -118,10 +119,12 @@ const AnalyticsDashboard = () => {
         </div>
       </div>
 
-      {/* Product Announcement Stickiness Widget */}
-      <AnnouncementStickinessWidget />
+      {/* Product Announcement Stickiness Widget - Standalone Section */}
+      <div className="w-full">
+        <AnnouncementStickinessWidget />
+      </div>
 
-      {/* Metrics Grid - Only 4 cards now */}
+      {/* Metrics Grid - Separate Section */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric, index) => (
           <Card key={metric.title} className="bg-gray-900 border-gray-800 hover:bg-gray-800/50 transition-colors animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>

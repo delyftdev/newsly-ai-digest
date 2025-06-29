@@ -1,15 +1,34 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ExternalLink, Edit, Eye, Calendar, Tag } from "lucide-react";
+import { 
+  Plus, 
+  Edit, 
+  Calendar, 
+  Tag, 
+  Share, 
+  ChevronDown,
+  Code
+} from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useChangelogStore } from "@/stores/changelogStore";
+import { useCompanyStore } from "@/stores/companyStore";
+import ShareDialog from "@/components/ShareDialog";
 
 const Changelogs = () => {
   const { changelogs, fetchChangelogs, loading } = useChangelogStore();
+  const { company } = useCompanyStore();
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [selectedChangelog, setSelectedChangelog] = useState<any>(null);
 
   useEffect(() => {
     fetchChangelogs();
@@ -33,10 +52,16 @@ const Changelogs = () => {
     }
   };
 
-  const handleViewPublic = (changelog: any) => {
-    if (changelog.shareable_url) {
-      window.open(changelog.shareable_url, '_blank');
-    }
+  const generateShareableUrl = (changelog: any) => {
+    const baseUrl = window.location.origin;
+    const companySlug = company?.subdomain || company?.slug || 'company';
+    const changelogSlug = changelog.public_slug || changelog.id;
+    return `${baseUrl}/changelog/${companySlug}/${changelogSlug}`;
+  };
+
+  const handleShare = (changelog: any) => {
+    setSelectedChangelog(changelog);
+    setShareDialogOpen(true);
   };
 
   return (
@@ -45,10 +70,6 @@ const Changelogs = () => {
         <div className="flex items-center justify-between">
           <div className="flex-1" />
           <div className="flex space-x-2">
-            <Button variant="outline">
-              <ExternalLink className="h-4 w-4 mr-2" />
-              View Public
-            </Button>
             <Link to="/changelogs/new">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -111,15 +132,26 @@ const Changelogs = () => {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        {changelog.status === 'published' && changelog.shareable_url && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm"
-                            onClick={() => handleViewPublic(changelog)}
-                            title="View public changelog"
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
+                        {changelog.status === 'published' && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm">
+                                <Share className="h-4 w-4 mr-2" />
+                                Share
+                                <ChevronDown className="h-4 w-4 ml-2" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={() => handleShare(changelog)}>
+                                <Share className="h-4 w-4 mr-2" />
+                                Share Link
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleShare(changelog)}>
+                                <Code className="h-4 w-4 mr-2" />
+                                Embed Code
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                         <Link to={`/changelogs/${changelog.id}/edit`}>
                           <Button variant="ghost" size="sm">
@@ -134,6 +166,16 @@ const Changelogs = () => {
             )}
           </CardContent>
         </Card>
+
+        {selectedChangelog && (
+          <ShareDialog
+            isOpen={shareDialogOpen}
+            onClose={() => setShareDialogOpen(false)}
+            title={selectedChangelog.title}
+            shareUrl={generateShareableUrl(selectedChangelog)}
+            type="changelog"
+          />
+        )}
       </div>
     </DashboardLayout>
   );
