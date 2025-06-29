@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +11,7 @@ import FeedbackCard from "@/components/feedback/FeedbackCard";
 
 const Feedback = () => {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
-  const { ideas, isLoading, error, sortBy, filterBy, fetchIdeas, setSortBy, setFilterBy } = useFeedbackStore();
+  const { ideas, isLoading, error, sortBy, filterBy, fetchIdeas, setSortBy, setFilterBy, createIdea, voteIdea, unvoteIdea } = useFeedbackStore();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -32,7 +31,7 @@ const Feedback = () => {
   const filteredIdeas = ideas.filter(idea => {
     if (filterBy === 'all') return true;
     if (filterBy === 'my-votes') return idea.user_has_voted;
-    return idea.status === filterBy;
+    return idea.status === filterBy || idea.category === filterBy;
   });
 
   const sortedIdeas = [...filteredIdeas].sort((a, b) => {
@@ -156,14 +155,20 @@ const Feedback = () => {
           </Card>
         ) : (
           sortedIdeas.map((idea) => (
-            <FeedbackCard key={idea.id} idea={idea} />
+            <FeedbackCard 
+              key={idea.id} 
+              idea={idea} 
+              onVote={voteIdea}
+              onUnvote={unvoteIdea}
+            />
           ))
         )}
       </div>
 
       <SubmitIdeaModal 
         open={isSubmitModalOpen} 
-        onOpenChange={setIsSubmitModalOpen} 
+        onOpenChange={setIsSubmitModalOpen}
+        onSubmit={createIdea}
       />
     </div>
   );

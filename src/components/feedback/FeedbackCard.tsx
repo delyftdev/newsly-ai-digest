@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -10,8 +9,8 @@ import { formatDistanceToNow } from 'date-fns';
 
 interface FeedbackCardProps {
   idea: FeedbackIdea;
-  onVote: (ideaId: string) => void;
-  onUnvote: (ideaId: string) => void;
+  onVote?: (ideaId: string) => void;
+  onUnvote?: (ideaId: string) => void;
   onStatusChange?: (ideaId: string, status: string) => void;
   showStatusActions?: boolean;
 }
@@ -26,6 +25,8 @@ const FeedbackCard = ({
   const [isVoting, setIsVoting] = useState(false);
 
   const handleVote = async () => {
+    if (!onVote || !onUnvote) return;
+    
     setIsVoting(true);
     try {
       if (idea.user_has_voted) {
@@ -92,7 +93,7 @@ const FeedbackCard = ({
               variant="ghost"
               size="sm"
               onClick={handleVote}
-              disabled={isVoting}
+              disabled={isVoting || (!onVote && !onUnvote)}
               className={cn(
                 "flex flex-col items-center gap-1 h-auto py-2 px-3 min-w-[60px]",
                 idea.user_has_voted 

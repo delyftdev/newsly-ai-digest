@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -11,7 +10,9 @@ import { Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface SubmitIdeaModalProps {
-  onSubmit: (idea: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSubmit?: (idea: {
     title: string;
     description: string;
     category: string;
@@ -22,8 +23,7 @@ interface SubmitIdeaModalProps {
   children?: React.ReactNode;
 }
 
-const SubmitIdeaModal = ({ onSubmit, children }: SubmitIdeaModalProps) => {
-  const [open, setOpen] = useState(false);
+const SubmitIdeaModal = ({ open, onOpenChange, onSubmit, children }: SubmitIdeaModalProps) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     title: '',
@@ -42,6 +42,11 @@ const SubmitIdeaModal = ({ onSubmit, children }: SubmitIdeaModalProps) => {
       return;
     }
 
+    if (!onSubmit) {
+      toast.error('Submit function not provided');
+      return;
+    }
+
     setIsSubmitting(true);
     
     try {
@@ -51,7 +56,7 @@ const SubmitIdeaModal = ({ onSubmit, children }: SubmitIdeaModalProps) => {
       });
       
       toast.success('Your idea has been submitted successfully!');
-      setOpen(false);
+      onOpenChange(false);
       setFormData({
         title: '',
         description: '',
@@ -91,7 +96,7 @@ const SubmitIdeaModal = ({ onSubmit, children }: SubmitIdeaModalProps) => {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         {children || (
           <Button>
@@ -205,7 +210,7 @@ const SubmitIdeaModal = ({ onSubmit, children }: SubmitIdeaModalProps) => {
             </div>
             
             <div className="flex gap-3">
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>
+              <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isSubmitting}>
