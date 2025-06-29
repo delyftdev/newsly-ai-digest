@@ -34,7 +34,7 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
         },
       }),
       Youtube.configure({
-        width: '100%',
+        width: 640,
         height: 315,
       }),
       Link.configure({

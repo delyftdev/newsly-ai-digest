@@ -172,17 +172,17 @@ const AnalyticsDashboard = () => {
                     <Line 
                       type="monotone" 
                       dataKey="votes" 
-                      stroke="var(--chart-1)" 
+                      stroke="hsl(var(--chart-1))" 
                       strokeWidth={3}
-                      dot={{ fill: "var(--chart-1)", strokeWidth: 2, r: 4 }}
+                      dot={{ fill: "hsl(var(--chart-1))", strokeWidth: 2, r: 4 }}
                       className="animate-[drawLine_2s_ease-in-out]"
                     />
                     <Line 
                       type="monotone" 
                       dataKey="ideas" 
-                      stroke="var(--chart-2)" 
+                      stroke="hsl(var(--chart-2))" 
                       strokeWidth={3}
-                      dot={{ fill: "var(--chart-2)", strokeWidth: 2, r: 4 }}
+                      dot={{ fill: "hsl(var(--chart-2))", strokeWidth: 2, r: 4 }}
                       className="animate-[drawLine_2s_ease-in-out_0.5s]"
                     />
                   </LineChart>
@@ -205,8 +205,8 @@ const AnalyticsDashboard = () => {
                     <Area 
                       type="monotone" 
                       dataKey="users" 
-                      stroke="var(--chart-4)" 
-                      fill="var(--chart-4)" 
+                      stroke="hsl(var(--chart-4))" 
+                      fill="hsl(var(--chart-4))" 
                       fillOpacity={0.3}
                       className="animate-[fillArea_2s_ease-in-out]"
                     />
@@ -230,13 +230,13 @@ const AnalyticsDashboard = () => {
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar 
                     dataKey="comments" 
-                    fill="var(--chart-3)" 
+                    fill="hsl(var(--chart-3))" 
                     radius={[4, 4, 0, 0]}
                     className="animate-[slideUp_1.5s_ease-out]"
                   />
                   <Bar 
                     dataKey="ideas" 
-                    fill="var(--chart-2)" 
+                    fill="hsl(var(--chart-2))" 
                     radius={[4, 4, 0, 0]}
                     className="animate-[slideUp_1.5s_ease-out_0.3s]"
                   />
