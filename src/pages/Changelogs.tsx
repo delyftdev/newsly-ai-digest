@@ -33,6 +33,12 @@ const Changelogs = () => {
     }
   };
 
+  const handleViewPublic = (changelog: any) => {
+    if (changelog.shareable_url) {
+      window.open(changelog.shareable_url, '_blank');
+    }
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -105,8 +111,13 @@ const Changelogs = () => {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        {changelog.status === 'published' && changelog.public_slug && (
-                          <Button variant="ghost" size="sm">
+                        {changelog.status === 'published' && changelog.shareable_url && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleViewPublic(changelog)}
+                            title="View public changelog"
+                          >
                             <Eye className="h-4 w-4" />
                           </Button>
                         )}

@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -16,6 +15,7 @@ export interface Changelog {
   published_at?: string;
   published_by?: string;
   public_slug?: string;
+  shareable_url?: string;
   created_by: string;
   created_at: string;
   updated_at: string;
@@ -287,6 +287,9 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         company_id: profile.company_id
       });
 
+      // Generate the full shareable URL
+      const shareableUrl = `${window.location.origin}/changelog/${company?.subdomain}/${slugData}`;
+
       const { data, error } = await supabase
         .from('changelogs')
         .update({
@@ -294,6 +297,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
           published_at: new Date().toISOString(),
           published_by: user.id,
           public_slug: slugData,
+          shareable_url: shareableUrl,
         })
         .eq('id', id)
         .select()
@@ -307,8 +311,6 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         currentChangelog: transformedData
       }));
 
-      // Return the shareable URL
-      const shareableUrl = `${window.location.origin}/changelog/${company?.subdomain}/${slugData}`;
       console.log('Changelog published with shareable URL:', shareableUrl);
 
       return {};
@@ -375,4 +377,4 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
   setCurrentChangelog: (changelog: Changelog | null) => {
     set({ currentChangelog: changelog });
   },
-}));
+});

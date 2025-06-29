@@ -61,6 +61,7 @@ export type Database = {
           public_slug: string | null
           published_at: string | null
           published_by: string | null
+          shareable_url: string | null
           status: string
           tags: string[] | null
           title: string
@@ -81,6 +82,7 @@ export type Database = {
           public_slug?: string | null
           published_at?: string | null
           published_by?: string | null
+          shareable_url?: string | null
           status?: string
           tags?: string[] | null
           title: string
@@ -101,6 +103,7 @@ export type Database = {
           public_slug?: string | null
           published_at?: string | null
           published_by?: string | null
+          shareable_url?: string | null
           status?: string
           tags?: string[] | null
           title?: string

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
@@ -74,9 +73,12 @@ const PublicChangelogView = () => {
         return;
       }
 
+      // Fix the company data structure
+      const companyData = Array.isArray(data.companies) ? data.companies[0] : data.companies;
+      
       setChangelog({
         ...data,
-        company: data.companies
+        company: companyData
       });
     } catch (err) {
       console.error('Error:', err);
