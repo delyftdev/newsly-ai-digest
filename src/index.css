@@ -42,6 +42,45 @@ body {
   font-family: "Inter", sans-serif;
 }
 
+/* Fix contrast issues for hover states */
+.hover\:bg-accent:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+.hover\:text-accent-foreground:hover {
+  color: hsl(var(--accent-foreground));
+}
+
+/* Ensure muted text has enough contrast */
+.text-muted-foreground {
+  color: hsl(var(--muted-foreground));
+}
+
+/* Fix dropdown and navigation hover states */
+.dark .hover\:bg-gray-700:hover {
+  background-color: rgb(55 65 81);
+  color: rgb(243 244 246);
+}
+
+.dark .text-gray-200 {
+  color: rgb(229 231 235);
+}
+
+.dark .text-gray-400 {
+  color: rgb(156 163 175);
+}
+
+/* Light theme contrast fixes */
+.light .text-muted-foreground {
+  color: rgb(107 114 128);
+}
+
+.light .hover\:bg-accent:hover {
+  background-color: rgb(243 244 246);
+  color: rgb(17 24 39);
+}
+
 @keyframes drawLine {
   0% {
     stroke-dasharray: 0 1000;
