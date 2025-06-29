@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -7,13 +6,10 @@ import { Button } from "@/components/ui/button";
 import { 
   TrendingUp, 
   TrendingDown, 
-  Users, 
   MessageSquare, 
   Lightbulb,
   Eye,
   ThumbsUp,
-  Bell,
-  Calendar,
   Filter
 } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
@@ -86,39 +82,19 @@ const AnalyticsDashboard = () => {
       color: "text-blue-400"
     },
     {
-      title: "Tracked Users",
-      value: "1,234",
-      change: "-2.1%",
-      trend: "down",
-      icon: Users,
-      color: "text-purple-400"
-    },
-    {
       title: "Page Views",
       value: "12.4K",
       change: "+24.8%",
       trend: "up",
       icon: Eye,
       color: "text-cyan-400"
-    },
-    {
-      title: "Subscribed Users",
-      value: "456",
-      change: "+6.7%",
-      trend: "up",
-      icon: Bell,
-      color: "text-orange-400"
     }
   ];
 
   return (
     <div className="space-y-6 p-6 bg-black min-h-screen">
-      {/* Header */}
+      {/* Header - Removed redundant title and description */}
       <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-white">Analytics Dashboard</h1>
-          <p className="text-gray-400 mt-1">Track engagement and user feedback across your platform</p>
-        </div>
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-2">
             {["7D", "MTD", "YTD", "All"].map((period) => (
@@ -140,8 +116,8 @@ const AnalyticsDashboard = () => {
         </div>
       </div>
 
-      {/* Metrics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+      {/* Metrics Grid - Only 4 cards now */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {metrics.map((metric, index) => (
           <Card key={metric.title} className="bg-gray-900 border-gray-800 hover:bg-gray-800/50 transition-colors animate-fade-in" style={{ animationDelay: `${index * 100}ms` }}>
             <CardContent className="p-6">
@@ -194,17 +170,17 @@ const AnalyticsDashboard = () => {
                     <Line 
                       type="monotone" 
                       dataKey="votes" 
-                      stroke="var(--color-votes)" 
+                      stroke="var(--chart-1)" 
                       strokeWidth={3}
-                      dot={{ fill: "var(--color-votes)", strokeWidth: 2, r: 4 }}
+                      dot={{ fill: "var(--chart-1)", strokeWidth: 2, r: 4 }}
                       className="animate-[drawLine_2s_ease-in-out]"
                     />
                     <Line 
                       type="monotone" 
                       dataKey="ideas" 
-                      stroke="var(--color-ideas)" 
+                      stroke="var(--chart-2)" 
                       strokeWidth={3}
-                      dot={{ fill: "var(--color-ideas)", strokeWidth: 2, r: 4 }}
+                      dot={{ fill: "var(--chart-2)", strokeWidth: 2, r: 4 }}
                       className="animate-[drawLine_2s_ease-in-out_0.5s]"
                     />
                   </LineChart>
@@ -227,8 +203,8 @@ const AnalyticsDashboard = () => {
                     <Area 
                       type="monotone" 
                       dataKey="users" 
-                      stroke="var(--color-users)" 
-                      fill="var(--color-users)" 
+                      stroke="var(--chart-4)" 
+                      fill="var(--chart-4)" 
                       fillOpacity={0.3}
                       className="animate-[fillArea_2s_ease-in-out]"
                     />
@@ -252,13 +228,13 @@ const AnalyticsDashboard = () => {
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <Bar 
                     dataKey="comments" 
-                    fill="var(--color-comments)" 
+                    fill="var(--chart-3)" 
                     radius={[4, 4, 0, 0]}
                     className="animate-[slideUp_1.5s_ease-out]"
                   />
                   <Bar 
                     dataKey="ideas" 
-                    fill="var(--color-ideas)" 
+                    fill="var(--chart-2)" 
                     radius={[4, 4, 0, 0]}
                     className="animate-[slideUp_1.5s_ease-out_0.3s]"
                   />

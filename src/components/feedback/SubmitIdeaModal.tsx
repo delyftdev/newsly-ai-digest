@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 
@@ -71,12 +71,12 @@ const SubmitIdeaModal = ({ isOpen, onClose, onSubmit }: SubmitIdeaModalProps) =>
   };
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="bg-popover max-w-md">
-        <DialogHeader>
-          <DialogTitle>Submit New Idea</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+    <Sheet open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="bg-popover w-full sm:max-w-md">
+        <SheetHeader>
+          <SheetTitle>Submit New Idea</SheetTitle>
+        </SheetHeader>
+        <form onSubmit={handleSubmit} className="space-y-4 mt-6">
           <div>
             <Label htmlFor="title">Title *</Label>
             <Input
@@ -151,8 +151,8 @@ const SubmitIdeaModal = ({ isOpen, onClose, onSubmit }: SubmitIdeaModalProps) =>
             </Button>
           </div>
         </form>
-      </DialogContent>
-    </Dialog>
+      </SheetContent>
+    </Sheet>
   );
 };
 

@@ -1,10 +1,9 @@
-
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Send, Plus, Image as ImageIcon, Video, Bold, Italic, List, ListOrdered, Heading1, Heading2 } from "lucide-react";
+import { ArrowLeft, Save, Send, Image as ImageIcon, Video, Bold, Italic, List, ListOrdered, Heading1, Heading2 } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -76,16 +75,75 @@ const ChangelogEditor = () => {
     }
   }, [title, content, category, featuredImage, videoUrl, visibility]);
 
-  // Fix text direction on editor mount
+  // Auto-save before leaving page
+  useEffect(() => {
+    const handleBeforeUnload = async (e: BeforeUnloadEvent) => {
+      if (isEditing && id && (title.trim() || content.trim())) {
+        // Prevent default browser dialog
+        e.preventDefault();
+        
+        // Save the changelog
+        try {
+          await updateChangelog(id, {
+            title,
+            content: { html: content },
+            category,
+            featured_image_url: featuredImage,
+            video_url: videoUrl,
+            visibility,
+            tags: [],
+          });
+          console.log('Auto-saved before page unload');
+        } catch (error) {
+          console.error('Failed to auto-save before unload:', error);
+        }
+      }
+    };
+
+    const handlePopState = async () => {
+      if (isEditing && id && (title.trim() || content.trim())) {
+        try {
+          await updateChangelog(id, {
+            title,
+            content: { html: content },
+            category,
+            featured_image_url: featuredImage,
+            video_url: videoUrl,
+            visibility,
+            tags: [],
+          });
+          console.log('Auto-saved on navigation');
+        } catch (error) {
+          console.error('Failed to auto-save on navigation:', error);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      window.removeEventListener('popstate', handlePopState);
+    };
+  }, [isEditing, id, title, content, category, featuredImage, videoUrl, visibility, updateChangelog]);
+
+  // Fix text direction on editor mount and maintain LTR
   useEffect(() => {
     if (editorRef.current) {
       const editor = editorRef.current;
+      // Force left-to-right text direction
       editor.style.direction = 'ltr';
       editor.style.textAlign = 'left';
-      editor.style.unicodeBidi = 'normal';
+      editor.style.unicodeBidi = 'bidi-override';
       editor.setAttribute('dir', 'ltr');
+      
+      // Set content if available
+      if (content) {
+        editor.innerHTML = content;
+      }
     }
-  }, []);
+  }, [content]);
 
   const handleSave = async () => {
     console.log('=== SAVE CLICKED ===');
@@ -167,7 +225,14 @@ const ChangelogEditor = () => {
       console.log('Publishing changelog:', currentChangelog.id);
       const { error } = await publishChangelog(currentChangelog.id);
       if (error) throw new Error(error);
-      toast({ title: "Changelog published!" });
+      
+      // Generate shareable URL
+      const shareableUrl = `${window.location.origin}/changelog/${currentChangelog.public_slug}`;
+      
+      toast({ 
+        title: "Changelog published!", 
+        description: `Share at: ${shareableUrl}` 
+      });
     } catch (error: any) {
       console.error('Publish error:', error);
       toast({
@@ -197,6 +262,7 @@ const ChangelogEditor = () => {
     if (editorRef.current) {
       editorRef.current.style.direction = 'ltr';
       editorRef.current.style.textAlign = 'left';
+      editorRef.current.style.unicodeBidi = 'bidi-override';
       setContent(editorRef.current.innerHTML);
     }
   };
@@ -278,9 +344,10 @@ const ChangelogEditor = () => {
   const handleEditorInput = (e: React.FormEvent<HTMLDivElement>) => {
     console.log('Editor input event');
     if (editorRef.current) {
-      // Ensure LTR direction is maintained
+      // Force LTR direction on every input
       editorRef.current.style.direction = 'ltr';
       editorRef.current.style.textAlign = 'left';
+      editorRef.current.style.unicodeBidi = 'bidi-override';
       setContent(editorRef.current.innerHTML);
     }
   };
@@ -365,7 +432,9 @@ const ChangelogEditor = () => {
               className="text-4xl font-bold border-none shadow-none p-0 h-auto bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
               style={{ 
                 fontSize: '2.25rem', 
-                lineHeight: '2.5rem'
+                lineHeight: '2.5rem',
+                direction: 'ltr',
+                textAlign: 'left'
               }}
             />
           </div>
@@ -448,17 +517,6 @@ const ChangelogEditor = () => {
               >
                 <Video className="h-4 w-4" />
               </Button>
-              {featuredImage && (
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  className="h-8 w-8 p-0"
-                  onClick={insertImage}
-                  title="Insert Featured Image"
-                >
-                  <ImageIcon className="h-4 w-4" />
-                </Button>
-              )}
             </div>
           </div>
 
@@ -473,9 +531,8 @@ const ChangelogEditor = () => {
               style={{ 
                 direction: 'ltr',
                 textAlign: 'left',
-                unicodeBidi: 'normal'
+                unicodeBidi: 'bidi-override'
               }}
-              dangerouslySetInnerHTML={{ __html: content }}
             />
             
             {!content && (

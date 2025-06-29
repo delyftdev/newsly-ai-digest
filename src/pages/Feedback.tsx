@@ -1,9 +1,9 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Plus, ArrowUp, MessageSquare, Filter, ThumbsUp } from "lucide-react";
+import { Plus, ThumbsUp, MessageSquare } from "lucide-react";
 import { useFeedbackStore } from "@/stores/feedbackStore";
 import { useToast } from "@/hooks/use-toast";
 import SubmitIdeaModal from "@/components/feedback/SubmitIdeaModal";
@@ -72,14 +72,8 @@ const Feedback = () => {
   return (
     <DashboardLayout>
       <div className="space-y-6">
-        {/* Header */}
+        {/* Header - Removed redundant title and description */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Feedback</h1>
-            <p className="text-muted-foreground">
-              Share your ideas and vote on features you'd like to see
-            </p>
-          </div>
           <Button onClick={() => setIsSubmitModalOpen(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Submit Idea
@@ -89,7 +83,6 @@ const Feedback = () => {
         {/* Filters and Sorting */}
         <div className="flex items-center gap-4 flex-wrap">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-muted-foreground" />
             <span className="text-sm text-muted-foreground">Filter:</span>
             <FilterDropdown value={filterBy} onChange={setFilterBy} />
           </div>
@@ -104,7 +97,6 @@ const Feedback = () => {
                   size="sm"
                   onClick={() => setSortBy(sort)}
                 >
-                  {sort === 'trending' && <ArrowUp className="h-3 w-3 mr-1" />}
                   {sort.charAt(0).toUpperCase() + sort.slice(1)}
                 </Button>
               ))}

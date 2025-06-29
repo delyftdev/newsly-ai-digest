@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -22,6 +23,7 @@ import PublicGlossary from "./pages/PublicGlossary";
 import NotFound from "./pages/NotFound";
 import ChangelogEditor from "./pages/ChangelogEditor";
 import PublicChangelogEntry from "./pages/PublicChangelogEntry";
+import PublicChangelogView from "./pages/PublicChangelogView";
 
 const queryClient = new QueryClient();
 
@@ -51,6 +53,7 @@ function App() {
               {/* Public routes */}
               <Route path="/glossary/:userId" element={<PublicGlossary />} />
               <Route path="/public/:companySlug" element={<PublicChangelog />} />
+              <Route path="/changelog/:companySlug/:changelogSlug" element={<PublicChangelogView />} />
               
               {/* Auth routes */}
               <Route 

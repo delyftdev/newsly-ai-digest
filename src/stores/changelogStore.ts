@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -270,6 +271,13 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         return { error: 'No company found' };
       }
 
+      // Get company subdomain for URL generation
+      const { data: company } = await supabase
+        .from('companies')
+        .select('subdomain')
+        .eq('id', profile.company_id)
+        .single();
+
       // Generate slug
       const changelog = get().currentChangelog;
       if (!changelog) return { error: 'Changelog not found' };
@@ -298,6 +306,10 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         changelogs: state.changelogs.map(c => c.id === id ? transformedData : c),
         currentChangelog: transformedData
       }));
+
+      // Return the shareable URL
+      const shareableUrl = `${window.location.origin}/changelog/${company?.subdomain}/${slugData}`;
+      console.log('Changelog published with shareable URL:', shareableUrl);
 
       return {};
     } catch (error: any) {
