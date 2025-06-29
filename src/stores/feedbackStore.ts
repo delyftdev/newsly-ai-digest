@@ -59,36 +59,25 @@ export const useFeedbackStore = create<FeedbackStore>((set, get) => ({
       const { company } = useCompanyStore.getState();
       
       if (!user || !company) {
-        console.log('User or company not found:', { user: !!user, company: !!company });
-        set({ ideas: [], isLoading: false });
-        return;
+        throw new Error('User or company not found');
       }
 
-      console.log('Fetching ideas for company:', company.id);
-
-      // Fetch ideas with user vote status using LEFT JOIN
+      // Fetch ideas with user vote status
       const { data: ideas, error: ideasError } = await supabase
         .from('feedback_ideas')
         .select(`
           *,
-          feedback_votes!left(user_id)
+          feedback_votes!inner(user_id)
         `)
         .eq('company_id', company.id)
         .order('created_at', { ascending: false });
 
-      if (ideasError) {
-        console.error('Error fetching ideas:', ideasError);
-        throw ideasError;
-      }
-
-      console.log('Fetched ideas:', ideas?.length || 0);
+      if (ideasError) throw ideasError;
 
       // Process ideas to include user vote status
       const processedIdeas = ideas?.map(idea => ({
         ...idea,
-        user_has_voted: Array.isArray(idea.feedback_votes) 
-          ? idea.feedback_votes.some((vote: any) => vote.user_id === user.id) 
-          : false,
+        user_has_voted: idea.feedback_votes?.some((vote: any) => vote.user_id === user.id) || false,
         feedback_votes: undefined // Remove the votes array from final object
       })) || [];
 
