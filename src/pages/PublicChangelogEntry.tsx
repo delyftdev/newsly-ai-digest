@@ -25,7 +25,16 @@ const PublicChangelogEntry = () => {
           .single();
 
         if (error) throw error;
-        setChangelog(data);
+        
+        // Transform database row to match Changelog interface
+        const transformedData: Changelog = {
+          ...data,
+          status: data.status as 'draft' | 'published',
+          visibility: data.visibility as 'public' | 'private',
+          tags: data.tags || [],
+        };
+        
+        setChangelog(transformedData);
       } catch (error) {
         console.error('Error fetching changelog:', error);
       } finally {
@@ -56,10 +65,10 @@ const PublicChangelogEntry = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-2 text-gray-600">Loading changelog...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-2 text-muted-foreground">Loading changelog...</p>
         </div>
       </div>
     );
@@ -67,27 +76,27 @@ const PublicChangelogEntry = () => {
 
   if (!changelog) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Changelog Not Found</h1>
-          <p className="text-gray-600">The changelog entry you're looking for doesn't exist or has been removed.</p>
+          <h1 className="text-2xl font-bold text-foreground mb-2">Changelog Not Found</h1>
+          <p className="text-muted-foreground">The changelog entry you're looking for doesn't exist or has been removed.</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background">
       <div className="max-w-4xl mx-auto py-8 px-4">
-        <div className="bg-white rounded-lg shadow-sm border p-8">
+        <div className="bg-card rounded-lg shadow-sm border p-8">
           {/* Header */}
           <div className="mb-8">
             <div className="flex items-center space-x-3 mb-4">
               <span className="text-2xl">{getCategoryIcon(changelog.category)}</span>
-              <h1 className="text-3xl font-bold text-gray-900">{changelog.title}</h1>
+              <h1 className="text-3xl font-bold text-foreground">{changelog.title}</h1>
             </div>
 
-            <div className="flex items-center space-x-6 text-sm text-gray-500 mb-4">
+            <div className="flex items-center space-x-6 text-sm text-muted-foreground mb-4">
               <div className="flex items-center">
                 <Calendar className="h-4 w-4 mr-2" />
                 {new Date(changelog.published_at || changelog.created_at).toLocaleDateString('en-US', {
@@ -126,7 +135,7 @@ const PublicChangelogEntry = () => {
 
           {/* Content */}
           <div 
-            className="prose prose-lg max-w-none"
+            className="prose prose-lg max-w-none dark:prose-invert"
             dangerouslySetInnerHTML={{ 
               __html: typeof changelog.content === 'string' 
                 ? changelog.content 

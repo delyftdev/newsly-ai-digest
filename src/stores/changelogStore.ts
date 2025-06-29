@@ -42,6 +42,14 @@ interface ChangelogStore {
   setCurrentChangelog: (changelog: Changelog | null) => void;
 }
 
+// Helper function to transform database row to Changelog type
+const transformDbRow = (row: any): Changelog => ({
+  ...row,
+  status: row.status as 'draft' | 'published',
+  visibility: row.visibility as 'public' | 'private',
+  tags: row.tags || [],
+});
+
 export const useChangelogStore = create<ChangelogStore>((set, get) => ({
   changelogs: [],
   currentChangelog: null,
@@ -57,7 +65,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      set({ changelogs: data || [] });
+      set({ changelogs: (data || []).map(transformDbRow) });
     } catch (error) {
       console.error('Error fetching changelogs:', error);
     } finally {
@@ -75,7 +83,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .single();
 
       if (error) throw error;
-      set({ currentChangelog: data });
+      set({ currentChangelog: transformDbRow(data) });
     } catch (error) {
       console.error('Error fetching changelog:', error);
       set({ currentChangelog: null });
@@ -96,7 +104,14 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       const { data, error } = await supabase
         .from('changelogs')
         .insert({
-          ...changelogData,
+          title: changelogData.title || '',
+          content: changelogData.content,
+          category: changelogData.category,
+          status: changelogData.status,
+          visibility: changelogData.visibility,
+          featured_image_url: changelogData.featured_image_url,
+          video_url: changelogData.video_url,
+          tags: changelogData.tags,
           company_id: company.id,
           created_by: user.id,
         })
@@ -105,12 +120,13 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
 
       if (error) throw error;
 
+      const transformedData = transformDbRow(data);
       set(state => ({
-        changelogs: [data, ...state.changelogs],
-        currentChangelog: data
+        changelogs: [transformedData, ...state.changelogs],
+        currentChangelog: transformedData
       }));
 
-      return { data };
+      return { data: transformedData };
     } catch (error: any) {
       console.error('Error creating changelog:', error);
       return { error: error.message };
@@ -122,7 +138,14 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       const { data, error } = await supabase
         .from('changelogs')
         .update({
-          ...updateData,
+          title: updateData.title,
+          content: updateData.content,
+          category: updateData.category,
+          status: updateData.status,
+          visibility: updateData.visibility,
+          featured_image_url: updateData.featured_image_url,
+          video_url: updateData.video_url,
+          tags: updateData.tags,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)
@@ -131,9 +154,10 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
 
       if (error) throw error;
 
+      const transformedData = transformDbRow(data);
       set(state => ({
-        changelogs: state.changelogs.map(c => c.id === id ? data : c),
-        currentChangelog: state.currentChangelog?.id === id ? data : state.currentChangelog
+        changelogs: state.changelogs.map(c => c.id === id ? transformedData : c),
+        currentChangelog: state.currentChangelog?.id === id ? transformedData : state.currentChangelog
       }));
 
       return {};
@@ -175,9 +199,10 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
 
       if (error) throw error;
 
+      const transformedData = transformDbRow(data);
       set(state => ({
-        changelogs: state.changelogs.map(c => c.id === id ? data : c),
-        currentChangelog: data
+        changelogs: state.changelogs.map(c => c.id === id ? transformedData : c),
+        currentChangelog: transformedData
       }));
 
       return {};
@@ -222,7 +247,14 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         await supabase
           .from('changelogs')
           .update({
-            ...data,
+            title: data.title,
+            content: data.content,
+            category: data.category,
+            status: data.status,
+            visibility: data.visibility,
+            featured_image_url: data.featured_image_url,
+            video_url: data.video_url,
+            tags: data.tags,
             auto_saved_at: new Date().toISOString(),
           })
           .eq('id', id);
