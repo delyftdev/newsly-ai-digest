@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@/components/ui/chart";
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from "recharts";
+import AnnouncementStickinessWidget from "./AnnouncementStickinessWidget";
 
 // Dummy data for analytics
 const engagementData = [
@@ -117,6 +117,9 @@ const AnalyticsDashboard = () => {
           </Button>
         </div>
       </div>
+
+      {/* Product Announcement Stickiness Widget */}
+      <AnnouncementStickinessWidget />
 
       {/* Metrics Grid - Only 4 cards now */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

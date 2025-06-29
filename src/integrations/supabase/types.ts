@@ -9,6 +9,78 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      announcement_analytics: {
+        Row: {
+          announcement_id: string
+          announcement_type: string
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          session_id: string | null
+          source: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          announcement_id: string
+          announcement_type?: string
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          session_id?: string | null
+          source?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          announcement_id?: string
+          announcement_type?: string
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          session_id?: string | null
+          source?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      announcement_reactions: {
+        Row: {
+          announcement_id: string
+          announcement_type: string
+          created_at: string
+          id: string
+          reaction_type: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          announcement_id: string
+          announcement_type?: string
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          announcement_id?: string
+          announcement_type?: string
+          created_at?: string
+          id?: string
+          reaction_type?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       branding: {
         Row: {
           company_id: string | null
@@ -51,64 +123,85 @@ export type Database = {
         Row: {
           ai_generated: boolean | null
           auto_saved_at: string | null
+          avg_time_spent: number | null
           category: string
+          click_through_rate: number | null
+          comment_count: number | null
           company_id: string
           content: Json | null
           created_at: string
           created_by: string
+          email_open_rate: number | null
           featured_image_url: string | null
           id: string
           public_slug: string | null
           published_at: string | null
           published_by: string | null
+          reaction_count: number | null
           shareable_url: string | null
           status: string
           tags: string[] | null
           title: string
+          unique_views: number | null
           updated_at: string
           video_url: string | null
+          view_count: number | null
           visibility: string
         }
         Insert: {
           ai_generated?: boolean | null
           auto_saved_at?: string | null
+          avg_time_spent?: number | null
           category?: string
+          click_through_rate?: number | null
+          comment_count?: number | null
           company_id: string
           content?: Json | null
           created_at?: string
           created_by: string
+          email_open_rate?: number | null
           featured_image_url?: string | null
           id?: string
           public_slug?: string | null
           published_at?: string | null
           published_by?: string | null
+          reaction_count?: number | null
           shareable_url?: string | null
           status?: string
           tags?: string[] | null
           title: string
+          unique_views?: number | null
           updated_at?: string
           video_url?: string | null
+          view_count?: number | null
           visibility?: string
         }
         Update: {
           ai_generated?: boolean | null
           auto_saved_at?: string | null
+          avg_time_spent?: number | null
           category?: string
+          click_through_rate?: number | null
+          comment_count?: number | null
           company_id?: string
           content?: Json | null
           created_at?: string
           created_by?: string
+          email_open_rate?: number | null
           featured_image_url?: string | null
           id?: string
           public_slug?: string | null
           published_at?: string | null
           published_by?: string | null
+          reaction_count?: number | null
           shareable_url?: string | null
           status?: string
           tags?: string[] | null
           title?: string
+          unique_views?: number | null
           updated_at?: string
           video_url?: string | null
+          view_count?: number | null
           visibility?: string
         }
         Relationships: []
@@ -599,16 +692,21 @@ export type Database = {
         Row: {
           ai_generated: boolean | null
           ai_summary: string | null
+          avg_time_spent: number | null
           category: string | null
+          click_through_rate: number | null
+          comment_count: number | null
           company_id: string | null
           content: Json | null
           created_at: string | null
           created_by: string | null
+          email_open_rate: number | null
           featured_image_url: string | null
           id: string
           public_slug: string | null
           published_at: string | null
           published_by: string | null
+          reaction_count: number | null
           release_date: string | null
           release_type: string | null
           source_document_name: string | null
@@ -618,23 +716,30 @@ export type Database = {
           status: string | null
           tags: string[] | null
           title: string
+          unique_views: number | null
           updated_at: string | null
           version: string | null
+          view_count: number | null
           visibility: string | null
         }
         Insert: {
           ai_generated?: boolean | null
           ai_summary?: string | null
+          avg_time_spent?: number | null
           category?: string | null
+          click_through_rate?: number | null
+          comment_count?: number | null
           company_id?: string | null
           content?: Json | null
           created_at?: string | null
           created_by?: string | null
+          email_open_rate?: number | null
           featured_image_url?: string | null
           id?: string
           public_slug?: string | null
           published_at?: string | null
           published_by?: string | null
+          reaction_count?: number | null
           release_date?: string | null
           release_type?: string | null
           source_document_name?: string | null
@@ -644,23 +749,30 @@ export type Database = {
           status?: string | null
           tags?: string[] | null
           title: string
+          unique_views?: number | null
           updated_at?: string | null
           version?: string | null
+          view_count?: number | null
           visibility?: string | null
         }
         Update: {
           ai_generated?: boolean | null
           ai_summary?: string | null
+          avg_time_spent?: number | null
           category?: string | null
+          click_through_rate?: number | null
+          comment_count?: number | null
           company_id?: string | null
           content?: Json | null
           created_at?: string | null
           created_by?: string | null
+          email_open_rate?: number | null
           featured_image_url?: string | null
           id?: string
           public_slug?: string | null
           published_at?: string | null
           published_by?: string | null
+          reaction_count?: number | null
           release_date?: string | null
           release_type?: string | null
           source_document_name?: string | null
@@ -670,8 +782,10 @@ export type Database = {
           status?: string | null
           tags?: string[] | null
           title?: string
+          unique_views?: number | null
           updated_at?: string | null
           version?: string | null
+          view_count?: number | null
           visibility?: string | null
         }
         Relationships: [
