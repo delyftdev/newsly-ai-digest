@@ -1,20 +1,15 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import DashboardLayout from "@/components/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Edit, Eye, Calendar, Tag, Share } from "lucide-react";
+import { Plus, ExternalLink, Edit, Eye, Calendar, Tag } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
-import ShareDialog from "@/components/ShareDialog";
 
 const Changelogs = () => {
   const { changelogs, fetchChangelogs, loading } = useChangelogStore();
-  const [shareDialog, setShareDialog] = useState<{ isOpen: boolean; changelog: any | null }>({
-    isOpen: false,
-    changelog: null,
-  });
 
   useEffect(() => {
     fetchChangelogs();
@@ -38,18 +33,10 @@ const Changelogs = () => {
     }
   };
 
-  const handleShare = (changelog: any) => {
-    setShareDialog({ isOpen: true, changelog });
-  };
-
   const handleViewPublic = (changelog: any) => {
     if (changelog.shareable_url) {
       window.open(changelog.shareable_url, '_blank');
     }
-  };
-
-  const closeShareDialog = () => {
-    setShareDialog({ isOpen: false, changelog: null });
   };
 
   return (
@@ -58,6 +45,10 @@ const Changelogs = () => {
         <div className="flex items-center justify-between">
           <div className="flex-1" />
           <div className="flex space-x-2">
+            <Button variant="outline">
+              <ExternalLink className="h-4 w-4 mr-2" />
+              View Public
+            </Button>
             <Link to="/changelogs/new">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -121,24 +112,14 @@ const Changelogs = () => {
 
                       <div className="flex items-center space-x-2">
                         {changelog.status === 'published' && changelog.shareable_url && (
-                          <>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleViewPublic(changelog)}
-                              title="View public changelog"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              variant="ghost" 
-                              size="sm"
-                              onClick={() => handleShare(changelog)}
-                              title="Share changelog"
-                            >
-                              <Share className="h-4 w-4" />
-                            </Button>
-                          </>
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => handleViewPublic(changelog)}
+                            title="View public changelog"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
                         )}
                         <Link to={`/changelogs/${changelog.id}/edit`}>
                           <Button variant="ghost" size="sm">
@@ -153,16 +134,6 @@ const Changelogs = () => {
             )}
           </CardContent>
         </Card>
-
-        {shareDialog.changelog && (
-          <ShareDialog
-            isOpen={shareDialog.isOpen}
-            onClose={closeShareDialog}
-            url={shareDialog.changelog.shareable_url || ''}
-            title={shareDialog.changelog.title}
-            description="Share this changelog with your users and customers."
-          />
-        )}
       </div>
     </DashboardLayout>
   );
