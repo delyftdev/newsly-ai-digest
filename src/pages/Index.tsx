@@ -7,7 +7,6 @@ import Footer from "@/components/Footer";
 import ValuePropsSection from "@/components/ValuePropsSection";
 import IntegrationsSection from "@/components/IntegrationsSection";
 import WaitlistSection from "@/components/WaitlistSection";
-import DelyftLogo from "@/components/DelyftLogo";
 
 const Index = () => {
   const [submittedEmail, setSubmittedEmail] = useState<string>('');
@@ -62,43 +61,43 @@ const Index = () => {
       )}
 
       {/* Hero Section */}
-      <section className="relative py-20 px-4 overflow-hidden">
+      <section className="relative py-24 px-4 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-primary/10" />
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/20 rounded-full blur-3xl animate-pulse" />
         <div className="absolute bottom-10 right-10 w-96 h-96 bg-primary/20 rounded-full blur-3xl animate-pulse delay-1000" />
         
-        <div className="relative max-w-4xl mx-auto text-center">
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-6 leading-tight">
+        <div className="relative max-w-5xl mx-auto text-center">
+          <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-8 leading-tight">
             Your shortcut to{" "}
             <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               customer-focused releases
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed">
             Create feedback loops, personalized changelogs, and track engagement — all in one place
           </p>
 
           <Button 
             size="lg" 
-            className="bg-primary hover:bg-primary/90 mb-8"
+            className="bg-primary hover:bg-primary/90 mb-12 text-lg px-8 py-6 h-auto"
             onClick={scrollToWaitlist}
           >
             <span className="mr-2">Get Early Access</span>
             <ArrowRight className="h-5 w-5" />
           </Button>
 
-          <div className="flex flex-wrap justify-center gap-4 text-sm text-muted-foreground">
+          <div className="flex flex-wrap justify-center gap-6 text-base text-muted-foreground">
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-primary" />
+              <CheckCircle className="h-5 w-5 text-primary" />
               <span>No credit card required</span>
             </div>
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-primary" />
+              <CheckCircle className="h-5 w-5 text-primary" />
               <span>Early access guaranteed</span>
             </div>
             <div className="flex items-center space-x-2">
-              <CheckCircle className="h-4 w-4 text-primary" />
+              <CheckCircle className="h-5 w-5 text-primary" />
               <span>Cancel anytime</span>
             </div>
           </div>

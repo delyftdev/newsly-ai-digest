@@ -1,11 +1,10 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Trophy, Users } from "lucide-react";
+import { Trophy } from "lucide-react";
 import WaitlistForm from "@/components/WaitlistForm";
 import SocialProofCounter from "@/components/SocialProofCounter";
 import WhyJoinWaitlist from "@/components/WhyJoinWaitlist";
-import ReferralSystem from "@/components/ReferralSystem";
 import LeaderboardPanel from "@/components/LeaderboardPanel";
 import {
   Sheet,
@@ -26,61 +25,54 @@ const WaitlistSection = ({ submittedEmail, submittedReferralCode, onWaitlistSucc
   const [showLeaderboard, setShowLeaderboard] = useState(false);
 
   return (
-    <section id="waitlist-section" className="py-20 px-4 bg-accent/20">
-      <div className="max-w-4xl mx-auto text-center">
+    <section id="waitlist-section" className="py-24 px-4 bg-accent/20">
+      <div className="max-w-5xl mx-auto text-center">
         <SocialProofCounter />
         
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">
+        <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
           Join the waitlist
         </h2>
         
-        <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+        <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
           Get early access to delyft and start building better customer relationships
         </p>
 
-        <div className="flex items-center justify-center space-x-4 mb-8">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
           <WaitlistForm onSuccess={onWaitlistSuccess} />
           
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline">
+              <Button variant="outline" size="lg" className="min-w-[140px]">
                 Why Join?
               </Button>
             </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Why Join Our Waitlist?</SheetTitle>
-                <SheetDescription>
+            <SheetContent className="w-full sm:max-w-2xl lg:max-w-4xl">
+              <SheetHeader className="mb-6">
+                <SheetTitle className="text-2xl">Why Join Our Waitlist?</SheetTitle>
+                <SheetDescription className="text-lg">
                   Get exclusive early access and special benefits
                 </SheetDescription>
               </SheetHeader>
-              <div className="mt-6">
+              <div className="overflow-y-auto max-h-[80vh]">
                 <WhyJoinWaitlist />
               </div>
             </SheetContent>
           </Sheet>
         </div>
 
-        <div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground mb-8">
+        <div className="flex items-center justify-center">
           <Button
             variant="ghost"
-            size="sm"
+            size="lg"
             onClick={() => setShowLeaderboard(true)}
-            className="flex items-center space-x-2"
+            className="flex items-center space-x-2 text-base"
           >
-            <Trophy className="h-4 w-4" />
-            <span>Top Referrers</span>
+            <Trophy className="h-5 w-5" />
+            <span>View Top Referrers</span>
           </Button>
         </div>
 
         <LeaderboardPanel open={showLeaderboard} onOpenChange={setShowLeaderboard} />
-
-        <div id="referral-section" className="mt-12">
-          <ReferralSystem 
-            email={submittedEmail} 
-            onReferralGenerated={(code) => {}}
-          />
-        </div>
       </div>
     </section>
   );
