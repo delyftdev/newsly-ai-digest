@@ -45,7 +45,20 @@ const Changelogs = () => {
 
   const generateCompanyChangelogUrl = () => {
     const baseUrl = window.location.origin;
-    const companySlug = company?.subdomain || company?.slug || 'company';
+    
+    // Use subdomain first, then slug, then fallback to company ID
+    let companySlug = company?.subdomain;
+    if (!companySlug) {
+      companySlug = company?.slug;
+    }
+    if (!companySlug) {
+      // Fallback to a URL-safe version of company name or ID
+      companySlug = company?.name?.toLowerCase().replace(/[^a-z0-9]/g, '-') || company?.id;
+    }
+    
+    console.log('Generating URL with company slug:', companySlug);
+    console.log('Company data:', company);
+    
     return `${baseUrl}/public/${companySlug}/changelog`;
   };
 
@@ -61,7 +74,7 @@ const Changelogs = () => {
           <div className="flex space-x-2">
             <Button variant="outline" onClick={handleShareChangelog}>
               <Share className="h-4 w-4 mr-2" />
-              Share Changelog
+              Share Company Changelog
             </Button>
             <Link to="/changelogs/new">
               <Button>

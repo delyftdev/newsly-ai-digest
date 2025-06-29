@@ -17,6 +17,8 @@ interface Company {
   primary_color?: string;
   secondary_color?: string;
   font_family?: string;
+  subdomain?: string;
+  slug?: string;
 }
 
 interface Changelog {
@@ -27,6 +29,8 @@ interface Changelog {
   featured_image_url?: string;
   tags?: string[];
   published_at: string;
+  status: string;
+  visibility: string;
 }
 
 const PublicChangelog = () => {
@@ -36,6 +40,7 @@ const PublicChangelog = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
+  const [debugInfo, setDebugInfo] = useState<string>("");
 
   useEffect(() => {
     if (companySlug) {
@@ -45,51 +50,119 @@ const PublicChangelog = () => {
 
   const fetchCompanyAndChangelogs = async () => {
     try {
-      // First try to fetch by subdomain, then by slug
-      let { data: companyData, error: companyError } = await supabase
+      console.log('=== DEBUG: Starting company lookup ===');
+      console.log('Company slug from URL:', companySlug);
+      
+      let debugLog = `Looking for company with slug: "${companySlug}"\n`;
+      
+      // First, let's see all companies to understand the data
+      const { data: allCompanies, error: allError } = await supabase
         .from('companies')
-        .select('id, name, logo_url, primary_color, secondary_color, font_family')
+        .select('id, name, subdomain, slug');
+      
+      console.log('All companies in database:', allCompanies);
+      debugLog += `All companies: ${JSON.stringify(allCompanies, null, 2)}\n`;
+      
+      if (allError) {
+        console.error('Error fetching all companies:', allError);
+        debugLog += `Error fetching all companies: ${allError.message}\n`;
+      }
+
+      // Try to find by subdomain first
+      console.log('Trying subdomain lookup...');
+      const { data: companyBySubdomain, error: subdomainError } = await supabase
+        .from('companies')
+        .select('id, name, logo_url, primary_color, secondary_color, font_family, subdomain, slug')
         .eq('subdomain', companySlug)
-        .single();
+        .maybeSingle();
+
+      debugLog += `Subdomain lookup result: ${JSON.stringify(companyBySubdomain, null, 2)}\n`;
+      debugLog += `Subdomain error: ${subdomainError?.message || 'none'}\n`;
+
+      let companyData = companyBySubdomain;
+      let companyError = subdomainError;
 
       // If not found by subdomain, try by slug
-      if (companyError && companyError.code === 'PGRST116') {
+      if (!companyData && !companyError) {
+        console.log('Subdomain lookup failed, trying slug lookup...');
         const { data: companyBySlug, error: slugError } = await supabase
           .from('companies')
-          .select('id, name, logo_url, primary_color, secondary_color, font_family')
+          .select('id, name, logo_url, primary_color, secondary_color, font_family, subdomain, slug')
           .eq('slug', companySlug)
-          .single();
+          .maybeSingle();
+          
+        debugLog += `Slug lookup result: ${JSON.stringify(companyBySlug, null, 2)}\n`;
+        debugLog += `Slug error: ${slugError?.message || 'none'}\n`;
         
         companyData = companyBySlug;
         companyError = slugError;
       }
 
+      // Try a partial match on subdomain if exact matches fail
+      if (!companyData && !companyError) {
+        console.log('Exact matches failed, trying partial subdomain match...');
+        const { data: partialMatch, error: partialError } = await supabase
+          .from('companies')
+          .select('id, name, logo_url, primary_color, secondary_color, font_family, subdomain, slug')
+          .ilike('subdomain', `%${companySlug}%`)
+          .limit(1)
+          .maybeSingle();
+          
+        debugLog += `Partial match result: ${JSON.stringify(partialMatch, null, 2)}\n`;
+        debugLog += `Partial error: ${partialError?.message || 'none'}\n`;
+        
+        companyData = partialMatch;
+        companyError = partialError;
+      }
+
+      console.log('Final company data:', companyData);
+      console.log('Final company error:', companyError);
+
       if (companyError) {
         console.error('Error fetching company:', companyError);
+        debugLog += `Final error: ${companyError.message}\n`;
+        setDebugInfo(debugLog);
+        setIsLoading(false);
+        return;
+      }
+
+      if (!companyData) {
+        console.log('No company found');
+        debugLog += 'No company found with any lookup method\n';
+        setDebugInfo(debugLog);
         setIsLoading(false);
         return;
       }
 
       setCompany(companyData);
+      debugLog += `Found company: ${companyData.name} (ID: ${companyData.id})\n`;
 
       // Fetch published changelogs
+      console.log('Fetching changelogs for company:', companyData.id);
       const { data: changelogsData, error: changelogsError } = await supabase
         .from('changelogs')
-        .select('id, title, content, category, featured_image_url, tags, published_at')
+        .select('id, title, content, category, featured_image_url, tags, published_at, status, visibility')
         .eq('company_id', companyData.id)
         .eq('status', 'published')
         .eq('visibility', 'public')
+        .not('published_at', 'is', null)
         .order('published_at', { ascending: false });
 
+      console.log('Changelogs query result:', { changelogsData, changelogsError });
+      debugLog += `Changelogs found: ${changelogsData?.length || 0}\n`;
+      
       if (changelogsError) {
         console.error('Error fetching changelogs:', changelogsError);
+        debugLog += `Changelogs error: ${changelogsError.message}\n`;
       } else {
         setChangelogs(changelogsData || []);
       }
 
+      setDebugInfo(debugLog);
       setIsLoading(false);
     } catch (error) {
       console.error('Error in fetchCompanyAndChangelogs:', error);
+      setDebugInfo(`Unexpected error: ${error}`);
       setIsLoading(false);
     }
   };
@@ -140,36 +213,46 @@ const PublicChangelog = () => {
   };
 
   const renderContent = (content: any) => {
-    if (!content || !content.blocks) return null;
+    if (!content) return null;
 
-    return content.blocks.map((block: any, index: number) => {
-      switch (block.type) {
-        case 'paragraph':
-          return (
-            <p key={index} className="mb-4 text-gray-700 leading-relaxed">
-              {block.data.text}
-            </p>
-          );
-        case 'header':
-          const HeaderTag = `h${Math.min(block.data.level || 1, 6)}` as keyof JSX.IntrinsicElements;
-          return (
-            <HeaderTag key={index} className="font-bold mb-3 text-gray-900">
-              {block.data.text}
-            </HeaderTag>
-          );
-        case 'list':
-          const ListTag = block.data.style === 'ordered' ? 'ol' : 'ul';
-          return (
-            <ListTag key={index} className="mb-4 pl-6 text-gray-700">
-              {block.data.items.map((item: string, itemIndex: number) => (
-                <li key={itemIndex} className="mb-1">{item}</li>
-              ))}
-            </ListTag>
-          );
-        default:
-          return null;
-      }
-    });
+    // Handle blocks format (Editor.js format)
+    if (content.blocks && Array.isArray(content.blocks)) {
+      return content.blocks.map((block: any, index: number) => {
+        switch (block.type) {
+          case 'paragraph':
+            return (
+              <p key={index} className="mb-4 text-gray-700 leading-relaxed">
+                {block.data?.text || ''}
+              </p>
+            );
+          case 'header':
+            const HeaderTag = `h${Math.min(block.data.level || 1, 6)}` as keyof JSX.IntrinsicElements;
+            return (
+              <HeaderTag key={index} className="font-bold mb-3 text-gray-900">
+                {block.data?.text || ''}
+              </HeaderTag>
+            );
+          case 'list':
+            const ListTag = block.data?.style === 'ordered' ? 'ol' : 'ul';
+            return (
+              <ListTag key={index} className="mb-4 pl-6 text-gray-700">
+                {(block.data?.items || []).map((item: string, itemIndex: number) => (
+                  <li key={itemIndex} className="mb-1">{item}</li>
+                ))}
+              </ListTag>
+            );
+          default:
+            return null;
+        }
+      });
+    }
+
+    // Handle legacy HTML content
+    if (typeof content === 'string') {
+      return <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: content }} />;
+    }
+
+    return <p className="text-gray-500">No content available</p>;
   };
 
   const getCategoryColor = (category: string) => {
@@ -185,7 +268,10 @@ const PublicChangelog = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p>Loading changelog...</p>
+        </div>
       </div>
     );
   }
@@ -193,9 +279,19 @@ const PublicChangelog = () => {
   if (!company) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-2xl mx-auto p-6">
           <h1 className="text-2xl font-bold text-gray-900 mb-2">Changelog Not Found</h1>
-          <p className="text-gray-600">The requested changelog could not be found.</p>
+          <p className="text-gray-600 mb-4">The requested company changelog could not be found.</p>
+          
+          {/* Debug information */}
+          <details className="mt-4 text-left">
+            <summary className="cursor-pointer text-sm text-gray-500 hover:text-gray-700">
+              Debug Information (Click to expand)
+            </summary>
+            <pre className="mt-2 p-4 bg-gray-100 rounded text-xs text-gray-700 overflow-auto max-h-96">
+              {debugInfo}
+            </pre>
+          </details>
         </div>
       </div>
     );
