@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from "react";
+
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Send, Image as ImageIcon, Video, Bold, Italic, List, ListOrdered, Heading1, Heading2 } from "lucide-react";
+import { ArrowLeft, Save, Send } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
-import ImageUpload from "@/components/ImageUpload";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import TipTapEditor from "@/components/TipTapEditor";
 
 const ChangelogEditor = () => {
   const { id } = useParams();
@@ -31,10 +31,7 @@ const ChangelogEditor = () => {
   const [visibility, setVisibility] = useState<'public' | 'private'>("public");
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [showVideoDialog, setShowVideoDialog] = useState(false);
-  const [showImageDialog, setShowImageDialog] = useState(false);
 
-  const editorRef = useRef<HTMLDivElement>(null);
   const isEditing = Boolean(id);
 
   useEffect(() => {
@@ -79,10 +76,8 @@ const ChangelogEditor = () => {
   useEffect(() => {
     const handleBeforeUnload = async (e: BeforeUnloadEvent) => {
       if (isEditing && id && (title.trim() || content.trim())) {
-        // Prevent default browser dialog
         e.preventDefault();
         
-        // Save the changelog
         try {
           await updateChangelog(id, {
             title,
@@ -127,23 +122,6 @@ const ChangelogEditor = () => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, [isEditing, id, title, content, category, featuredImage, videoUrl, visibility, updateChangelog]);
-
-  // Fix text direction on editor mount and maintain LTR
-  useEffect(() => {
-    if (editorRef.current) {
-      const editor = editorRef.current;
-      // Force left-to-right text direction
-      editor.style.direction = 'ltr';
-      editor.style.textAlign = 'left';
-      editor.style.unicodeBidi = 'bidi-override';
-      editor.setAttribute('dir', 'ltr');
-      
-      // Set content if available
-      if (content) {
-        editor.innerHTML = content;
-      }
-    }
-  }, [content]);
 
   const handleSave = async () => {
     console.log('=== SAVE CLICKED ===');
@@ -226,7 +204,6 @@ const ChangelogEditor = () => {
       const { error } = await publishChangelog(currentChangelog.id);
       if (error) throw new Error(error);
       
-      // Generate shareable URL
       const shareableUrl = `${window.location.origin}/changelog/${currentChangelog.public_slug}`;
       
       toast({ 
@@ -240,115 +217,6 @@ const ChangelogEditor = () => {
         description: "Failed to publish changelog",
         variant: "destructive",
       });
-    }
-  };
-
-  const executeCommand = (command: string, value?: string) => {
-    if (!editorRef.current) {
-      console.error('Editor ref not available');
-      return;
-    }
-    
-    console.log('Executing command:', command, value);
-    
-    // Focus the editor first
-    editorRef.current.focus();
-    
-    // Execute the command
-    const success = document.execCommand(command, false, value);
-    console.log('Command execution result:', success);
-    
-    // Update content state and ensure LTR
-    if (editorRef.current) {
-      editorRef.current.style.direction = 'ltr';
-      editorRef.current.style.textAlign = 'left';
-      editorRef.current.style.unicodeBidi = 'bidi-override';
-      setContent(editorRef.current.innerHTML);
-    }
-  };
-
-  const insertVideo = () => {
-    if (!videoUrl || !editorRef.current) {
-      console.error('Video URL or editor ref not available');
-      return;
-    }
-
-    console.log('Inserting video:', videoUrl);
-    let embedHtml = '';
-    
-    // YouTube
-    if (videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be')) {
-      const videoId = videoUrl.includes('youtu.be') 
-        ? videoUrl.split('youtu.be/')[1]?.split('?')[0]
-        : videoUrl.split('v=')[1]?.split('&')[0];
-      
-      if (videoId) {
-        embedHtml = `<div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin: 16px 0;">
-          <iframe src="https://www.youtube.com/embed/${videoId}" 
-                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
-                  frameborder="0" allowfullscreen></iframe>
-        </div>`;
-      }
-    }
-    // Vimeo
-    else if (videoUrl.includes('vimeo.com')) {
-      const videoId = videoUrl.split('vimeo.com/')[1]?.split('?')[0];
-      if (videoId) {
-        embedHtml = `<div class="video-container" style="position: relative; padding-bottom: 56.25%; height: 0; overflow: hidden; margin: 16px 0;">
-          <iframe src="https://player.vimeo.com/video/${videoId}" 
-                  style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;" 
-                  frameborder="0" allowfullscreen></iframe>
-        </div>`;
-      }
-    }
-    // Generic video URL
-    else {
-      embedHtml = `<video controls style="width: 100%; max-width: 100%; margin: 16px 0;">
-        <source src="${videoUrl}" type="video/mp4">
-        Your browser does not support the video tag.
-      </video>`;
-    }
-
-    if (embedHtml) {
-      editorRef.current.innerHTML += embedHtml;
-      setContent(editorRef.current.innerHTML);
-      setVideoUrl('');
-      setShowVideoDialog(false);
-      console.log('Video inserted successfully');
-    }
-  };
-
-  const handleImageUpload = (file: File) => {
-    console.log('Image uploaded:', file.name);
-    const imageUrl = URL.createObjectURL(file);
-    
-    if (editorRef.current) {
-      const imageHtml = `<img src="${imageUrl}" alt="Image" style="max-width: 100%; height: auto; margin: 16px 0;" />`;
-      editorRef.current.innerHTML += imageHtml;
-      setContent(editorRef.current.innerHTML);
-    }
-    
-    setFeaturedImage(imageUrl);
-    setShowImageDialog(false);
-  };
-
-  const insertImage = () => {
-    if (featuredImage && editorRef.current) {
-      console.log('Inserting image:', featuredImage);
-      const imageHtml = `<img src="${featuredImage}" alt="Image" style="max-width: 100%; height: auto; margin: 16px 0;" />`;
-      editorRef.current.innerHTML += imageHtml;
-      setContent(editorRef.current.innerHTML);
-    }
-  };
-
-  const handleEditorInput = (e: React.FormEvent<HTMLDivElement>) => {
-    console.log('Editor input event');
-    if (editorRef.current) {
-      // Force LTR direction on every input
-      editorRef.current.style.direction = 'ltr';
-      editorRef.current.style.textAlign = 'left';
-      editorRef.current.style.unicodeBidi = 'bidi-override';
-      setContent(editorRef.current.innerHTML);
     }
   };
 
@@ -439,145 +307,13 @@ const ChangelogEditor = () => {
             />
           </div>
 
-          {/* Always Visible Formatting Toolbar */}
-          <div className="mb-4 p-3 border rounded-md bg-muted/30">
-            <div className="flex items-center space-x-1">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => executeCommand('bold')}
-                className="h-8 w-8 p-0"
-                title="Bold"
-              >
-                <Bold className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => executeCommand('italic')}
-                className="h-8 w-8 p-0"
-                title="Italic"
-              >
-                <Italic className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => executeCommand('formatBlock', 'h1')}
-                className="h-8 w-8 p-0"
-                title="Heading 1"
-              >
-                <Heading1 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => executeCommand('formatBlock', 'h2')}
-                className="h-8 w-8 p-0"
-                title="Heading 2"
-              >
-                <Heading2 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => executeCommand('insertUnorderedList')}
-                className="h-8 w-8 p-0"
-                title="Bullet List"
-              >
-                <List className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => executeCommand('insertOrderedList')}
-                className="h-8 w-8 p-0"
-                title="Numbered List"
-              >
-                <ListOrdered className="h-4 w-4" />
-              </Button>
-              
-              <div className="w-px h-6 bg-border mx-2" />
-              
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => setShowImageDialog(true)}
-                title="Add Image"
-              >
-                <ImageIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                className="h-8 w-8 p-0"
-                onClick={() => setShowVideoDialog(true)}
-                title="Add Video"
-              >
-                <Video className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-
-          {/* Content Editor */}
-          <div className="relative">
-            <div
-              ref={editorRef}
-              contentEditable
-              suppressContentEditableWarning={true}
-              onInput={handleEditorInput}
-              className="prose prose-lg max-w-none dark:prose-invert min-h-[400px] focus:outline-none text-foreground border rounded-lg p-4"
-              style={{ 
-                direction: 'ltr',
-                textAlign: 'left',
-                unicodeBidi: 'bidi-override'
-              }}
-            />
-            
-            {!content && (
-              <div className="absolute top-6 left-6 text-muted-foreground/50 pointer-events-none">
-                Tell your story...
-              </div>
-            )}
-          </div>
+          {/* TipTap Editor */}
+          <TipTapEditor
+            content={content}
+            onChange={setContent}
+            placeholder="Tell your story..."
+          />
         </div>
-
-        {/* Video Dialog */}
-        <Dialog open={showVideoDialog} onOpenChange={setShowVideoDialog}>
-          <DialogContent className="bg-popover">
-            <DialogHeader>
-              <DialogTitle>Add Video</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <Input
-                value={videoUrl}
-                onChange={(e) => setVideoUrl(e.target.value)}
-                placeholder="Enter YouTube, Vimeo, or direct video URL"
-              />
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setShowVideoDialog(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={insertVideo}>Add Video</Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        {/* Image Dialog */}
-        <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-          <DialogContent className="bg-popover">
-            <DialogHeader>
-              <DialogTitle>Add Featured Image</DialogTitle>
-            </DialogHeader>
-            <ImageUpload
-              onImageUpload={handleImageUpload}
-              currentImage={featuredImage}
-              onImageRemove={() => setFeaturedImage("")}
-            />
-          </DialogContent>
-        </Dialog>
       </div>
     </DashboardLayout>
   );

@@ -1,8 +1,6 @@
 
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
-import { useAuthStore } from './authStore';
-import { useCompanyStore } from './companyStore';
 
 export interface FeedbackIdea {
   id: string;
@@ -55,11 +53,30 @@ export const useFeedbackStore = create<FeedbackStore>((set, get) => ({
     set({ isLoading: true, error: null });
     
     try {
-      const { user } = useAuthStore.getState();
-      const { company } = useCompanyStore.getState();
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      if (!user || !company) {
-        throw new Error('User or company not found');
+      if (userError) {
+        throw new Error(`Authentication error: ${userError.message}`);
+      }
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get user's company
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        throw new Error(`Profile error: ${profileError.message}`);
+      }
+      
+      if (!profile?.company_id) {
+        throw new Error('No company found for user');
       }
 
       // Fetch ideas with user vote status
@@ -67,9 +84,9 @@ export const useFeedbackStore = create<FeedbackStore>((set, get) => ({
         .from('feedback_ideas')
         .select(`
           *,
-          feedback_votes!inner(user_id)
+          feedback_votes!left(user_id)
         `)
-        .eq('company_id', company.id)
+        .eq('company_id', profile.company_id)
         .order('created_at', { ascending: false });
 
       if (ideasError) throw ideasError;
@@ -90,18 +107,37 @@ export const useFeedbackStore = create<FeedbackStore>((set, get) => ({
 
   createIdea: async (ideaData) => {
     try {
-      const { user } = useAuthStore.getState();
-      const { company } = useCompanyStore.getState();
+      // Get current user
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
       
-      if (!user || !company) {
-        throw new Error('User or company not found');
+      if (userError) {
+        throw new Error(`Authentication error: ${userError.message}`);
+      }
+      
+      if (!user) {
+        throw new Error('User not authenticated');
+      }
+
+      // Get user's company
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      if (profileError) {
+        throw new Error(`Profile error: ${profileError.message}`);
+      }
+      
+      if (!profile?.company_id) {
+        throw new Error('No company found for user');
       }
 
       const { data, error } = await supabase
         .from('feedback_ideas')
         .insert({
           ...ideaData,
-          company_id: company.id,
+          company_id: profile.company_id,
           user_id: user.id
         })
         .select()
@@ -121,8 +157,11 @@ export const useFeedbackStore = create<FeedbackStore>((set, get) => ({
 
   voteIdea: async (ideaId) => {
     try {
-      const { user } = useAuthStore.getState();
-      if (!user) throw new Error('User not found');
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error('User not authenticated');
+      }
 
       const { error } = await supabase
         .from('feedback_votes')
@@ -149,8 +188,11 @@ export const useFeedbackStore = create<FeedbackStore>((set, get) => ({
 
   unvoteIdea: async (ideaId) => {
     try {
-      const { user } = useAuthStore.getState();
-      if (!user) throw new Error('User not found');
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      
+      if (userError || !user) {
+        throw new Error('User not authenticated');
+      }
 
       const { error } = await supabase
         .from('feedback_votes')
