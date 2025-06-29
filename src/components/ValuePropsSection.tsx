@@ -1,5 +1,6 @@
 
 import { Inbox, Edit, MessageCircle, BarChart3 } from "lucide-react";
+import FeedbackHubSvg from "./FeedbackHubSvg";
 
 const ValuePropsSection = () => {
   const valueProps = [
@@ -22,7 +23,8 @@ const ValuePropsSection = () => {
       title: "Feedback Hub with Public Voting",
       benefit: "Close the loop faster. Show customers you're listening.",
       description: "Let customers and teammates submit, vote, and see how ideas are progressing.",
-      placeholder: "🗳️ Feedback voting demo"
+      placeholder: null, // Will use SVG component
+      useSvg: true
     },
     {
       icon: BarChart3,
@@ -61,8 +63,14 @@ const ValuePropsSection = () => {
                 </div>
               </div>
               
-              <div className="bg-accent/50 rounded-lg p-6 mb-4 text-center text-muted-foreground">
-                {prop.placeholder}
+              <div className="bg-accent/50 rounded-lg p-6 mb-4 text-center text-muted-foreground min-h-[200px] flex items-center justify-center">
+                {prop.useSvg ? (
+                  <div className="w-full h-48 max-w-md mx-auto">
+                    <FeedbackHubSvg />
+                  </div>
+                ) : (
+                  prop.placeholder
+                )}
               </div>
               
               <p className="text-muted-foreground text-sm leading-relaxed">
