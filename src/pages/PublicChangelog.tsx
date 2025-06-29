@@ -19,39 +19,50 @@ interface Company {
   font_family?: string;
 }
 
-interface Release {
+interface Changelog {
   id: string;
   title: string;
   content: any;
   category: string;
-  version?: string;
-  published_at: string;
   featured_image_url?: string;
   tags?: string[];
+  published_at: string;
 }
 
 const PublicChangelog = () => {
   const { companySlug } = useParams<{ companySlug: string }>();
   const [company, setCompany] = useState<Company | null>(null);
-  const [releases, setReleases] = useState<Release[]>([]);
+  const [changelogs, setChangelogs] = useState<Changelog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [email, setEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
 
   useEffect(() => {
     if (companySlug) {
-      fetchCompanyAndReleases();
+      fetchCompanyAndChangelogs();
     }
   }, [companySlug]);
 
-  const fetchCompanyAndReleases = async () => {
+  const fetchCompanyAndChangelogs = async () => {
     try {
-      // Fetch company by slug
-      const { data: companyData, error: companyError } = await supabase
+      // First try to fetch by subdomain, then by slug
+      let { data: companyData, error: companyError } = await supabase
         .from('companies')
         .select('id, name, logo_url, primary_color, secondary_color, font_family')
-        .eq('slug', companySlug)
+        .eq('subdomain', companySlug)
         .single();
+
+      // If not found by subdomain, try by slug
+      if (companyError && companyError.code === 'PGRST116') {
+        const { data: companyBySlug, error: slugError } = await supabase
+          .from('companies')
+          .select('id, name, logo_url, primary_color, secondary_color, font_family')
+          .eq('slug', companySlug)
+          .single();
+        
+        companyData = companyBySlug;
+        companyError = slugError;
+      }
 
       if (companyError) {
         console.error('Error fetching company:', companyError);
@@ -61,24 +72,24 @@ const PublicChangelog = () => {
 
       setCompany(companyData);
 
-      // Fetch published releases
-      const { data: releasesData, error: releasesError } = await supabase
-        .from('releases')
-        .select('id, title, content, category, version, published_at, featured_image_url, tags')
+      // Fetch published changelogs
+      const { data: changelogsData, error: changelogsError } = await supabase
+        .from('changelogs')
+        .select('id, title, content, category, featured_image_url, tags, published_at')
         .eq('company_id', companyData.id)
         .eq('status', 'published')
         .eq('visibility', 'public')
         .order('published_at', { ascending: false });
 
-      if (releasesError) {
-        console.error('Error fetching releases:', releasesError);
+      if (changelogsError) {
+        console.error('Error fetching changelogs:', changelogsError);
       } else {
-        setReleases(releasesData || []);
+        setChangelogs(changelogsData || []);
       }
 
       setIsLoading(false);
     } catch (error) {
-      console.error('Error in fetchCompanyAndReleases:', error);
+      console.error('Error in fetchCompanyAndChangelogs:', error);
       setIsLoading(false);
     }
   };
@@ -113,7 +124,7 @@ const PublicChangelog = () => {
       } else {
         toast({
           title: "Subscribed!",
-          description: "You'll receive updates when we publish new releases.",
+          description: "You'll receive updates when we publish new changes.",
         });
         setEmail("");
       }
@@ -163,11 +174,10 @@ const PublicChangelog = () => {
 
   const getCategoryColor = (category: string) => {
     const colors = {
-      'feature': 'bg-blue-100 text-blue-800',
+      'new-feature': 'bg-blue-100 text-blue-800',
       'improvement': 'bg-green-100 text-green-800',
-      'bug_fix': 'bg-red-100 text-red-800',
+      'fix': 'bg-red-100 text-red-800',
       'announcement': 'bg-purple-100 text-purple-800',
-      'security': 'bg-yellow-100 text-yellow-800',
     };
     return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800';
   };
@@ -251,20 +261,20 @@ const PublicChangelog = () => {
 
       {/* Content */}
       <main className="max-w-4xl mx-auto px-6 py-8">
-        {releases.length === 0 ? (
+        {changelogs.length === 0 ? (
           <div className="text-center py-12">
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">No releases yet</h2>
+            <h2 className="text-xl font-semibold text-gray-900 mb-2">No updates yet</h2>
             <p className="text-gray-600">Check back soon for product updates!</p>
           </div>
         ) : (
           <div className="space-y-8">
-            {releases.map((release) => (
-              <Card key={release.id} className="overflow-hidden">
-                {release.featured_image_url && (
+            {changelogs.map((changelog) => (
+              <Card key={changelog.id} className="overflow-hidden">
+                {changelog.featured_image_url && (
                   <div className="aspect-video bg-gray-100">
                     <img
-                      src={release.featured_image_url}
-                      alt={release.title}
+                      src={changelog.featured_image_url}
+                      alt={changelog.title}
                       className="w-full h-full object-cover"
                     />
                   </div>
@@ -273,18 +283,15 @@ const PublicChangelog = () => {
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
-                        <Badge className={getCategoryColor(release.category)}>
-                          {release.category?.replace('_', ' ')}
+                        <Badge className={getCategoryColor(changelog.category)}>
+                          {changelog.category?.replace('-', ' ')}
                         </Badge>
-                        {release.version && (
-                          <Badge variant="outline">v{release.version}</Badge>
-                        )}
                       </div>
-                      <CardTitle className="text-xl mb-2">{release.title}</CardTitle>
+                      <CardTitle className="text-xl mb-2">{changelog.title}</CardTitle>
                       <div className="flex items-center gap-4 text-sm text-gray-500">
                         <div className="flex items-center gap-1">
                           <Calendar className="h-4 w-4" />
-                          {new Date(release.published_at).toLocaleDateString('en-US', {
+                          {new Date(changelog.published_at).toLocaleDateString('en-US', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
@@ -296,16 +303,16 @@ const PublicChangelog = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="prose prose-sm max-w-none">
-                    {renderContent(release.content)}
+                    {renderContent(changelog.content)}
                   </div>
                   
-                  {release.tags && release.tags.length > 0 && (
+                  {changelog.tags && changelog.tags.length > 0 && (
                     <>
                       <Separator className="my-4" />
                       <div className="flex items-center gap-2">
                         <Tag className="h-4 w-4 text-gray-400" />
                         <div className="flex flex-wrap gap-1">
-                          {release.tags.map((tag, index) => (
+                          {changelog.tags.map((tag, index) => (
                             <Badge key={index} variant="secondary" className="text-xs">
                               {tag}
                             </Badge>

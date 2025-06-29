@@ -10,16 +10,8 @@ import {
   Edit, 
   Calendar, 
   Tag, 
-  Share, 
-  ChevronDown,
-  Code
+  Share
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useCompanyStore } from "@/stores/companyStore";
 import ShareDialog from "@/components/ShareDialog";
@@ -28,7 +20,6 @@ const Changelogs = () => {
   const { changelogs, fetchChangelogs, loading } = useChangelogStore();
   const { company } = useCompanyStore();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const [selectedChangelog, setSelectedChangelog] = useState<any>(null);
 
   useEffect(() => {
     fetchChangelogs();
@@ -52,15 +43,13 @@ const Changelogs = () => {
     }
   };
 
-  const generateShareableUrl = (changelog: any) => {
+  const generateCompanyChangelogUrl = () => {
     const baseUrl = window.location.origin;
     const companySlug = company?.subdomain || company?.slug || 'company';
-    const changelogSlug = changelog.public_slug || changelog.id;
-    return `${baseUrl}/changelog/${companySlug}/${changelogSlug}`;
+    return `${baseUrl}/public/${companySlug}/changelog`;
   };
 
-  const handleShare = (changelog: any) => {
-    setSelectedChangelog(changelog);
+  const handleShareChangelog = () => {
     setShareDialogOpen(true);
   };
 
@@ -70,6 +59,10 @@ const Changelogs = () => {
         <div className="flex items-center justify-between">
           <div className="flex-1" />
           <div className="flex space-x-2">
+            <Button variant="outline" onClick={handleShareChangelog}>
+              <Share className="h-4 w-4 mr-2" />
+              Share Changelog
+            </Button>
             <Link to="/changelogs/new">
               <Button>
                 <Plus className="h-4 w-4 mr-2" />
@@ -132,27 +125,6 @@ const Changelogs = () => {
                       </div>
 
                       <div className="flex items-center space-x-2">
-                        {changelog.status === 'published' && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="outline" size="sm">
-                                <Share className="h-4 w-4 mr-2" />
-                                Share
-                                <ChevronDown className="h-4 w-4 ml-2" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => handleShare(changelog)}>
-                                <Share className="h-4 w-4 mr-2" />
-                                Share Link
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleShare(changelog)}>
-                                <Code className="h-4 w-4 mr-2" />
-                                Embed Code
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
                         <Link to={`/changelogs/${changelog.id}/edit`}>
                           <Button variant="ghost" size="sm">
                             <Edit className="h-4 w-4" />
@@ -167,15 +139,13 @@ const Changelogs = () => {
           </CardContent>
         </Card>
 
-        {selectedChangelog && (
-          <ShareDialog
-            isOpen={shareDialogOpen}
-            onClose={() => setShareDialogOpen(false)}
-            title={selectedChangelog.title}
-            shareUrl={generateShareableUrl(selectedChangelog)}
-            type="changelog"
-          />
-        )}
+        <ShareDialog
+          isOpen={shareDialogOpen}
+          onClose={() => setShareDialogOpen(false)}
+          title={`${company?.name || 'Company'} Changelog`}
+          shareUrl={generateCompanyChangelogUrl()}
+          type="changelog"
+        />
       </div>
     </DashboardLayout>
   );

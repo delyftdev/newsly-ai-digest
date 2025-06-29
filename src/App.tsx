@@ -52,7 +52,7 @@ function App() {
             <Routes>
               {/* Public routes */}
               <Route path="/glossary/:userId" element={<PublicGlossary />} />
-              <Route path="/public/:companySlug" element={<PublicChangelog />} />
+              <Route path="/public/:companySlug/changelog" element={<PublicChangelog />} />
               <Route path="/changelog/:companySlug/:changelogSlug" element={<PublicChangelogView />} />
               
               {/* Auth routes */}
