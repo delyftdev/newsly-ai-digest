@@ -1,3 +1,4 @@
+
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -185,9 +186,6 @@ const ChangelogEditor = () => {
     
     // Update content state
     setContent(editorRef.current.innerHTML);
-    
-    // Keep plus menu open after command execution
-    setShowPlusMenu(true);
   };
 
   const insertVideo = () => {
@@ -237,7 +235,7 @@ const ChangelogEditor = () => {
       setContent(editorRef.current.innerHTML);
       setVideoUrl('');
       setShowVideoDialog(false);
-      setShowPlusMenu(false);
+      setShowFormattingToolbar(false);
       console.log('Video inserted successfully');
     }
   };
@@ -245,9 +243,16 @@ const ChangelogEditor = () => {
   const handleImageUpload = (file: File) => {
     console.log('Image uploaded:', file.name);
     const imageUrl = URL.createObjectURL(file);
+    
+    if (editorRef.current) {
+      const imageHtml = `<img src="${imageUrl}" alt="Image" style="max-width: 100%; height: auto; margin: 16px 0;" />`;
+      editorRef.current.innerHTML += imageHtml;
+      setContent(editorRef.current.innerHTML);
+    }
+    
     setFeaturedImage(imageUrl);
     setShowImageDialog(false);
-    setShowPlusMenu(false);
+    setShowFormattingToolbar(false);
   };
 
   const insertImage = () => {
@@ -256,7 +261,7 @@ const ChangelogEditor = () => {
       const imageHtml = `<img src="${featuredImage}" alt="Image" style="max-width: 100%; height: auto; margin: 16px 0;" />`;
       editorRef.current.innerHTML += imageHtml;
       setContent(editorRef.current.innerHTML);
-      setShowPlusMenu(false);
+      setShowFormattingToolbar(false);
     }
   };
 
@@ -270,7 +275,6 @@ const ChangelogEditor = () => {
   const handleEditorFocus = () => {
     console.log('Editor focused - showing plus menu');
     setShowPlusMenu(true);
-    setShowFormattingToolbar(false);
   };
 
   const handleEditorBlur = (e: React.FocusEvent<HTMLDivElement>) => {
@@ -288,7 +292,7 @@ const ChangelogEditor = () => {
   const handlePlusClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log('Plus button clicked');
+    console.log('Plus button clicked - toggling toolbar');
     setShowFormattingToolbar(!showFormattingToolbar);
     if (editorRef.current) {
       editorRef.current.focus();
@@ -375,12 +379,8 @@ const ChangelogEditor = () => {
               className="text-4xl font-bold border-none shadow-none p-0 h-auto bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
               style={{ 
                 fontSize: '2.25rem', 
-                lineHeight: '2.5rem',
-                direction: 'ltr',
-                textAlign: 'left',
-                unicodeBidi: 'embed'
+                lineHeight: '2.5rem'
               }}
-              dir="ltr"
             />
           </div>
 
@@ -400,7 +400,7 @@ const ChangelogEditor = () => {
                 
                 {/* Formatting Toolbar - Shows when plus is clicked */}
                 {showFormattingToolbar && (
-                  <div className="absolute left-10 top-0 flex items-center space-x-1 p-2 border rounded-md bg-card shadow-lg z-30 editor-toolbar">
+                  <div className="absolute left-10 top-0 flex items-center space-x-1 p-2 border rounded-md bg-popover shadow-lg z-30 editor-toolbar">
                     <Button
                       variant="ghost"
                       size="sm"
@@ -499,22 +499,15 @@ const ChangelogEditor = () => {
               onInput={handleEditorInput}
               onFocus={handleEditorFocus}
               onBlur={handleEditorBlur}
-              className="rich-text-editor prose prose-lg max-w-none dark:prose-invert min-h-[400px] focus:outline-none text-foreground"
+              className="prose prose-lg max-w-none dark:prose-invert min-h-[400px] focus:outline-none text-foreground"
               style={{ 
-                direction: 'ltr',
-                textAlign: 'left',
-                unicodeBidi: 'embed',
                 whiteSpace: 'pre-wrap'
               }}
-              dir="ltr"
               dangerouslySetInnerHTML={{ __html: content }}
             />
             
             {!content && !showPlusMenu && (
-              <div 
-                className="absolute top-0 left-0 text-muted-foreground/50 pointer-events-none"
-                style={{ direction: 'ltr', textAlign: 'left' }}
-              >
+              <div className="absolute top-0 left-0 text-muted-foreground/50 pointer-events-none">
                 Tell your story...
               </div>
             )}
@@ -523,7 +516,7 @@ const ChangelogEditor = () => {
 
         {/* Video Dialog */}
         <Dialog open={showVideoDialog} onOpenChange={setShowVideoDialog}>
-          <DialogContent className="bg-background">
+          <DialogContent className="bg-popover">
             <DialogHeader>
               <DialogTitle>Add Video</DialogTitle>
             </DialogHeader>
@@ -532,9 +525,6 @@ const ChangelogEditor = () => {
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
                 placeholder="Enter YouTube, Vimeo, or direct video URL"
-                className="bg-background text-foreground"
-                dir="ltr"
-                style={{ direction: 'ltr', textAlign: 'left' }}
               />
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setShowVideoDialog(false)}>
@@ -548,7 +538,7 @@ const ChangelogEditor = () => {
 
         {/* Image Dialog */}
         <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-          <DialogContent className="bg-background">
+          <DialogContent className="bg-popover">
             <DialogHeader>
               <DialogTitle>Add Featured Image</DialogTitle>
             </DialogHeader>
@@ -560,27 +550,6 @@ const ChangelogEditor = () => {
           </DialogContent>
         </Dialog>
       </div>
-
-      <style>{`
-        .editor-container, .rich-text-editor, .ql-editor {
-          direction: ltr !important;
-          text-align: left !important;
-          unicode-bidi: embed !important;
-        }
-        
-        .rich-text-editor * {
-          direction: ltr !important;
-          text-align: left !important;
-        }
-        
-        .rich-text-editor h1, .rich-text-editor h2, .rich-text-editor h3,
-        .rich-text-editor h4, .rich-text-editor h5, .rich-text-editor h6,
-        .rich-text-editor p, .rich-text-editor div, .rich-text-editor span {
-          direction: ltr !important;
-          text-align: left !important;
-          unicode-bidi: embed !important;
-        }
-      `}</style>
     </DashboardLayout>
   );
 };

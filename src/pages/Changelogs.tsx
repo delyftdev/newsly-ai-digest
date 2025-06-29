@@ -53,13 +53,13 @@ const Changelogs = () => {
         </div>
 
         <Card>
-          <CardContent>
+          <CardContent className="p-0">
             {loading ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <p>Loading changelogs...</p>
               </div>
             ) : changelogs.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
+              <div className="text-center py-8 text-muted-foreground">
                 <p>No changelog entries yet. Create your first entry to get started.</p>
                 <Link to="/changelogs/new">
                   <Button className="mt-4">
@@ -69,20 +69,20 @@ const Changelogs = () => {
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="divide-y divide-border">
                 {changelogs.map((changelog) => (
-                  <div key={changelog.id} className="border rounded-lg p-4 hover:bg-gray-50 transition-colors">
+                  <div key={changelog.id} className="p-6 hover:bg-accent/50 transition-colors">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
                           <span className="text-lg">{getCategoryIcon(changelog.category)}</span>
-                          <h3 className="text-lg font-semibold">{changelog.title}</h3>
+                          <h3 className="text-lg font-semibold text-foreground">{changelog.title}</h3>
                           <Badge variant={changelog.status === 'published' ? 'default' : 'secondary'}>
                             {changelog.status}
                           </Badge>
                         </div>
                         
-                        <div className="flex items-center space-x-4 text-sm text-gray-500 mb-3">
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 mr-1" />
                             {new Date(changelog.created_at).toLocaleDateString()}
