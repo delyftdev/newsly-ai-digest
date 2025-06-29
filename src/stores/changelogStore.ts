@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -377,4 +378,4 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
   setCurrentChangelog: (changelog: Changelog | null) => {
     set({ currentChangelog: changelog });
   },
-});
+}));
