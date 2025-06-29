@@ -64,7 +64,10 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .select('*')
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Fetch changelogs error:', error);
+        throw error;
+      }
       set({ changelogs: (data || []).map(transformDbRow) });
     } catch (error) {
       console.error('Error fetching changelogs:', error);
@@ -82,7 +85,10 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .eq('id', id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Fetch changelog error:', error);
+        throw error;
+      }
       set({ currentChangelog: transformDbRow(data) });
     } catch (error) {
       console.error('Error fetching changelog:', error);
@@ -94,31 +100,58 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
 
   createChangelog: async (changelogData: Partial<Changelog>) => {
     try {
-      const { user } = useAuthStore.getState();
-      const { company } = useCompanyStore.getState();
-
-      if (!user || !company) {
-        return { error: 'User not authenticated or no company found' };
+      console.log('Creating changelog with data:', changelogData);
+      
+      // Get current user
+      const { data: { user }, error: authError } = await supabase.auth.getUser();
+      console.log('Current user:', user, 'Auth error:', authError);
+      
+      if (authError || !user) {
+        console.error('Authentication error:', authError);
+        return { error: 'User not authenticated' };
       }
+
+      // Get user's company from profile
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+      
+      console.log('User profile:', profile, 'Profile error:', profileError);
+
+      if (profileError || !profile?.company_id) {
+        console.error('Profile/company error:', profileError);
+        return { error: 'No company found for user' };
+      }
+
+      const insertData = {
+        title: changelogData.title || '',
+        content: changelogData.content,
+        category: changelogData.category,
+        status: changelogData.status,
+        visibility: changelogData.visibility,
+        featured_image_url: changelogData.featured_image_url,
+        video_url: changelogData.video_url,
+        tags: changelogData.tags,
+        company_id: profile.company_id,
+        created_by: user.id,
+      };
+
+      console.log('Insert data:', insertData);
 
       const { data, error } = await supabase
         .from('changelogs')
-        .insert({
-          title: changelogData.title || '',
-          content: changelogData.content,
-          category: changelogData.category,
-          status: changelogData.status,
-          visibility: changelogData.visibility,
-          featured_image_url: changelogData.featured_image_url,
-          video_url: changelogData.video_url,
-          tags: changelogData.tags,
-          company_id: company.id,
-          created_by: user.id,
-        })
+        .insert(insertData)
         .select()
         .single();
 
-      if (error) throw error;
+      console.log('Insert result:', { data, error });
+
+      if (error) {
+        console.error('Database insert error:', error);
+        throw error;
+      }
 
       const transformedData = transformDbRow(data);
       set(state => ({
@@ -126,15 +159,18 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         currentChangelog: transformedData
       }));
 
+      console.log('Successfully created changelog:', transformedData);
       return { data: transformedData };
     } catch (error: any) {
       console.error('Error creating changelog:', error);
-      return { error: error.message };
+      return { error: error.message || 'Failed to create changelog' };
     }
   },
 
   updateChangelog: async (id: string, updateData: Partial<Changelog>) => {
     try {
+      console.log('Updating changelog:', id, 'with data:', updateData);
+
       const { data, error } = await supabase
         .from('changelogs')
         .update({
@@ -152,7 +188,12 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .select()
         .single();
 
-      if (error) throw error;
+      console.log('Update result:', { data, error });
+
+      if (error) {
+        console.error('Database update error:', error);
+        throw error;
+      }
 
       const transformedData = transformDbRow(data);
       set(state => ({
@@ -160,20 +201,31 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         currentChangelog: state.currentChangelog?.id === id ? transformedData : state.currentChangelog
       }));
 
+      console.log('Successfully updated changelog:', transformedData);
       return {};
     } catch (error: any) {
       console.error('Error updating changelog:', error);
-      return { error: error.message };
+      return { error: error.message || 'Failed to update changelog' };
     }
   },
 
   publishChangelog: async (id: string) => {
     try {
-      const { user } = useAuthStore.getState();
-      const { company } = useCompanyStore.getState();
+      const { data: { user } } = await supabase.auth.getUser();
       
-      if (!user || !company) {
+      if (!user) {
         return { error: 'User not authenticated' };
+      }
+
+      // Get user's company
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('company_id')
+        .eq('id', user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        return { error: 'No company found' };
       }
 
       // Generate slug
@@ -182,7 +234,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
 
       const { data: slugData } = await supabase.rpc('generate_changelog_slug', {
         title: changelog.title,
-        company_id: company.id
+        company_id: profile.company_id
       });
 
       const { data, error } = await supabase

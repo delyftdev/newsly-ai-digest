@@ -1,16 +1,16 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Send, Plus, Image as ImageIcon, Video, Camera, Type, Bold, Italic, List, ListOrdered } from "lucide-react";
+import { ArrowLeft, Save, Send, Plus, Image as ImageIcon, Video, Bold, Italic, List, ListOrdered, Type, Heading1, Heading2 } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
 import ImageUpload from "@/components/ImageUpload";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 const ChangelogEditor = () => {
   const { id } = useParams();
@@ -33,10 +33,12 @@ const ChangelogEditor = () => {
   const [visibility, setVisibility] = useState<'public' | 'private'>("public");
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
-  const [showToolbar, setShowToolbar] = useState(false);
   const [showVideoDialog, setShowVideoDialog] = useState(false);
   const [showImageDialog, setShowImageDialog] = useState(false);
+  const [showPlusMenu, setShowPlusMenu] = useState(false);
+  const [isEditorFocused, setIsEditorFocused] = useState(false);
 
+  const editorRef = useRef<HTMLDivElement>(null);
   const isEditing = Boolean(id);
 
   useEffect(() => {
@@ -75,6 +77,8 @@ const ChangelogEditor = () => {
   }, [title, content, category, featuredImage, videoUrl, visibility]);
 
   const handleSave = async () => {
+    console.log('Save clicked, current state:', { title, content, category, visibility });
+    
     if (!title.trim()) {
       toast({
         title: "Error",
@@ -97,20 +101,35 @@ const ChangelogEditor = () => {
         tags: [],
       };
 
+      console.log('Attempting to save changelog with data:', changelogData);
+
       if (isEditing && id) {
-        const { error } = await updateChangelog(id, changelogData);
-        if (error) throw new Error(error);
+        const result = await updateChangelog(id, changelogData);
+        console.log('Update result:', result);
+        if (result.error) {
+          console.error('Update error:', result.error);
+          throw new Error(result.error);
+        }
         toast({ title: "Changelog updated!" });
       } else {
-        const { error } = await createChangelog(changelogData);
-        if (error) throw new Error(error);
+        const result = await createChangelog(changelogData);
+        console.log('Create result:', result);
+        if (result.error) {
+          console.error('Create error:', result.error);
+          throw new Error(result.error);
+        }
         toast({ title: "Changelog created!" });
-        navigate('/changelogs');
+        if (result.data?.id) {
+          navigate(`/changelogs/${result.data.id}`);
+        } else {
+          navigate('/changelogs');
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Save error:', error);
       toast({
         title: "Error",
-        description: "Failed to save changelog",
+        description: error.message || "Failed to save changelog",
         variant: "destructive",
       });
     } finally {
@@ -134,8 +153,21 @@ const ChangelogEditor = () => {
     }
   };
 
+  const executeCommand = (command: string, value?: string) => {
+    if (!editorRef.current) return;
+    
+    // Focus the editor first
+    editorRef.current.focus();
+    
+    // Execute the command
+    document.execCommand(command, false, value);
+    
+    // Update content state
+    setContent(editorRef.current.innerHTML);
+  };
+
   const insertVideo = () => {
-    if (!videoUrl) return;
+    if (!videoUrl || !editorRef.current) return;
 
     let embedHtml = '';
     
@@ -173,9 +205,11 @@ const ChangelogEditor = () => {
     }
 
     if (embedHtml) {
-      setContent(content + embedHtml);
+      editorRef.current.innerHTML += embedHtml;
+      setContent(editorRef.current.innerHTML);
       setVideoUrl('');
       setShowVideoDialog(false);
+      setShowPlusMenu(false);
     }
   };
 
@@ -183,17 +217,31 @@ const ChangelogEditor = () => {
     const imageUrl = URL.createObjectURL(file);
     setFeaturedImage(imageUrl);
     setShowImageDialog(false);
+    setShowPlusMenu(false);
   };
 
   const insertImage = () => {
-    if (featuredImage) {
+    if (featuredImage && editorRef.current) {
       const imageHtml = `<img src="${featuredImage}" alt="Image" style="max-width: 100%; height: auto; margin: 16px 0;" />`;
-      setContent(content + imageHtml);
+      editorRef.current.innerHTML += imageHtml;
+      setContent(editorRef.current.innerHTML);
+      setShowPlusMenu(false);
     }
   };
 
-  const formatText = (command: string) => {
-    document.execCommand(command, false);
+  const handleEditorInput = () => {
+    if (editorRef.current) {
+      setContent(editorRef.current.innerHTML);
+    }
+  };
+
+  const handleEditorFocus = () => {
+    setIsEditorFocused(true);
+  };
+
+  const handleEditorBlur = () => {
+    // Delay to allow toolbar interactions
+    setTimeout(() => setIsEditorFocused(false), 200);
   };
 
   return (
@@ -219,7 +267,7 @@ const ChangelogEditor = () => {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="px-3 py-1 border border-input bg-background text-foreground rounded-md text-sm"
+                  className="px-3 py-1 border border-input bg-background text-foreground rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="announcement">📢 Announcement</option>
                   <option value="new-feature">✨ New Feature</option>
@@ -230,7 +278,7 @@ const ChangelogEditor = () => {
                 <select
                   value={visibility}
                   onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
-                  className="px-3 py-1 border border-input bg-background text-foreground rounded-md text-sm"
+                  className="px-3 py-1 border border-input bg-background text-foreground rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring"
                 >
                   <option value="public">Public</option>
                   <option value="private">Private</option>
@@ -277,90 +325,135 @@ const ChangelogEditor = () => {
           </div>
 
           {/* Toolbar */}
-          {showToolbar && (
+          {isEditorFocused && (
             <div className="flex items-center space-x-2 mb-4 p-2 border rounded-md bg-card">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => formatText('bold')}
+                onClick={() => executeCommand('bold')}
+                className="h-8 w-8 p-0"
               >
                 <Bold className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => formatText('italic')}
+                onClick={() => executeCommand('italic')}
+                className="h-8 w-8 p-0"
               >
                 <Italic className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => formatText('insertUnorderedList')}
+                onClick={() => executeCommand('formatBlock', 'h1')}
+                className="h-8 w-8 p-0"
+              >
+                <Heading1 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => executeCommand('formatBlock', 'h2')}
+                className="h-8 w-8 p-0"
+              >
+                <Heading2 className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => executeCommand('insertUnorderedList')}
+                className="h-8 w-8 p-0"
               >
                 <List className="h-4 w-4" />
               </Button>
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => formatText('insertOrderedList')}
+                onClick={() => executeCommand('insertOrderedList')}
+                className="h-8 w-8 p-0"
               >
                 <ListOrdered className="h-4 w-4" />
               </Button>
+              
               <div className="w-px h-6 bg-border mx-2" />
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowImageDialog(true)}
-              >
-                <ImageIcon className="h-4 w-4" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setShowVideoDialog(true)}
-              >
-                <Video className="h-4 w-4" />
-              </Button>
+              
+              <Popover open={showPlusMenu} onOpenChange={setShowPlusMenu}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 w-8 p-0"
+                  >
+                    <Plus className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-48 p-2" align="start">
+                  <div className="space-y-1">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => setShowImageDialog(true)}
+                    >
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Add Featured Image
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={insertImage}
+                      disabled={!featuredImage}
+                    >
+                      <ImageIcon className="h-4 w-4 mr-2" />
+                      Insert Image
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="w-full justify-start"
+                      onClick={() => setShowVideoDialog(true)}
+                    >
+                      <Video className="h-4 w-4 mr-2" />
+                      Add Video
+                    </Button>
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 
           {/* Content Editor */}
           <div className="relative">
             <div
+              ref={editorRef}
               contentEditable
               suppressContentEditableWarning={true}
-              onInput={(e) => setContent(e.currentTarget.innerHTML)}
-              onFocus={() => setShowToolbar(true)}
-              onBlur={() => setTimeout(() => setShowToolbar(false), 200)}
+              onInput={handleEditorInput}
+              onFocus={handleEditorFocus}
+              onBlur={handleEditorBlur}
               className="prose prose-lg max-w-none dark:prose-invert min-h-[400px] focus:outline-none text-foreground"
-              style={{ direction: 'ltr' }}
+              style={{ 
+                direction: 'ltr',
+                textAlign: 'left',
+                whiteSpace: 'pre-wrap'
+              }}
+              dir="ltr"
               dangerouslySetInnerHTML={{ __html: content }}
             />
             
-            {!content && !showToolbar && (
+            {!content && !isEditorFocused && (
               <div className="absolute top-0 left-0 text-muted-foreground/50 pointer-events-none">
                 Tell your story...
               </div>
-            )}
-
-            {/* Plus Button */}
-            {showToolbar && (
-              <Button
-                variant="outline"
-                size="sm"
-                className="absolute -left-12 top-0"
-                onClick={() => setShowToolbar(!showToolbar)}
-              >
-                <Plus className="h-4 w-4" />
-              </Button>
             )}
           </div>
         </div>
 
         {/* Video Dialog */}
         <Dialog open={showVideoDialog} onOpenChange={setShowVideoDialog}>
-          <DialogContent>
+          <DialogContent className="bg-background">
             <DialogHeader>
               <DialogTitle>Add Video</DialogTitle>
             </DialogHeader>
@@ -369,6 +462,7 @@ const ChangelogEditor = () => {
                 value={videoUrl}
                 onChange={(e) => setVideoUrl(e.target.value)}
                 placeholder="Enter YouTube, Vimeo, or direct video URL"
+                className="bg-background text-foreground"
               />
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setShowVideoDialog(false)}>
@@ -382,7 +476,7 @@ const ChangelogEditor = () => {
 
         {/* Image Dialog */}
         <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
-          <DialogContent>
+          <DialogContent className="bg-background">
             <DialogHeader>
               <DialogTitle>Add Featured Image</DialogTitle>
             </DialogHeader>
