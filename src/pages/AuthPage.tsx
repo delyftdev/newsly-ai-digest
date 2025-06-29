@@ -5,10 +5,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Mail, Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
+import { Eye, EyeOff, Loader2, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuthStore } from "@/stores/authStore";
 import { Link } from "react-router-dom";
+import DelyftLogo from "@/components/DelyftLogo";
 
 const AuthPage = () => {
   const [showPassword, setShowPassword] = useState(false);
@@ -116,12 +117,12 @@ const AuthPage = () => {
 
         <Card className="border-0 shadow-lg">
           <CardHeader className="pb-4 text-center">
-            <div className="w-12 h-12 bg-primary rounded-lg flex items-center justify-center mx-auto mb-4">
-              <Mail className="w-6 h-6 text-white" />
+            <div className="flex justify-center mb-4">
+              <DelyftLogo width={120} height={34} className="h-8" />
             </div>
-            <CardTitle className="text-2xl">Welcome to NewsletterAI</CardTitle>
+            <CardTitle className="text-2xl">Welcome to Delyft</CardTitle>
             <CardDescription>
-              Transform newsletter chaos into organized intelligence
+              Your intelligent communication management platform
             </CardDescription>
           </CardHeader>
           

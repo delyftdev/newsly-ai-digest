@@ -42,6 +42,52 @@ body {
   font-family: "Inter", sans-serif;
 }
 
+/* Fix hover states and text contrast */
+*:hover {
+  transition: all 0.2s ease-in-out;
+}
+
+/* Ensure proper text contrast on hover */
+.hover\:bg-accent:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/* Fix generated email field hover */
+.bg-gray-100:hover {
+  background-color: hsl(var(--muted));
+  color: hsl(var(--muted-foreground));
+}
+
+/* Fix settings and other hover states */
+.text-muted-foreground:hover {
+  color: hsl(var(--foreground));
+}
+
+/* Ensure proper hover states for cards */
+.group:hover .text-muted-foreground {
+  color: hsl(var(--foreground));
+}
+
+/* Fix specific hover issues */
+.hover\:text-foreground:hover {
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Ensure proper contrast for all interactive elements */
+button:hover,
+a:hover,
+.hover\:bg-accent:hover {
+  background-color: hsl(var(--accent));
+  color: hsl(var(--accent-foreground));
+}
+
+/* Fix card hover states */
+.card:hover {
+  background-color: hsl(var(--card));
+  color: hsl(var(--card-foreground));
+}
+
 @keyframes drawLine {
   0% {
     stroke-dasharray: 0 1000;

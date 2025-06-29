@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Plus,
   Bell,
-  Inbox
+  Inbox,
+  BookOpen
 } from "lucide-react";
 import { useAuthStore } from "@/stores/authStore";
 import { useCompanyStore } from "@/stores/companyStore";
@@ -35,16 +36,14 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
   const navigation = [
     { name: 'Dashboard', href: '/dashboard', icon: Home },
     { name: 'Inbox', href: '/inbox', icon: Inbox },
-    { 
-      name: 'Communications', 
-      icon: MessageSquare,
-      children: [
-        { name: 'Release Notes', href: '/releases', icon: FileText },
-        { name: 'Changelogs', href: '/changelogs', icon: MessageCircle },
-      ]
-    },
+    { name: 'Changelogs', href: '/changelogs', icon: BookOpen },
     { name: 'Feedback', href: '/feedback', icon: MessageCircle },
-    { name: 'Roadmap', href: '/roadmap', icon: Map },
+    { 
+      name: 'Roadmap', 
+      href: '/roadmap', 
+      icon: Map,
+      comingSoon: true
+    },
     { name: 'Settings', href: '/settings', icon: Settings },
   ];
 
@@ -66,9 +65,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             {!sidebarCollapsed && (
               <div className="flex items-center">
                 <DelyftLogo width={120} height={34} className="h-8 mr-3" />
-                <div>
-                  <p className="text-sm text-muted-foreground">delyft</p>
-                </div>
               </div>
             )}
             {sidebarCollapsed && (
@@ -92,49 +88,29 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
         {/* Navigation */}
         <nav className="flex-1 p-4 space-y-2">
           {navigation.map((item) => (
-            <div key={item.name}>
-              {item.children ? (
-                <div className="space-y-1">
-                  <div className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium text-muted-foreground",
-                    sidebarCollapsed && "justify-center"
-                  )}>
-                    <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
-                    {!sidebarCollapsed && item.name}
-                  </div>
-                  {!sidebarCollapsed && (
-                    <div className="ml-6 space-y-1">
-                      {item.children.map((child) => (
-                        <Link
-                          key={child.name}
-                          to={child.href}
-                          className={cn(
-                            "flex items-center px-3 py-2 text-sm text-muted-foreground rounded-md hover:bg-accent",
-                            location.pathname === child.href && "bg-accent text-foreground"
-                          )}
-                        >
-                          <child.icon className="h-4 w-4 mr-2 flex-shrink-0" />
-                          {child.name}
-                        </Link>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <Link
-                  to={item.href}
-                  className={cn(
-                    "flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent",
-                    location.pathname === item.href 
-                      ? "bg-accent text-foreground" 
-                      : "text-muted-foreground",
-                    sidebarCollapsed && "justify-center"
-                  )}
-                >
-                  <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
-                  {!sidebarCollapsed && item.name}
-                </Link>
-              )}
+            <div key={item.name} className="relative">
+              <Link
+                to={item.href}
+                className={cn(
+                  "flex items-center px-3 py-2 text-sm font-medium rounded-md hover:bg-accent hover:text-accent-foreground transition-colors",
+                  location.pathname === item.href 
+                    ? "bg-accent text-accent-foreground" 
+                    : "text-muted-foreground",
+                  sidebarCollapsed && "justify-center"
+                )}
+              >
+                <item.icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                {!sidebarCollapsed && (
+                  <span className="flex items-center">
+                    {item.name}
+                    {item.comingSoon && (
+                      <span className="ml-2 px-2 py-1 text-xs bg-blue-100 text-blue-800 rounded-full font-medium">
+                        Coming Soon
+                      </span>
+                    )}
+                  </span>
+                )}
+              </Link>
             </div>
           ))}
         </nav>
@@ -170,7 +146,6 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             <h2 className="text-xl font-semibold text-foreground">
               {location.pathname === '/dashboard' && 'Dashboard'}
               {location.pathname === '/inbox' && 'Inbox'}
-              {location.pathname.includes('/releases') && 'Release Notes'}
               {location.pathname === '/changelogs' && 'Changelogs'}
               {location.pathname === '/feedback' && 'Feedback'}
               {location.pathname === '/roadmap' && 'Roadmap'}
@@ -178,11 +153,11 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
             </h2>
             
             <div className="flex items-center space-x-4">
-              {location.pathname.includes('/releases') && (
-                <Link to="/releases/new">
+              {location.pathname === '/changelogs' && (
+                <Link to="/changelogs/new">
                   <Button>
                     <Plus className="h-4 w-4 mr-2" />
-                    New Release
+                    New Changelog
                   </Button>
                 </Link>
               )}

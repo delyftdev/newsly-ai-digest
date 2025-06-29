@@ -1,242 +1,171 @@
 
-import { useEffect, useMemo } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Plus, Search, TrendingUp, Clock, ThumbsUp, CheckCircle } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Plus, ArrowUp, MessageSquare, Filter } from "lucide-react";
 import { useFeedbackStore } from "@/stores/feedbackStore";
-import FeedbackCard from "@/components/feedback/FeedbackCard";
+import { useToast } from "@/hooks/use-toast";
 import SubmitIdeaModal from "@/components/feedback/SubmitIdeaModal";
 import FilterDropdown from "@/components/feedback/FilterDropdown";
-import { useState } from "react";
-import { toast } from "sonner";
+import FeedbackCard from "@/components/feedback/FeedbackCard";
 
 const Feedback = () => {
-  const {
-    ideas,
-    isLoading,
-    error,
-    sortBy,
-    filterBy,
-    fetchIdeas,
-    createIdea,
-    voteIdea,
-    unvoteIdea,
-    updateIdeaStatus,
-    setSortBy,
-    setFilterBy
-  } = useFeedbackStore();
-
-  const [searchQuery, setSearchQuery] = useState("");
+  const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const { ideas, isLoading, error, sortBy, filterBy, fetchIdeas, setSortBy, setFilterBy } = useFeedbackStore();
+  const { toast } = useToast();
 
   useEffect(() => {
     fetchIdeas();
   }, [fetchIdeas]);
 
-  // Filter and sort ideas
-  const filteredAndSortedIdeas = useMemo(() => {
-    let filtered = ideas;
-
-    // Apply search filter
-    if (searchQuery.trim()) {
-      filtered = filtered.filter(idea =>
-        idea.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        idea.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        idea.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+  useEffect(() => {
+    if (error) {
+      toast({
+        title: "Error",
+        description: error,
+        variant: "destructive",
+      });
     }
+  }, [error, toast]);
 
-    // Apply category/status filter
-    if (filterBy !== 'all') {
-      filtered = filtered.filter(idea => 
-        idea.category === filterBy || idea.status === filterBy
-      );
-    }
+  const filteredIdeas = ideas.filter(idea => {
+    if (filterBy === 'all') return true;
+    if (filterBy === 'my-votes') return idea.user_has_voted;
+    return idea.status === filterBy;
+  });
 
-    // Apply sorting
+  const sortedIdeas = [...filteredIdeas].sort((a, b) => {
     switch (sortBy) {
       case 'trending':
-        return filtered.sort((a, b) => {
-          // Simple trending algorithm: combine votes and recency
-          const aScore = a.vote_count + (new Date(a.updated_at).getTime() / 1000000000);
-          const bScore = b.vote_count + (new Date(b.updated_at).getTime() / 1000000000);
-          return bScore - aScore;
-        });
+        return b.vote_count - a.vote_count;
       case 'new':
-        return filtered.sort((a, b) => 
-          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
+        return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
       case 'top':
-        return filtered.sort((a, b) => b.vote_count - a.vote_count);
+        return b.vote_count - a.vote_count;
       default:
-        return filtered;
+        return 0;
     }
-  }, [ideas, searchQuery, filterBy, sortBy]);
+  });
 
-  const handleCreateIdea = async (ideaData: any) => {
-    await createIdea(ideaData);
-  };
-
-  const handleVote = async (ideaId: string) => {
-    await voteIdea(ideaId);
-  };
-
-  const handleUnvote = async (ideaId: string) => {
-    await unvoteIdea(ideaId);
-  };
-
-  const handleStatusChange = async (ideaId: string, status: string) => {
-    await updateIdeaStatus(ideaId, status);
-    toast.success(`Status updated to ${status.replace('-', ' ')}`);
-  };
-
-  // Statistics
-  const stats = useMemo(() => {
-    const total = ideas.length;
-    const underReview = ideas.filter(idea => idea.status === 'under-review').length;
-    const planned = ideas.filter(idea => idea.status === 'planned').length;
-    const completed = ideas.filter(idea => idea.status === 'completed').length;
-    
-    return { total, underReview, planned, completed };
-  }, [ideas]);
-
-  if (error) {
+  if (isLoading) {
     return (
-      <DashboardLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="text-center">
-            <p className="text-red-600 dark:text-red-400 mb-4">Error loading feedback: {error}</p>
-            <Button onClick={fetchIdeas}>Try Again</Button>
-          </div>
+      <div className="flex items-center justify-center min-h-[400px]">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading feedback...</p>
         </div>
-      </DashboardLayout>
+      </div>
     );
   }
 
   return (
-    <DashboardLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Feature Ideas</h1>
-            <p className="text-gray-600 dark:text-gray-400">Collect and manage community feedback and feature requests</p>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">Feedback</h1>
+          <p className="text-muted-foreground">
+            Share your ideas and vote on features you'd like to see
+          </p>
+        </div>
+        <Button onClick={() => setIsSubmitModalOpen(true)}>
+          <Plus className="h-4 w-4 mr-2" />
+          Submit Idea
+        </Button>
+      </div>
+
+      {/* Filters and Sorting */}
+      <div className="flex items-center gap-4 flex-wrap">
+        <div className="flex items-center gap-2">
+          <Filter className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Filter:</span>
+          <FilterDropdown value={filterBy} onChange={setFilterBy} />
+        </div>
+        
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Sort by:</span>
+          <div className="flex gap-1">
+            {(['trending', 'new', 'top'] as const).map((sort) => (
+              <Button
+                key={sort}
+                variant={sortBy === sort ? "default" : "outline"}
+                size="sm"
+                onClick={() => setSortBy(sort)}
+              >
+                {sort === 'trending' && <ArrowUp className="h-3 w-3 mr-1" />}
+                {sort.charAt(0).toUpperCase() + sort.slice(1)}
+              </Button>
+            ))}
           </div>
-          <SubmitIdeaModal onSubmit={handleCreateIdea}>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Submit Idea
-            </Button>
-          </SubmitIdeaModal>
-        </div>
-
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Total Ideas</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <div className="text-2xl font-bold dark:text-gray-100">{stats.total}</div>
-                <TrendingUp className="h-4 w-4 ml-2 text-gray-400" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Under Review</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <div className="text-2xl font-bold text-yellow-600">{stats.underReview}</div>
-                <Clock className="h-4 w-4 ml-2 text-yellow-400" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Planned</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <div className="text-2xl font-bold text-blue-600">{stats.planned}</div>
-                <ThumbsUp className="h-4 w-4 ml-2 text-blue-400" />
-              </div>
-            </CardContent>
-          </Card>
-          
-          <Card className="dark:bg-gray-800 dark:border-gray-700">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-gray-600 dark:text-gray-400">Completed</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center">
-                <div className="text-2xl font-bold text-green-600">{stats.completed}</div>
-                <CheckCircle className="h-4 w-4 ml-2 text-green-400" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filters and Search */}
-        <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
-          <div className="relative flex-1 max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-            <Input
-              placeholder="Search ideas..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 dark:bg-gray-800 dark:border-gray-700 dark:text-gray-100"
-            />
-          </div>
-          <FilterDropdown
-            sortBy={sortBy}
-            filterBy={filterBy}
-            onSortChange={setSortBy}
-            onFilterChange={setFilterBy}
-          />
-        </div>
-
-        {/* Ideas List */}
-        <div className="space-y-4">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-            </div>
-          ) : filteredAndSortedIdeas.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-gray-500 dark:text-gray-400 mb-4">
-                {searchQuery || filterBy !== 'all' 
-                  ? "No ideas match your current filters." 
-                  : "No ideas yet. Be the first to submit one!"
-                }
-              </div>
-              <SubmitIdeaModal onSubmit={handleCreateIdea}>
-                <Button variant="outline">
-                  <Plus className="h-4 w-4 mr-2" />
-                  Submit First Idea
-                </Button>
-              </SubmitIdeaModal>
-            </div>
-          ) : (
-            filteredAndSortedIdeas.map((idea) => (
-              <FeedbackCard
-                key={idea.id}
-                idea={idea}
-                onVote={handleVote}
-                onUnvote={handleUnvote}
-                onStatusChange={handleStatusChange}
-                showStatusActions={true}
-              />
-            ))
-          )}
         </div>
       </div>
-    </DashboardLayout>
+
+      {/* Stats */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">{ideas.length}</div>
+            <div className="text-sm text-muted-foreground">Total Ideas</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              {ideas.filter(idea => idea.status === 'under-review').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Under Review</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              {ideas.filter(idea => idea.status === 'planned').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Planned</div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-4">
+            <div className="text-2xl font-bold">
+              {ideas.filter(idea => idea.status === 'completed').length}
+            </div>
+            <div className="text-sm text-muted-foreground">Completed</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Ideas List */}
+      <div className="space-y-4">
+        {sortedIdeas.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center">
+              <MessageSquare className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-semibold mb-2">No feedback found</h3>
+              <p className="text-muted-foreground mb-4">
+                {filterBy === 'all' 
+                  ? "Be the first to submit an idea!"
+                  : "Try adjusting your filters to see more results."
+                }
+              </p>
+              <Button onClick={() => setIsSubmitModalOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Submit First Idea
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          sortedIdeas.map((idea) => (
+            <FeedbackCard key={idea.id} idea={idea} />
+          ))
+        )}
+      </div>
+
+      <SubmitIdeaModal 
+        open={isSubmitModalOpen} 
+        onOpenChange={setIsSubmitModalOpen} 
+      />
+    </div>
   );
 };
 
