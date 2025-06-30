@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Sun, Moon } from "lucide-react";
@@ -17,9 +16,9 @@ const Header = () => {
 
   const productItems = [
     { name: "Smart Inbox", description: "Organize all customer updates" },
-    { name: "AI Editor", description: "Create on-brand content" },
-    { name: "Feedback Hub", description: "Collect and prioritize feedback" },
-    { name: "Content Insights", description: "Track engagement and performance" },
+    { name: "Changelog", description: "Create on-brand content" },
+    { name: "Feedback", description: "Collect and prioritize feedback" },
+    { name: "Insights", description: "Track engagement and performance" },
   ];
 
   return (
@@ -39,7 +38,7 @@ const Header = () => {
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuContent align="start" className="w-64 bg-background/95 backdrop-blur-lg">
                   {productItems.map((item) => (
                     <DropdownMenuItem key={item.name} className="flex flex-col items-start p-3">
                       <div className="font-medium">{item.name}</div>

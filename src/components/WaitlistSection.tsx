@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
@@ -43,12 +42,12 @@ const WaitlistSection = ({ submittedEmail, submittedReferralCode, onWaitlistSucc
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline" size="lg" className="min-w-[140px]">
-                Why Join?
+                Join Beta
               </Button>
             </SheetTrigger>
             <SheetContent className="w-full sm:max-w-2xl lg:max-w-4xl">
               <SheetHeader className="mb-6">
-                <SheetTitle className="text-2xl">Why Join Our Waitlist?</SheetTitle>
+                <SheetTitle className="text-2xl">Join Our Beta Program</SheetTitle>
                 <SheetDescription className="text-lg">
                   Get exclusive early access and special benefits
                 </SheetDescription>

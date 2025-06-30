@@ -1,4 +1,3 @@
-
 import { Inbox, Edit, MessageCircle, BarChart3 } from "lucide-react";
 import FeedbackHubSvg from "./FeedbackHubSvg";
 
@@ -6,21 +5,21 @@ const ValuePropsSection = () => {
   const valueProps = [
     {
       icon: Inbox,
-      title: "Smart Inbox for All Customer Updates",
+      title: "Smart Inbox",
       benefit: "Find what you need instantly. Stop losing great ideas.",
       description: "Auto-organize every release note, announcement, or idea in one searchable inbox. No more hunting through docs, emails, and chats.",
       placeholder: "📥 Smart organization demo"
     },
     {
       icon: Edit,
-      title: "AI Editor for On-Brand Content", 
+      title: "Changelog", 
       benefit: "Send updates customers actually read. No more robotic emails.",
       description: "Tweak drafts to match your brand's voice and customer's tone — then publish as changelogs or widgets.",
       placeholder: "✨ AI content editor demo"
     },
     {
       icon: MessageCircle,
-      title: "Feedback Hub with Public Voting",
+      title: "Feedback",
       benefit: "Close the loop faster. Show customers you're listening.",
       description: "Let customers and teammates submit, vote, and see how ideas are progressing.",
       placeholder: null, // Will use SVG component
@@ -28,7 +27,7 @@ const ValuePropsSection = () => {
     },
     {
       icon: BarChart3,
-      title: "Content Insights Dashboard",
+      title: "Insights",
       benefit: "See what's working. Stop wasting time on what's not.",
       description: "Check open rates, clicks, and reactions for every update you send.",
       placeholder: "📊 Analytics dashboard demo"
