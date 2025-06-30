@@ -1,5 +1,7 @@
+
 import { Inbox, Edit, MessageCircle, BarChart3 } from "lucide-react";
-import FeedbackHubSvg from "./FeedbackHubSvg";
+import FeedbackSvg from "./FeedbackSvg";
+import InsightsSvg from "./InsightsSvg";
 
 const ValuePropsSection = () => {
   const valueProps = [
@@ -30,7 +32,8 @@ const ValuePropsSection = () => {
       title: "Insights",
       benefit: "See what's working. Stop wasting time on what's not.",
       description: "Check open rates, clicks, and reactions for every update you send.",
-      placeholder: "📊 Analytics dashboard demo"
+      placeholder: null, // Will use SVG component
+      useSvg: true
     }
   ];
 
@@ -65,7 +68,7 @@ const ValuePropsSection = () => {
               <div className="bg-accent/50 rounded-lg p-6 mb-4 text-center text-muted-foreground min-h-[200px] flex items-center justify-center">
                 {prop.useSvg ? (
                   <div className="w-full h-48 max-w-md mx-auto">
-                    <FeedbackHubSvg />
+                    {prop.title === "Feedback" ? <FeedbackSvg /> : <InsightsSvg />}
                   </div>
                 ) : (
                   prop.placeholder
