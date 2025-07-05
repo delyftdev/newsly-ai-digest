@@ -1,4 +1,3 @@
-
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -158,6 +157,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         tags: changelogData.tags || [],
         company_id: profile.company_id,
         created_by: user.id,
+        ai_generated: changelogData.ai_generated || false,
       };
 
       console.log('Final insert data:', JSON.stringify(insertData, null, 2));
@@ -225,6 +225,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
           featured_image_url: updateData.featured_image_url,
           video_url: updateData.video_url,
           tags: updateData.tags,
+          ai_generated: updateData.ai_generated,
           updated_at: new Date().toISOString(),
         })
         .eq('id', id)

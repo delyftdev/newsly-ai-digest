@@ -1,14 +1,15 @@
-
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Send } from "lucide-react";
+import { ArrowLeft, Save, Send, Sparkles, FileText } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
 import TipTapEditor from "@/components/TipTapEditor";
+import DocumentUpload from "@/components/DocumentUpload";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const ChangelogEditor = () => {
   const { id } = useParams();
@@ -31,6 +32,9 @@ const ChangelogEditor = () => {
   const [visibility, setVisibility] = useState<'public' | 'private'>("public");
   const [isSaving, setIsSaving] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [aiGenerated, setAiGenerated] = useState(false);
+  const [sourceDocument, setSourceDocument] = useState<string>("");
+  const [showDocumentUpload, setShowDocumentUpload] = useState(!id); // Show by default for new changelogs
 
   const isEditing = Boolean(id);
 
@@ -220,6 +224,34 @@ const ChangelogEditor = () => {
     }
   };
 
+  const handleAIGenerate = (aiData: any) => {
+    console.log('AI generated data received:', aiData);
+    
+    // Pre-populate the editor with AI-generated content
+    setTitle(aiData.title || "");
+    setContent(aiData.content || "");
+    setCategory(aiData.category || "announcement");
+    setAiGenerated(true);
+    setSourceDocument(aiData.sourceDocument || "");
+    
+    // Hide the upload section after successful generation
+    setShowDocumentUpload(false);
+    
+    toast({
+      title: "Changelog Generated!",
+      description: "AI has created a draft based on your document. You can now edit and customize it.",
+    });
+  };
+
+  const handleDocumentUpload = (file: File) => {
+    console.log('Document uploaded:', file.name);
+    // File is now ready for AI processing
+  };
+
+  const toggleDocumentUpload = () => {
+    setShowDocumentUpload(!showDocumentUpload);
+  };
+
   return (
     <DashboardLayout>
       <div className="min-h-screen bg-background">
@@ -237,9 +269,25 @@ const ChangelogEditor = () => {
                     Auto-saved {lastSaved.toLocaleTimeString()}
                   </Badge>
                 )}
+                {aiGenerated && (
+                  <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    AI Generated
+                  </Badge>
+                )}
               </div>
               
               <div className="flex items-center space-x-2">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={toggleDocumentUpload}
+                  className="text-purple-600 hover:text-purple-700"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  {showDocumentUpload ? 'Hide' : 'Show'} AI Assistant
+                </Button>
+
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
@@ -278,8 +326,38 @@ const ChangelogEditor = () => {
           </div>
         </div>
 
+        {/* AI Document Upload Section */}
+        {showDocumentUpload && (
+          <div className="max-w-4xl mx-auto px-6 py-6 border-b">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center">
+                  <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
+                  AI Changelog Generator
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <DocumentUpload
+                  onDocumentUpload={handleDocumentUpload}
+                  onAIGenerate={handleAIGenerate}
+                />
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Editor Canvas */}
         <div className="max-w-4xl mx-auto px-6 py-8">
+          {/* Source Document Info */}
+          {sourceDocument && (
+            <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+              <div className="flex items-center text-sm text-purple-700">
+                <FileText className="h-4 w-4 mr-2" />
+                Generated from: <strong className="ml-1">{sourceDocument}</strong>
+              </div>
+            </div>
+          )}
+
           {/* Featured Image */}
           {featuredImage && (
             <div className="mb-8">

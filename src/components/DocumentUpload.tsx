@@ -2,23 +2,25 @@
 import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Upload, FileText, X, Sparkles } from "lucide-react";
+import { Upload, FileText, X, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import GoogleDrivePicker from "./GoogleDrivePicker";
 
 interface DocumentUploadProps {
   onDocumentUpload: (file: File) => void;
-  onAIProcess?: (content: string) => void;
+  onAIGenerate?: (changelogData: any) => void;
   isProcessing?: boolean;
 }
 
 const DocumentUpload = ({ 
   onDocumentUpload, 
-  onAIProcess,
+  onAIGenerate,
   isProcessing = false 
 }: DocumentUploadProps) => {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [isAIProcessing, setIsAIProcessing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
@@ -68,7 +70,7 @@ const DocumentUpload = ({
     onDocumentUpload(file);
     toast({
       title: "Document uploaded",
-      description: `${file.name} is ready for processing.`,
+      description: `${file.name} is ready for AI processing.`,
     });
   };
 
@@ -76,10 +78,50 @@ const DocumentUpload = ({
     setUploadedFiles(files => files.filter((_, i) => i !== index));
   };
 
-  const handleAIProcessing = () => {
-    if (uploadedFiles.length > 0 && onAIProcess) {
-      // In a real implementation, we'd extract text from the document
-      onAIProcess("Document content would be extracted here");
+  const handleAIProcessing = async () => {
+    if (uploadedFiles.length === 0) return;
+    
+    setIsAIProcessing(true);
+    try {
+      const file = uploadedFiles[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      console.log('Processing file with AI:', file.name);
+
+      const { data, error } = await supabase.functions.invoke('process-document-to-changelog', {
+        body: formData,
+      });
+
+      if (error) {
+        console.error('AI processing error:', error);
+        throw new Error(error.message);
+      }
+
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to process document');
+      }
+
+      console.log('AI processing successful:', data.data);
+
+      toast({
+        title: "AI Processing Complete!",
+        description: "Your changelog draft has been generated and is ready for editing.",
+      });
+
+      if (onAIGenerate) {
+        onAIGenerate(data.data);
+      }
+
+    } catch (error: any) {
+      console.error('Error processing document:', error);
+      toast({
+        title: "Processing Failed",
+        description: error.message || "Failed to process document with AI",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAIProcessing(false);
     }
   };
 
@@ -98,10 +140,10 @@ const DocumentUpload = ({
         <CardContent className="p-8 text-center">
           <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">
-            Upload Document
+            Upload Document for AI Processing
           </h3>
           <p className="text-gray-600 mb-4">
-            Drag and drop a document here, or click to select
+            Upload release notes, documentation, or any text file to generate a changelog
           </p>
           <p className="text-sm text-gray-500 mb-4">
             Supports PDF, Word documents, and text files
@@ -113,7 +155,7 @@ const DocumentUpload = ({
             </Button>
             <GoogleDrivePicker 
               onFileSelected={handleFileUpload}
-              disabled={isProcessing}
+              disabled={isProcessing || isAIProcessing}
             />
           </div>
           <input
@@ -131,17 +173,24 @@ const DocumentUpload = ({
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center justify-between">
-              <span>Uploaded Documents</span>
-              {onAIProcess && (
-                <Button 
-                  onClick={handleAIProcessing}
-                  disabled={isProcessing}
-                  className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
-                >
-                  <Sparkles className="h-4 w-4 mr-2" />
-                  {isProcessing ? 'Processing...' : 'Smart AI Convert'}
-                </Button>
-              )}
+              <span>Ready for AI Processing</span>
+              <Button 
+                onClick={handleAIProcessing}
+                disabled={isProcessing || isAIProcessing}
+                className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+              >
+                {isAIProcessing ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-4 w-4 mr-2" />
+                    Generate Changelog with AI
+                  </>
+                )}
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -167,11 +216,26 @@ const DocumentUpload = ({
                       e.stopPropagation();
                       removeFile(index);
                     }}
+                    disabled={isAIProcessing}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 </div>
               ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {isAIProcessing && (
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-center space-x-3">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <div>
+                <p className="font-medium">AI is generating your changelog...</p>
+                <p className="text-sm text-gray-500">This may take a few moments</p>
+              </div>
             </div>
           </CardContent>
         </Card>
