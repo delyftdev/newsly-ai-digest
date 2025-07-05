@@ -10,19 +10,16 @@ import {
   Edit, 
   Calendar, 
   Tag, 
-  Share,
-  Eye
+  Share
 } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useCompanyStore } from "@/stores/companyStore";
 import ShareDialog from "@/components/ShareDialog";
-import { useSidebar } from "@/components/ui/sidebar";
 
 const Changelogs = () => {
   const { changelogs, fetchChangelogs, loading } = useChangelogStore();
   const { company } = useCompanyStore();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
-  const { setOpenMobile } = useSidebar();
 
   useEffect(() => {
     fetchChangelogs();
@@ -69,43 +66,6 @@ const Changelogs = () => {
     setShareDialogOpen(true);
   };
 
-  const handleChangelogClick = (changelogId: string) => {
-    // Auto-collapse sidebar on mobile/tablet
-    if (window.innerWidth < 1024) {
-      setOpenMobile(false);
-    }
-  };
-
-  // Group changelogs by date
-  const groupedChangelogs = changelogs.reduce((groups, changelog) => {
-    const date = new Date(changelog.created_at).toDateString();
-    if (!groups[date]) {
-      groups[date] = [];
-    }
-    groups[date].push(changelog);
-    return groups;
-  }, {} as Record<string, typeof changelogs>);
-
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (date.toDateString() === today.toDateString()) {
-      return 'Today';
-    } else if (date.toDateString() === yesterday.toDateString()) {
-      return 'Yesterday';
-    } else {
-      return date.toLocaleDateString('en-US', { 
-        weekday: 'long', 
-        year: 'numeric', 
-        month: 'long', 
-        day: 'numeric' 
-      });
-    }
-  };
-
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -125,18 +85,14 @@ const Changelogs = () => {
           </div>
         </div>
 
-        {loading ? (
-          <Card>
-            <CardContent className="p-8">
-              <div className="text-center text-muted-foreground">
+        <Card>
+          <CardContent className="p-0">
+            {loading ? (
+              <div className="text-center py-8 text-muted-foreground">
                 <p>Loading changelogs...</p>
               </div>
-            </CardContent>
-          </Card>
-        ) : changelogs.length === 0 ? (
-          <Card>
-            <CardContent className="p-8">
-              <div className="text-center text-muted-foreground">
+            ) : changelogs.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
                 <p>No changelog entries yet. Create your first entry to get started.</p>
                 <Link to="/changelogs/new">
                   <Button className="mt-4">
@@ -145,103 +101,56 @@ const Changelogs = () => {
                   </Button>
                 </Link>
               </div>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="space-y-6">
-            {Object.entries(groupedChangelogs).map(([dateString, dayChangelogs]) => (
-              <div key={dateString} className="space-y-4">
-                <div className="flex items-center space-x-3">
-                  <h2 className="text-lg font-semibold text-foreground">
-                    {formatDate(dateString)}
-                  </h2>
-                  <div className="flex-1 h-px bg-border"></div>
-                </div>
-                
-                <Card>
-                  <CardContent className="p-0">
-                    <div className="divide-y divide-border">
-                      {dayChangelogs.map((changelog) => (
-                        <div key={changelog.id} className="p-6 hover:bg-accent/30 transition-colors">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3 mb-3">
-                                <span className="text-2xl">{getCategoryIcon(changelog.category)}</span>
-                                <Link 
-                                  to={`/changelogs/${changelog.id}/edit`}
-                                  className="text-xl font-semibold text-foreground hover:text-primary transition-colors"
-                                  onClick={() => handleChangelogClick(changelog.id)}
-                                >
-                                  {changelog.title}
-                                </Link>
-                                <Badge 
-                                  variant={changelog.status === 'published' ? 'default' : 'secondary'}
-                                  className="ml-2"
-                                >
-                                  {changelog.status}
-                                </Badge>
-                              </div>
-                              
-                              <div className="flex items-center space-x-6 text-sm text-muted-foreground mb-3">
-                                <div className="flex items-center space-x-1">
-                                  <Calendar className="h-4 w-4" />
-                                  <span>{new Date(changelog.created_at).toLocaleTimeString('en-US', { 
-                                    hour: 'numeric', 
-                                    minute: '2-digit',
-                                    hour12: true 
-                                  })}</span>
-                                </div>
-                                <div className="flex items-center space-x-1">
-                                  <Tag className="h-4 w-4" />
-                                  <span>{getCategoryLabel(changelog.category)}</span>
-                                </div>
-                                {changelog.view_count !== undefined && changelog.view_count > 0 && (
-                                  <div className="flex items-center space-x-1">
-                                    <Eye className="h-4 w-4" />
-                                    <span>{changelog.view_count} views</span>
-                                  </div>
-                                )}
-                              </div>
-
-                              {changelog.tags && changelog.tags.length > 0 && (
-                                <div className="flex flex-wrap gap-2 mb-3">
-                                  {changelog.tags.map((tag) => (
-                                    <Badge key={tag} variant="outline" className="text-xs">
-                                      {tag}
-                                    </Badge>
-                                  ))}
-                                </div>
-                              )}
-
-                              {changelog.ai_generated && (
-                                <div className="flex items-center space-x-1 mb-2">
-                                  <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                                    ✨ AI Generated
-                                  </Badge>
-                                </div>
-                              )}
-                            </div>
-
-                            <div className="flex items-center space-x-2 ml-4">
-                              <Link 
-                                to={`/changelogs/${changelog.id}/edit`}
-                                onClick={() => handleChangelogClick(changelog.id)}
-                              >
-                                <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                            </div>
+            ) : (
+              <div className="divide-y divide-border">
+                {changelogs.map((changelog) => (
+                  <div key={changelog.id} className="p-6 hover:bg-accent/50 transition-colors">
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-3 mb-2">
+                          <span className="text-lg">{getCategoryIcon(changelog.category)}</span>
+                          <h3 className="text-lg font-semibold text-foreground">{changelog.title}</h3>
+                          <Badge variant={changelog.status === 'published' ? 'default' : 'secondary'}>
+                            {changelog.status}
+                          </Badge>
+                        </div>
+                        
+                        <div className="flex items-center space-x-4 text-sm text-muted-foreground mb-3">
+                          <div className="flex items-center">
+                            <Calendar className="h-4 w-4 mr-1" />
+                            {new Date(changelog.created_at).toLocaleDateString()}
+                          </div>
+                          <div className="flex items-center">
+                            <Tag className="h-4 w-4 mr-1" />
+                            {getCategoryLabel(changelog.category)}
                           </div>
                         </div>
-                      ))}
+
+                        {changelog.tags && changelog.tags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mb-3">
+                            {changelog.tags.map((tag) => (
+                              <Badge key={tag} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="flex items-center space-x-2">
+                        <Link to={`/changelogs/${changelog.id}/edit`}>
+                          <Button variant="ghost" size="sm">
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                      </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        )}
+            )}
+          </CardContent>
+        </Card>
 
         <ShareDialog
           isOpen={shareDialogOpen}

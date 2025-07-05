@@ -22,8 +22,6 @@ export interface Changelog {
   updated_at: string;
   auto_saved_at?: string;
   ai_generated: boolean;
-  view_count?: number;
-  unique_views?: number;
 }
 
 interface ChangelogStore {
@@ -354,7 +352,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       clearTimeout(autoSaveTimeout);
     }
 
-    // Set new timeout for auto-save (reduced to 1 second for better responsiveness)
+    // Set new timeout for auto-save (reduced to 2 seconds for better responsiveness)
     const newTimeout = setTimeout(async () => {
       try {
         console.log('Auto-saving changelog:', id);
@@ -376,7 +374,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       } catch (error) {
         console.error('Auto-save failed:', error);
       }
-    }, 1000); // Auto-save after 1 second of inactivity
+    }, 2000); // Auto-save after 2 seconds of inactivity
 
     set({ autoSaveTimeout: newTimeout });
   },

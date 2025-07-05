@@ -44,7 +44,6 @@ const ChangelogEditor = () => {
   const [aiGenerated, setAiGenerated] = useState(false);
   const [showAIWriter, setShowAIWriter] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [isTyping, setIsTyping] = useState(false);
 
   const isEditing = Boolean(id);
 
@@ -70,27 +69,10 @@ const ChangelogEditor = () => {
     if (currentChangelog) {
       console.log('Loading changelog data:', currentChangelog);
       setTitle(currentChangelog.title);
-      
-      // Improved content parsing to handle different formats
-      let parsedContent = '';
-      if (currentChangelog.content) {
-        if (typeof currentChangelog.content === 'string') {
-          // If it's a string, try to parse as JSON first, then use as-is
-          try {
-            const jsonContent = JSON.parse(currentChangelog.content);
-            parsedContent = jsonContent.html || jsonContent.content || currentChangelog.content;
-          } catch {
-            parsedContent = currentChangelog.content;
-          }
-        } else if (currentChangelog.content.html) {
-          parsedContent = currentChangelog.content.html;
-        } else if (currentChangelog.content.content) {
-          parsedContent = currentChangelog.content.content;
-        }
-      }
-      
-      console.log('Parsed content:', parsedContent);
-      setContent(parsedContent);
+      setContent(typeof currentChangelog.content === 'string' 
+        ? currentChangelog.content 
+        : currentChangelog.content?.html || ''
+      );
       setCategory(currentChangelog.category);
       setFeaturedImage(currentChangelog.featured_image_url || "");
       setVideoUrl(currentChangelog.video_url || "");
@@ -98,7 +80,7 @@ const ChangelogEditor = () => {
     }
   }, [currentChangelog]);
 
-  // Debounced auto-save function with improved navigation logic
+  // Debounced auto-save function
   const debouncedAutoSave = useCallback(
     debounce(async (saveData: any) => {
       if (!saveData.title?.trim() && !saveData.content?.trim()) return;
@@ -107,22 +89,21 @@ const ChangelogEditor = () => {
         if (isEditing && id) {
           // Update existing changelog
           await autoSaveChangelog(id, saveData);
-        } else if (!isTyping) {
-          // Only create new changelog when not actively typing
+        } else {
+          // Create new draft and redirect
           const result = await createChangelog({
             ...saveData,
             status: 'draft',
           });
           if (result.data?.id) {
-            // Fixed: Navigate to edit route instead of view route
-            navigate(`/changelogs/${result.data.id}/edit`, { replace: true });
+            navigate(`/changelogs/${result.data.id}`, { replace: true });
           }
         }
       } catch (error) {
         console.error('Auto-save failed:', error);
       }
-    }, 1000), // Increased debounce time to prevent premature navigation
-    [isEditing, id, autoSaveChangelog, createChangelog, navigate, isTyping]
+    }, 500),
+    [isEditing, id, autoSaveChangelog, createChangelog, navigate]
   );
 
   // Auto-save on content change
@@ -142,24 +123,6 @@ const ChangelogEditor = () => {
       debouncedAutoSave(saveData);
     }
   }, [title, content, category, featuredImage, videoUrl, aiGenerated, debouncedAutoSave]);
-
-  // Handle title changes with typing state
-  const handleTitleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setIsTyping(true);
-    setTitle(e.target.value);
-    
-    // Clear typing state after user stops typing
-    setTimeout(() => setIsTyping(false), 1500);
-  };
-
-  // Handle content changes with typing state
-  const handleContentChange = (newContent: string) => {
-    setIsTyping(true);
-    setContent(newContent);
-    
-    // Clear typing state after user stops typing
-    setTimeout(() => setIsTyping(false), 1500);
-  };
 
   // Save draft before leaving page
   useEffect(() => {
@@ -238,7 +201,7 @@ const ChangelogEditor = () => {
         
         // Navigate to the published changelog if we were creating a new one
         if (!isEditing) {
-          navigate(`/changelogs/${changelogId}/edit`);
+          navigate(`/changelogs/${changelogId}`);
         }
       }
     } catch (error: any) {
@@ -344,7 +307,7 @@ const ChangelogEditor = () => {
               <div className="mb-6">
                 <Input
                   value={title}
-                  onChange={handleTitleChange}
+                  onChange={(e) => setTitle(e.target.value)}
                   placeholder="Untitled"
                   className="text-4xl font-bold border-none shadow-none p-0 h-auto bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
                   style={{ 
@@ -357,7 +320,7 @@ const ChangelogEditor = () => {
               {/* TipTap Editor */}
               <TipTapEditor
                 content={content}
-                onChange={handleContentChange}
+                onChange={setContent}
                 placeholder="Tell your story..."
               />
             </div>
