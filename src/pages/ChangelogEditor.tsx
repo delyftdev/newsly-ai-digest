@@ -1,14 +1,15 @@
+
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Send, Sparkles, FileText } from "lucide-react";
+import { ArrowLeft, Save, Send, MessageSquare, X } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
 import TipTapEditor from "@/components/TipTapEditor";
-import DocumentUpload from "@/components/DocumentUpload";
+import AIWriterChat from "@/components/AIWriterChat";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const ChangelogEditor = () => {
@@ -34,7 +35,7 @@ const ChangelogEditor = () => {
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [aiGenerated, setAiGenerated] = useState(false);
   const [sourceDocument, setSourceDocument] = useState<string>("");
-  const [showDocumentUpload, setShowDocumentUpload] = useState(!id); // Show by default for new changelogs
+  const [showAIWriter, setShowAIWriter] = useState(false);
 
   const isEditing = Boolean(id);
 
@@ -57,6 +58,7 @@ const ChangelogEditor = () => {
       setFeaturedImage(currentChangelog.featured_image_url || "");
       setVideoUrl(currentChangelog.video_url || "");
       setVisibility(currentChangelog.visibility);
+      setAiGenerated(currentChangelog.ai_generated || false);
     }
   }, [currentChangelog]);
 
@@ -75,57 +77,6 @@ const ChangelogEditor = () => {
       setLastSaved(new Date());
     }
   }, [title, content, category, featuredImage, videoUrl, visibility]);
-
-  // Auto-save before leaving page
-  useEffect(() => {
-    const handleBeforeUnload = async (e: BeforeUnloadEvent) => {
-      if (isEditing && id && (title.trim() || content.trim())) {
-        e.preventDefault();
-        
-        try {
-          await updateChangelog(id, {
-            title,
-            content: { html: content },
-            category,
-            featured_image_url: featuredImage,
-            video_url: videoUrl,
-            visibility,
-            tags: [],
-          });
-          console.log('Auto-saved before page unload');
-        } catch (error) {
-          console.error('Failed to auto-save before unload:', error);
-        }
-      }
-    };
-
-    const handlePopState = async () => {
-      if (isEditing && id && (title.trim() || content.trim())) {
-        try {
-          await updateChangelog(id, {
-            title,
-            content: { html: content },
-            category,
-            featured_image_url: featuredImage,
-            video_url: videoUrl,
-            visibility,
-            tags: [],
-          });
-          console.log('Auto-saved on navigation');
-        } catch (error) {
-          console.error('Failed to auto-save on navigation:', error);
-        }
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    window.addEventListener('popstate', handlePopState);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      window.removeEventListener('popstate', handlePopState);
-    };
-  }, [isEditing, id, title, content, category, featuredImage, videoUrl, visibility, updateChangelog]);
 
   const handleSave = async () => {
     console.log('=== SAVE CLICKED ===');
@@ -152,6 +103,7 @@ const ChangelogEditor = () => {
         video_url: videoUrl,
         visibility,
         tags: [],
+        ai_generated: aiGenerated,
       };
 
       console.log('=== ATTEMPTING TO SAVE ===');
@@ -224,32 +176,27 @@ const ChangelogEditor = () => {
     }
   };
 
-  const handleAIGenerate = (aiData: any) => {
-    console.log('AI generated data received:', aiData);
-    
-    // Pre-populate the editor with AI-generated content
-    setTitle(aiData.title || "");
-    setContent(aiData.content || "");
-    setCategory(aiData.category || "announcement");
+  const handleContentGenerated = (generatedContent: string) => {
+    setContent(generatedContent);
     setAiGenerated(true);
-    setSourceDocument(aiData.sourceDocument || "");
-    
-    // Hide the upload section after successful generation
-    setShowDocumentUpload(false);
-    
     toast({
-      title: "Changelog Generated!",
-      description: "AI has created a draft based on your document. You can now edit and customize it.",
+      title: "Content Generated!",
+      description: "AI has created content for your changelog.",
     });
   };
 
-  const handleDocumentUpload = (file: File) => {
-    console.log('Document uploaded:', file.name);
-    // File is now ready for AI processing
+  const handleInsertContent = (contentToInsert: string) => {
+    // Insert content at current cursor position or append to existing content
+    if (content.trim()) {
+      setContent(prev => prev + '\n\n' + contentToInsert);
+    } else {
+      setContent(contentToInsert);
+    }
+    setAiGenerated(true);
   };
 
-  const toggleDocumentUpload = () => {
-    setShowDocumentUpload(!showDocumentUpload);
+  const toggleAIWriter = () => {
+    setShowAIWriter(!showAIWriter);
   };
 
   return (
@@ -257,7 +204,7 @@ const ChangelogEditor = () => {
       <div className="min-h-screen bg-background">
         {/* Header */}
         <div className="sticky top-0 bg-background border-b z-10">
-          <div className="max-w-4xl mx-auto px-6 py-4">
+          <div className="max-w-7xl mx-auto px-6 py-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Button variant="ghost" size="sm" onClick={() => navigate('/changelogs')}>
@@ -271,7 +218,7 @@ const ChangelogEditor = () => {
                 )}
                 {aiGenerated && (
                   <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                    <Sparkles className="h-3 w-3 mr-1" />
+                    <MessageSquare className="h-3 w-3 mr-1" />
                     AI Generated
                   </Badge>
                 )}
@@ -279,13 +226,13 @@ const ChangelogEditor = () => {
               
               <div className="flex items-center space-x-2">
                 <Button
-                  variant="ghost"
+                  variant={showAIWriter ? "default" : "ghost"}
                   size="sm"
-                  onClick={toggleDocumentUpload}
-                  className="text-purple-600 hover:text-purple-700"
+                  onClick={toggleAIWriter}
+                  className={showAIWriter ? "bg-purple-600 hover:bg-purple-700" : "text-purple-600 hover:text-purple-700"}
                 >
-                  <FileText className="h-4 w-4 mr-2" />
-                  {showDocumentUpload ? 'Hide' : 'Show'} AI Assistant
+                  {showAIWriter ? <X className="h-4 w-4 mr-2" /> : <MessageSquare className="h-4 w-4 mr-2" />}
+                  {showAIWriter ? 'Close AI Writer' : 'AI Writer'}
                 </Button>
 
                 <select
@@ -326,71 +273,64 @@ const ChangelogEditor = () => {
           </div>
         </div>
 
-        {/* AI Document Upload Section */}
-        {showDocumentUpload && (
-          <div className="max-w-4xl mx-auto px-6 py-6 border-b">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Sparkles className="h-5 w-5 mr-2 text-purple-600" />
-                  AI Changelog Generator
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <DocumentUpload
-                  onDocumentUpload={handleDocumentUpload}
-                  onAIGenerate={handleAIGenerate}
+        {/* Main Content Area */}
+        <div className="flex h-[calc(100vh-80px)]">
+          {/* Editor Canvas */}
+          <div className={`flex-1 transition-all duration-300 ${showAIWriter ? 'mr-96' : ''}`}>
+            <div className="max-w-4xl mx-auto px-6 py-8 h-full overflow-y-auto">
+              {/* Source Document Info */}
+              {sourceDocument && (
+                <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  <div className="flex items-center text-sm text-purple-700">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Generated from: <strong className="ml-1">{sourceDocument}</strong>
+                  </div>
+                </div>
+              )}
+
+              {/* Featured Image */}
+              {featuredImage && (
+                <div className="mb-8">
+                  <img 
+                    src={featuredImage} 
+                    alt="Featured" 
+                    className="w-full rounded-lg shadow-sm max-h-96 object-cover"
+                  />
+                </div>
+              )}
+
+              {/* Title */}
+              <div className="mb-6">
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Untitled"
+                  className="text-4xl font-bold border-none shadow-none p-0 h-auto bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
+                  style={{ 
+                    fontSize: '2.25rem', 
+                    lineHeight: '2.5rem',
+                  }}
                 />
-              </CardContent>
-            </Card>
-          </div>
-        )}
-
-        {/* Editor Canvas */}
-        <div className="max-w-4xl mx-auto px-6 py-8">
-          {/* Source Document Info */}
-          {sourceDocument && (
-            <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-              <div className="flex items-center text-sm text-purple-700">
-                <FileText className="h-4 w-4 mr-2" />
-                Generated from: <strong className="ml-1">{sourceDocument}</strong>
               </div>
-            </div>
-          )}
 
-          {/* Featured Image */}
-          {featuredImage && (
-            <div className="mb-8">
-              <img 
-                src={featuredImage} 
-                alt="Featured" 
-                className="w-full rounded-lg shadow-sm max-h-96 object-cover"
+              {/* TipTap Editor */}
+              <TipTapEditor
+                content={content}
+                onChange={setContent}
+                placeholder="Tell your story..."
+              />
+            </div>
+          </div>
+
+          {/* AI Writer Side Panel */}
+          {showAIWriter && (
+            <div className="fixed right-0 top-[80px] w-96 h-[calc(100vh-80px)] bg-background border-l shadow-lg z-40">
+              <AIWriterChat
+                onContentGenerated={handleContentGenerated}
+                onInsertContent={handleInsertContent}
               />
             </div>
           )}
-
-          {/* Title */}
-          <div className="mb-6">
-            <Input
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Untitled"
-              className="text-4xl font-bold border-none shadow-none p-0 h-auto bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
-              style={{ 
-                fontSize: '2.25rem', 
-                lineHeight: '2.5rem',
-                direction: 'ltr',
-                textAlign: 'left'
-              }}
-            />
-          </div>
-
-          {/* TipTap Editor */}
-          <TipTapEditor
-            content={content}
-            onChange={setContent}
-            placeholder="Tell your story..."
-          />
         </div>
       </div>
     </DashboardLayout>

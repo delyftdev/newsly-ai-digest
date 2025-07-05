@@ -122,7 +122,6 @@ const ReleaseEditor = () => {
   };
 
   const handleImageUpload = (file: File) => {
-    // In a real implementation, you'd upload to storage
     const url = URL.createObjectURL(file);
     setFeaturedImage(url);
   };
@@ -134,22 +133,11 @@ const ReleaseEditor = () => {
     });
   };
 
-  const handleGoogleDriveConnect = () => {
-    toast({
-      title: "Google Drive Integration",
-      description: "Google Drive integration coming soon!",
-    });
-  };
-
-  const handleAIProcess = async (documentContent: string) => {
+  const handleAIGenerate = async (aiData: any) => {
     setIsProcessingDocument(true);
     try {
-      // Simulate AI processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Mock AI-generated content
-      setTitle("New Feature Release - AI Generated");
-      setContent(`
+      setTitle(aiData.title || "New Feature Release - AI Generated");
+      setContent(aiData.content || `
         <h2>What's New</h2>
         <p>We're excited to announce our latest feature updates based on your feedback.</p>
         
@@ -163,7 +151,7 @@ const ReleaseEditor = () => {
         <h3>Getting Started</h3>
         <p>To start using these new features, simply log into your account and explore the updated interface.</p>
       `);
-      setTags(["feature", "update", "enhancement"]);
+      setTags(aiData.tags || ["feature", "update", "enhancement"]);
       
       toast({
         title: "AI Processing Complete",
@@ -224,7 +212,7 @@ const ReleaseEditor = () => {
               <CardContent>
                 <DocumentUpload
                   onDocumentUpload={handleDocumentUpload}
-                  onAIProcess={handleAIProcess}
+                  onAIGenerate={handleAIGenerate}
                   isProcessing={isProcessingDocument}
                 />
               </CardContent>
