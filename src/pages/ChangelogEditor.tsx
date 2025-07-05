@@ -4,7 +4,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ArrowLeft, Save, Send, MessageSquare, X } from "lucide-react";
+import { ArrowLeft, Send, MessageSquare, X } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
@@ -30,9 +30,6 @@ const ChangelogEditor = () => {
   const [category, setCategory] = useState("announcement");
   const [featuredImage, setFeaturedImage] = useState<string>("");
   const [videoUrl, setVideoUrl] = useState<string>("");
-  const [visibility, setVisibility] = useState<'public' | 'private'>("public");
-  const [isSaving, setIsSaving] = useState(false);
-  const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [aiGenerated, setAiGenerated] = useState(false);
   const [sourceDocument, setSourceDocument] = useState<string>("");
   const [showAIWriter, setShowAIWriter] = useState(false);
@@ -57,7 +54,6 @@ const ChangelogEditor = () => {
       setCategory(currentChangelog.category);
       setFeaturedImage(currentChangelog.featured_image_url || "");
       setVideoUrl(currentChangelog.video_url || "");
-      setVisibility(currentChangelog.visibility);
       setAiGenerated(currentChangelog.ai_generated || false);
     }
   }, [currentChangelog]);
@@ -72,15 +68,37 @@ const ChangelogEditor = () => {
         category,
         featured_image_url: featuredImage,
         video_url: videoUrl,
-        visibility,
+        visibility: 'public' as const,
       });
-      setLastSaved(new Date());
     }
-  }, [title, content, category, featuredImage, videoUrl, visibility]);
+  }, [title, content, category, featuredImage, videoUrl]);
+
+  // Auto-save on page unload
+  useEffect(() => {
+    const handleBeforeUnload = async () => {
+      if ((title || content) && !isEditing) {
+        // Create new changelog as draft
+        await createChangelog({
+          title: title || "Untitled Changelog",
+          content: { html: content },
+          category,
+          status: 'draft',
+          featured_image_url: featuredImage,
+          video_url: videoUrl,
+          visibility: 'public' as const,
+          tags: [],
+          ai_generated: aiGenerated,
+        });
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [title, content, category, featuredImage, videoUrl, aiGenerated, isEditing, createChangelog]);
 
   const handleSave = async () => {
     console.log('=== SAVE CLICKED ===');
-    console.log('Current state:', { title, content, category, visibility });
+    console.log('Current state:', { title, content, category });
     
     if (!title.trim()) {
       console.error('Save failed: Title is required');
@@ -92,7 +110,6 @@ const ChangelogEditor = () => {
       return;
     }
 
-    setIsSaving(true);
     try {
       const changelogData = {
         title,
@@ -101,7 +118,7 @@ const ChangelogEditor = () => {
         status: 'draft' as const,
         featured_image_url: featuredImage,
         video_url: videoUrl,
-        visibility,
+        visibility: 'public' as const,
         tags: [],
         ai_generated: aiGenerated,
       };
@@ -147,8 +164,6 @@ const ChangelogEditor = () => {
         description: error.message || "Failed to save changelog",
         variant: "destructive",
       });
-    } finally {
-      setIsSaving(false);
     }
   };
 
@@ -211,11 +226,6 @@ const ChangelogEditor = () => {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
-                {lastSaved && (
-                  <Badge variant="outline" className="text-xs text-muted-foreground">
-                    Auto-saved {lastSaved.toLocaleTimeString()}
-                  </Badge>
-                )}
                 {aiGenerated && (
                   <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
                     <MessageSquare className="h-3 w-3 mr-1" />
@@ -246,21 +256,6 @@ const ChangelogEditor = () => {
                   <option value="improvement" style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}>📈 Improvement</option>
                   <option value="fix" style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}>🐛 Bug Fix</option>
                 </select>
-                
-                <select
-                  value={visibility}
-                  onChange={(e) => setVisibility(e.target.value as 'public' | 'private')}
-                  className="px-3 py-1 border border-input bg-background text-foreground rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring z-50"
-                  style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
-                >
-                  <option value="public" style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}>Public</option>
-                  <option value="private" style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}>Private</option>
-                </select>
-
-                <Button variant="outline" onClick={handleSave} disabled={isSaving}>
-                  <Save className="h-4 w-4 mr-2" />
-                  {isSaving ? 'Saving...' : 'Save Draft'}
-                </Button>
                 
                 {isEditing && currentChangelog?.status === 'draft' && (
                   <Button onClick={handlePublish}>

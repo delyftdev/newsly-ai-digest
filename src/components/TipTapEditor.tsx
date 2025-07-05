@@ -10,6 +10,8 @@ import { useState } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import ImageUpload from './ImageUpload';
+import { supabase } from '@/integrations/supabase/client';
+import './TipTapEditor.css';
 
 interface TipTapEditorProps {
   content: string;
@@ -30,8 +32,10 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
       StarterKit,
       Image.configure({
         HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg',
+          class: 'max-w-full h-auto rounded-lg cursor-pointer',
+          style: 'resize: both; overflow: auto;',
         },
+        allowBase64: true,
       }),
       Youtube.configure({
         width: 640,
@@ -40,7 +44,7 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
       Link.configure({
         openOnClick: false,
         HTMLAttributes: {
-          class: 'text-blue-500 underline',
+          class: 'text-primary underline hover:text-primary/80',
         },
       }),
     ],
@@ -50,7 +54,7 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-lg max-w-none dark:prose-invert min-h-[400px] focus:outline-none p-4 border rounded-lg',
+        class: 'min-h-[400px] focus:outline-none p-4 border rounded-lg bg-background text-foreground',
       },
     },
   });
@@ -65,10 +69,32 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
     }
   };
 
-  const handleImageUpload = (file: File) => {
-    const imageUrl = URL.createObjectURL(file);
-    addImage(imageUrl);
-    setShowImageDialog(false);
+  const handleImageUpload = async (file: File) => {
+    try {
+      // Create a unique filename
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      
+      // Upload to Supabase storage
+      const { data, error } = await supabase.storage
+        .from('changelog-images')
+        .upload(fileName, file);
+
+      if (error) {
+        console.error('Error uploading image:', error);
+        return;
+      }
+
+      // Get the public URL
+      const { data: { publicUrl } } = supabase.storage
+        .from('changelog-images')
+        .getPublicUrl(data.path);
+
+      addImage(publicUrl);
+      setShowImageDialog(false);
+    } catch (error) {
+      console.error('Error uploading image:', error);
+    }
   };
 
   const addVideo = () => {
