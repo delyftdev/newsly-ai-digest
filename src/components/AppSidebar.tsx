@@ -53,6 +53,13 @@ export function AppSidebar() {
     return () => window.removeEventListener('resize', handleResize);
   }, [setOpenMobile]);
 
+  const handleNavClick = () => {
+    // Auto-collapse on mobile after navigation
+    if (window.innerWidth < 1024) {
+      setOpenMobile(false);
+    }
+  };
+
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-60"} collapsible="offcanvas">
       <SidebarHeader className="p-4">
@@ -83,12 +90,7 @@ export function AppSidebar() {
                       className={({ isActive }) => 
                         `flex items-center gap-3 ${isActive ? 'bg-accent text-accent-foreground' : ''}`
                       }
-                      onClick={() => {
-                        // Auto-collapse on mobile after navigation
-                        if (window.innerWidth < 1024) {
-                          setOpenMobile(false);
-                        }
-                      }}
+                      onClick={handleNavClick}
                     >
                       <item.icon className="h-4 w-4 shrink-0" />
                       {!isCollapsed && <span>{item.title}</span>}
