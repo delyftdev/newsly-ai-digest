@@ -54,7 +54,7 @@ export function AppSidebar() {
   }, [setOpenMobile]);
 
   return (
-    <Sidebar className={isCollapsed ? "w-14" : "w-60"} collapsible>
+    <Sidebar className={isCollapsed ? "w-14" : "w-60"} collapsible="offcanvas">
       <SidebarHeader className="p-4">
         <div className="flex items-center justify-between">
           <h2 className={`font-bold text-lg ${isCollapsed ? 'hidden' : 'block'}`}>
