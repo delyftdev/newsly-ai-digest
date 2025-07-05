@@ -16,11 +16,13 @@ import {
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useCompanyStore } from "@/stores/companyStore";
 import ShareDialog from "@/components/ShareDialog";
+import { useSidebar } from "@/components/ui/sidebar";
 
 const Changelogs = () => {
   const { changelogs, fetchChangelogs, loading } = useChangelogStore();
   const { company } = useCompanyStore();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const { setOpenMobile } = useSidebar();
 
   useEffect(() => {
     fetchChangelogs();
@@ -68,8 +70,10 @@ const Changelogs = () => {
   };
 
   const handleChangelogClick = (changelogId: string) => {
-    // Auto-collapse sidebar on mobile/tablet - this will be handled by the DashboardLayout
-    console.log('Navigating to changelog:', changelogId);
+    // Auto-collapse sidebar on mobile/tablet
+    if (window.innerWidth < 1024) {
+      setOpenMobile(false);
+    }
   };
 
   // Group changelogs by date
