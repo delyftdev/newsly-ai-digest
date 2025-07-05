@@ -4,6 +4,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
 import Youtube from '@tiptap/extension-youtube';
 import Link from '@tiptap/extension-link';
+import ImageResize from 'tiptap-extension-resize-image';
 import { Button } from '@/components/ui/button';
 import { Bold, Italic, List, ListOrdered, Heading1, Heading2, Image as ImageIcon, Video, Link as LinkIcon } from 'lucide-react';
 import { useState } from 'react';
@@ -11,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Input } from '@/components/ui/input';
 import ImageUpload from './ImageUpload';
 import { supabase } from '@/integrations/supabase/client';
+import { useToast } from '@/hooks/use-toast';
 import './TipTapEditor.css';
 
 interface TipTapEditorProps {
@@ -26,20 +28,36 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
   const [videoUrl, setVideoUrl] = useState('');
   const [linkUrl, setLinkUrl] = useState('');
   const [linkText, setLinkText] = useState('');
+  const { toast } = useToast();
 
   const editor = useEditor({
     extensions: [
-      StarterKit,
-      Image.configure({
-        HTMLAttributes: {
-          class: 'max-w-full h-auto rounded-lg cursor-pointer',
-          style: 'resize: both; overflow: auto;',
+      StarterKit.configure({
+        heading: {
+          levels: [1, 2, 3],
         },
-        allowBase64: true,
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+      }),
+      ImageResize.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {
+          class: 'rounded-lg cursor-pointer',
+        },
       }),
       Youtube.configure({
         width: 640,
         height: 315,
+        HTMLAttributes: {
+          class: 'youtube-embed',
+        },
       }),
       Link.configure({
         openOnClick: false,
@@ -54,7 +72,7 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
     },
     editorProps: {
       attributes: {
-        class: 'min-h-[400px] focus:outline-none p-4 border rounded-lg bg-background text-foreground',
+        class: 'min-h-[400px] focus:outline-none p-4 prose prose-slate max-w-none text-foreground',
       },
     },
   });
@@ -82,6 +100,11 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
 
       if (error) {
         console.error('Error uploading image:', error);
+        toast({
+          title: "Upload Failed",
+          description: "Failed to upload image. Please try again.",
+          variant: "destructive",
+        });
         return;
       }
 
@@ -92,8 +115,17 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
 
       addImage(publicUrl);
       setShowImageDialog(false);
+      toast({
+        title: "Image Added",
+        description: "Image has been successfully uploaded and added to your changelog.",
+      });
     } catch (error) {
       console.error('Error uploading image:', error);
+      toast({
+        title: "Upload Error",
+        description: "An unexpected error occurred while uploading the image.",
+        variant: "destructive",
+      });
     }
   };
 
@@ -104,6 +136,10 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
       });
       setVideoUrl('');
       setShowVideoDialog(false);
+      toast({
+        title: "Video Added",
+        description: "Video has been embedded in your changelog.",
+      });
     }
   };
 
@@ -117,6 +153,10 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
       setLinkUrl('');
       setLinkText('');
       setShowLinkDialog(false);
+      toast({
+        title: "Link Added",
+        description: "Link has been added to your changelog.",
+      });
     }
   };
 

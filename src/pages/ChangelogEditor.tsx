@@ -1,16 +1,27 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { ArrowLeft, Send, MessageSquare, X } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useToast } from "@/hooks/use-toast";
 import DashboardLayout from "@/components/DashboardLayout";
 import TipTapEditor from "@/components/TipTapEditor";
 import AIWriterChat from "@/components/AIWriterChat";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+// Debounce utility function
+const debounce = (func: Function, wait: number) => {
+  let timeout: NodeJS.Timeout;
+  return function executedFunction(...args: any[]) {
+    const later = () => {
+      clearTimeout(timeout);
+      func(...args);
+    };
+    clearTimeout(timeout);
+    timeout = setTimeout(later, wait);
+  };
+};
 
 const ChangelogEditor = () => {
   const { id } = useParams();
@@ -31,10 +42,21 @@ const ChangelogEditor = () => {
   const [featuredImage, setFeaturedImage] = useState<string>("");
   const [videoUrl, setVideoUrl] = useState<string>("");
   const [aiGenerated, setAiGenerated] = useState(false);
-  const [sourceDocument, setSourceDocument] = useState<string>("");
   const [showAIWriter, setShowAIWriter] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
 
   const isEditing = Boolean(id);
+
+  // Determine if there's content for showing the publish button
+  const hasContent = useMemo(() => 
+    Boolean(title?.trim() || content?.trim()), 
+    [title, content]
+  );
+
+  // Show publish button logic
+  const showPublishButton = isEditing 
+    ? currentChangelog?.status === 'draft'
+    : hasContent;
 
   useEffect(() => {
     if (isEditing && id) {
@@ -58,28 +80,99 @@ const ChangelogEditor = () => {
     }
   }, [currentChangelog]);
 
-  // Auto-save functionality
+  // Debounced auto-save function
+  const debouncedAutoSave = useCallback(
+    debounce(async (saveData: any) => {
+      if (!saveData.title?.trim() && !saveData.content?.trim()) return;
+      
+      try {
+        if (isEditing && id) {
+          // Update existing changelog
+          await autoSaveChangelog(id, saveData);
+        } else {
+          // Create new draft and redirect
+          const result = await createChangelog({
+            ...saveData,
+            status: 'draft',
+          });
+          if (result.data?.id) {
+            navigate(`/changelogs/${result.data.id}`, { replace: true });
+          }
+        }
+      } catch (error) {
+        console.error('Auto-save failed:', error);
+      }
+    }, 500),
+    [isEditing, id, autoSaveChangelog, createChangelog, navigate]
+  );
+
+  // Auto-save on content change
   useEffect(() => {
-    if (isEditing && id && (title || content)) {
-      console.log('Auto-saving changelog');
-      autoSaveChangelog(id, {
+    if (title || content) {
+      const saveData = {
         title,
         content: { html: content },
         category,
         featured_image_url: featuredImage,
         video_url: videoUrl,
         visibility: 'public' as const,
-      });
+        tags: [],
+        ai_generated: aiGenerated,
+      };
+      
+      debouncedAutoSave(saveData);
     }
-  }, [title, content, category, featuredImage, videoUrl]);
+  }, [title, content, category, featuredImage, videoUrl, aiGenerated, debouncedAutoSave]);
 
-  // Auto-save on page unload
+  // Save draft before leaving page
   useEffect(() => {
-    const handleBeforeUnload = async () => {
-      if ((title || content) && !isEditing) {
-        // Create new changelog as draft
-        await createChangelog({
-          title: title || "Untitled Changelog",
+    const handleBeforeUnload = async (e: BeforeUnloadEvent) => {
+      if ((title?.trim() || content?.trim()) && !isEditing) {
+        e.preventDefault();
+        e.returnValue = '';
+        
+        // Try to save as draft
+        try {
+          await createChangelog({
+            title: title || "Untitled Changelog",
+            content: { html: content },
+            category,
+            status: 'draft',
+            featured_image_url: featuredImage,
+            video_url: videoUrl,
+            visibility: 'public' as const,
+            tags: [],
+            ai_generated: aiGenerated,
+          });
+        } catch (error) {
+          console.error('Failed to save draft on page unload:', error);
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [title, content, category, featuredImage, videoUrl, aiGenerated, isEditing, createChangelog]);
+
+  const handlePublish = async () => {
+    if (!title.trim()) {
+      toast({
+        title: "Title Required",
+        description: "Please add a title before publishing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsPublishing(true);
+    
+    try {
+      let changelogId = id;
+      
+      // If this is a new changelog, save it first
+      if (!isEditing) {
+        const result = await createChangelog({
+          title,
           content: { html: content },
           category,
           status: 'draft',
@@ -89,105 +182,37 @@ const ChangelogEditor = () => {
           tags: [],
           ai_generated: aiGenerated,
         });
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [title, content, category, featuredImage, videoUrl, aiGenerated, isEditing, createChangelog]);
-
-  const handleSave = async () => {
-    console.log('=== SAVE CLICKED ===');
-    console.log('Current state:', { title, content, category });
-    
-    if (!title.trim()) {
-      console.error('Save failed: Title is required');
-      toast({
-        title: "Error",
-        description: "Title is required",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      const changelogData = {
-        title,
-        content: { html: content },
-        category,
-        status: 'draft' as const,
-        featured_image_url: featuredImage,
-        video_url: videoUrl,
-        visibility: 'public' as const,
-        tags: [],
-        ai_generated: aiGenerated,
-      };
-
-      console.log('=== ATTEMPTING TO SAVE ===');
-      console.log('Data being saved:', JSON.stringify(changelogData, null, 2));
-
-      if (isEditing && id) {
-        console.log('Updating existing changelog:', id);
-        const result = await updateChangelog(id, changelogData);
-        console.log('Update result:', result);
+        
         if (result.error) {
-          console.error('Update failed:', result.error);
           throw new Error(result.error);
         }
-        console.log('✅ Update successful');
-        toast({ title: "Changelog updated!" });
-      } else {
-        console.log('Creating new changelog');
-        const result = await createChangelog(changelogData);
-        console.log('Create result:', result);
-        if (result.error) {
-          console.error('Create failed:', result.error);
-          throw new Error(result.error);
-        }
-        console.log('✅ Create successful');
-        toast({ title: "Changelog created!" });
-        if (result.data?.id) {
-          console.log('Navigating to:', `/changelogs/${result.data.id}`);
-          navigate(`/changelogs/${result.data.id}`);
-        } else {
-          console.log('Navigating to changelogs list');
-          navigate('/changelogs');
+        
+        changelogId = result.data?.id;
+      }
+      
+      if (changelogId) {
+        const { error } = await publishChangelog(changelogId);
+        if (error) throw new Error(error);
+        
+        toast({ 
+          title: "Changelog Published!", 
+          description: "Your changelog is now live and visible to your audience." 
+        });
+        
+        // Navigate to the published changelog if we were creating a new one
+        if (!isEditing) {
+          navigate(`/changelogs/${changelogId}`);
         }
       }
-    } catch (error: any) {
-      console.error('=== SAVE ERROR ===');
-      console.error('Error details:', error);
-      console.error('Error message:', error.message);
-      console.error('Error stack:', error.stack);
-      toast({
-        title: "Error",
-        description: error.message || "Failed to save changelog",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handlePublish = async () => {
-    if (!currentChangelog) return;
-    
-    try {
-      console.log('Publishing changelog:', currentChangelog.id);
-      const { error } = await publishChangelog(currentChangelog.id);
-      if (error) throw new Error(error);
-      
-      const shareableUrl = `${window.location.origin}/changelog/${currentChangelog.public_slug}`;
-      
-      toast({ 
-        title: "Changelog published!", 
-        description: `Share at: ${shareableUrl}` 
-      });
     } catch (error: any) {
       console.error('Publish error:', error);
       toast({
-        title: "Error",
-        description: "Failed to publish changelog",
+        title: "Publish Failed",
+        description: error.message || "Failed to publish changelog",
         variant: "destructive",
       });
+    } finally {
+      setIsPublishing(false);
     }
   };
 
@@ -226,12 +251,6 @@ const ChangelogEditor = () => {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
-                {aiGenerated && (
-                  <Badge variant="outline" className="text-xs bg-purple-50 text-purple-700 border-purple-200">
-                    <MessageSquare className="h-3 w-3 mr-1" />
-                    AI Generated
-                  </Badge>
-                )}
               </div>
               
               <div className="flex items-center space-x-2">
@@ -257,10 +276,10 @@ const ChangelogEditor = () => {
                   <option value="fix" style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}>🐛 Bug Fix</option>
                 </select>
                 
-                {isEditing && currentChangelog?.status === 'draft' && (
-                  <Button onClick={handlePublish}>
+                {showPublishButton && (
+                  <Button onClick={handlePublish} disabled={isPublishing}>
                     <Send className="h-4 w-4 mr-2" />
-                    Publish
+                    {isPublishing ? 'Publishing...' : 'Publish'}
                   </Button>
                 )}
               </div>
@@ -273,16 +292,6 @@ const ChangelogEditor = () => {
           {/* Editor Canvas */}
           <div className={`flex-1 transition-all duration-300 ${showAIWriter ? 'mr-96' : ''}`}>
             <div className="max-w-4xl mx-auto px-6 py-8 h-full overflow-y-auto">
-              {/* Source Document Info */}
-              {sourceDocument && (
-                <div className="mb-6 p-4 bg-purple-50 border border-purple-200 rounded-lg">
-                  <div className="flex items-center text-sm text-purple-700">
-                    <MessageSquare className="h-4 w-4 mr-2" />
-                    Generated from: <strong className="ml-1">{sourceDocument}</strong>
-                  </div>
-                </div>
-              )}
-
               {/* Featured Image */}
               {featuredImage && (
                 <div className="mb-8">

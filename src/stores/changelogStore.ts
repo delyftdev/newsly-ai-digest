@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -351,9 +352,10 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       clearTimeout(autoSaveTimeout);
     }
 
-    // Set new timeout for auto-save
+    // Set new timeout for auto-save (reduced to 2 seconds for better responsiveness)
     const newTimeout = setTimeout(async () => {
       try {
+        console.log('Auto-saving changelog:', id);
         await supabase
           .from('changelogs')
           .update({
@@ -368,10 +370,11 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
             auto_saved_at: new Date().toISOString(),
           })
           .eq('id', id);
+        console.log('Auto-save completed for:', id);
       } catch (error) {
         console.error('Auto-save failed:', error);
       }
-    }, 3000); // Auto-save after 3 seconds of inactivity
+    }, 2000); // Auto-save after 2 seconds of inactivity
 
     set({ autoSaveTimeout: newTimeout });
   },

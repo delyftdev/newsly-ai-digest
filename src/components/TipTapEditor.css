@@ -1,3 +1,4 @@
+
 /* Custom styles for TipTap editor content */
 .ProseMirror {
   outline: none;
@@ -86,6 +87,39 @@
   height: auto;
   border-radius: 0.5rem;
   margin: 1rem 0;
+  display: block;
+}
+
+/* Image resize functionality */
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+}
+
+/* Resize handles for images */
+.ProseMirror .image-resizer {
+  position: relative;
+  display: inline-block;
+}
+
+.ProseMirror .image-resizer img {
+  display: block;
+}
+
+.ProseMirror .image-resizer .resize-handle {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: hsl(var(--primary));
+  border: 2px solid white;
+  border-radius: 50%;
+  cursor: nw-resize;
+}
+
+.ProseMirror .image-resizer .resize-handle.bottom-right {
+  bottom: -5px;
+  right: -5px;
+  cursor: se-resize;
 }
 
 .ProseMirror a {
@@ -103,4 +137,23 @@
   margin: 1rem 0;
   border-radius: 0.5rem;
   overflow: hidden;
+}
+
+.ProseMirror .youtube-embed iframe {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+}
+
+/* Ensure lists work properly */
+.ProseMirror ul[data-type="bulletList"] {
+  list-style-type: disc;
+}
+
+.ProseMirror ol[data-type="orderedList"] {
+  list-style-type: decimal;
+}
+
+.ProseMirror li p {
+  margin: 0;
 }
