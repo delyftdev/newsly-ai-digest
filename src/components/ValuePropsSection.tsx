@@ -1,8 +1,8 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Inbox, Edit, MessageCircle, BarChart3 } from "lucide-react";
 import FeedbackSvg from "./FeedbackSvg";
 import InsightsSvg from "./InsightsSvg";
+import ChangelogSvg from "./ChangelogSvg";
 
 const ValuePropsSection = () => {
   const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set());
@@ -23,7 +23,7 @@ const ValuePropsSection = () => {
       title: "Changelog", 
       benefit: "Send updates customers actually read. No more robotic emails.",
       description: "Tweak drafts to match your brand's voice and customer's tone — then publish as changelogs or widgets.",
-      placeholder: "✨ AI content editor demo",
+      useSvg: true,
       highlightWords: ["actually read"],
       position: "right"
     },
@@ -254,6 +254,8 @@ const ValuePropsSection = () => {
                       <div className="w-full max-w-4xl mx-auto">
                         {prop.title === "Feedback" ? (
                           <FeedbackSvg />
+                        ) : prop.title === "Changelog" ? (
+                          <ChangelogSvg />
                         ) : (
                           <InsightsSvg />
                         )}
