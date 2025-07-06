@@ -36,6 +36,7 @@ const Changelogs = () => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [changelogToDelete, setChangelogToDelete] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     fetchChangelogs();
@@ -83,7 +84,8 @@ const Changelogs = () => {
   };
 
   const handleDeleteClick = (changelogId: string) => {
-    console.log('Delete button clicked for changelog:', changelogId);
+    console.log('=== DELETE BUTTON CLICKED ===');
+    console.log('Changelog ID:', changelogId);
     setChangelogToDelete(changelogId);
     setDeleteDialogOpen(true);
   };
@@ -91,7 +93,10 @@ const Changelogs = () => {
   const handleDeleteConfirm = async () => {
     if (!changelogToDelete) return;
 
-    console.log('Confirming delete for changelog:', changelogToDelete);
+    console.log('=== DELETE CONFIRMATION ===');
+    console.log('Deleting changelog:', changelogToDelete);
+    console.log('Current changelogs count before delete:', changelogs.length);
+    
     setDeletingId(changelogToDelete);
     
     try {
@@ -101,17 +106,22 @@ const Changelogs = () => {
         throw new Error(error);
       }
       
+      console.log('Delete successful, refreshing list...');
+      
+      // Force refresh the changelogs list
+      setRefreshing(true);
+      await fetchChangelogs();
+      
+      console.log('Changelogs count after refresh:', changelogs.length);
+      
       toast({
         title: "Changelog deleted successfully",
         description: "The changelog has been permanently removed.",
       });
       
-      // Force refresh the changelogs list to ensure UI is updated
-      console.log('Refreshing changelogs list after delete');
-      await fetchChangelogs();
-      
     } catch (error: any) {
-      console.error('Delete error:', error);
+      console.error('=== DELETE ERROR ===');
+      console.error('Delete error details:', error);
       toast({
         title: "Failed to delete changelog",
         description: error.message || "There was an error deleting the changelog. Please try again.",
@@ -121,6 +131,7 @@ const Changelogs = () => {
       setDeletingId(null);
       setDeleteDialogOpen(false);
       setChangelogToDelete(null);
+      setRefreshing(false);
     }
   };
 
@@ -129,6 +140,12 @@ const Changelogs = () => {
     setDeleteDialogOpen(false);
     setChangelogToDelete(null);
   };
+
+  // Debug logging for changelogs list
+  console.log('=== CHANGELOGS PAGE RENDER ===');
+  console.log('Changelogs count:', changelogs.length);
+  console.log('Loading state:', loading);
+  console.log('Refreshing state:', refreshing);
 
   return (
     <DashboardLayout>
@@ -151,10 +168,10 @@ const Changelogs = () => {
 
         <Card>
           <CardContent className="p-0">
-            {loading ? (
+            {(loading || refreshing) ? (
               <div className="text-center py-8 text-muted-foreground">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-                <p>Loading changelogs...</p>
+                <p>{refreshing ? 'Refreshing changelogs...' : 'Loading changelogs...'}</p>
               </div>
             ) : changelogs.length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">

@@ -10,17 +10,57 @@ import DashboardLayout from "@/components/DashboardLayout";
 import TipTapEditor from "@/components/TipTapEditor";
 import AIWriterChat from "@/components/AIWriterChat";
 
-// Debounce utility function
+// Debounce utility function with enhanced logging
 const debounce = (func: Function, wait: number) => {
   let timeout: NodeJS.Timeout;
   return function executedFunction(...args: any[]) {
     const later = () => {
       clearTimeout(timeout);
+      console.log('=== DEBOUNCED FUNCTION EXECUTING ===');
       func(...args);
     };
     clearTimeout(timeout);
     timeout = setTimeout(later, wait);
   };
+};
+
+// Content validation utilities
+const isContentEmpty = (content: string): boolean => {
+  if (!content || content.trim() === '') return true;
+  
+  // Remove HTML tags and check if meaningful content remains
+  const textContent = content.replace(/<[^>]*>/g, '').trim();
+  return textContent === '' || textContent === 'Start writing...';
+};
+
+const validateContentFormat = (content: any): { isValid: boolean; cleanContent: string } => {
+  console.log('=== VALIDATING CONTENT FORMAT ===');
+  console.log('Raw content:', content);
+  
+  if (!content) {
+    return { isValid: true, cleanContent: '' };
+  }
+  
+  if (typeof content === 'string') {
+    const isEmpty = isContentEmpty(content);
+    console.log('String content empty check:', isEmpty);
+    return { 
+      isValid: !isEmpty, 
+      cleanContent: isEmpty ? '' : content 
+    };
+  }
+  
+  if (typeof content === 'object' && content.html) {
+    const isEmpty = isContentEmpty(content.html);
+    console.log('Object.html content empty check:', isEmpty);
+    return { 
+      isValid: !isEmpty, 
+      cleanContent: isEmpty ? '' : content.html 
+    };
+  }
+  
+  console.log('Content format invalid or empty');
+  return { isValid: false, cleanContent: '' };
 };
 
 const ChangelogEditor = () => {
@@ -49,121 +89,53 @@ const ChangelogEditor = () => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [contentLoaded, setContentLoaded] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
-  const [editorKey, setEditorKey] = useState(0); // Force re-render of editor
+  const [editorKey, setEditorKey] = useState(0);
+  const [isDirty, setIsDirty] = useState(false);
+  const [isAutoSaving, setIsAutoSaving] = useState(false);
+  const [autoSaveBlocked, setAutoSaveBlocked] = useState(false);
 
   const isEditing = Boolean(id);
   const isNewChangelog = location.pathname === '/changelogs/new';
 
-  console.log('=== EDITOR STATE DEBUG ===');
-  console.log('Current ID from URL:', id);
+  console.log('=== EDITOR COMPONENT STATE ===');
+  console.log('URL ID:', id);
   console.log('Is editing:', isEditing);
-  console.log('Is new changelog:', isNewChangelog);
+  console.log('Is new:', isNewChangelog);
   console.log('Current changelog ID:', currentChangelog?.id);
   console.log('Content loaded:', contentLoaded);
-  console.log('Loading content:', loadingContent);
+  console.log('Is dirty:', isDirty);
+  console.log('Auto-save blocked:', autoSaveBlocked);
 
-  // Determine if there's content for showing the publish button
-  const hasContent = useMemo(() => 
-    Boolean(title?.trim() || content?.trim()), 
-    [title, content]
-  );
+  // Determine if there's meaningful content for showing the publish button
+  const hasContent = useMemo(() => {
+    const hasTitle = Boolean(title?.trim());
+    const { isValid } = validateContentFormat(content);
+    console.log('Has content check:', { hasTitle, isValidContent: isValid });
+    return hasTitle && isValid;
+  }, [title, content]);
 
   // Show publish button logic
   const showPublishButton = isEditing 
-    ? currentChangelog?.status === 'draft'
+    ? currentChangelog?.status === 'draft' && hasContent
     : hasContent;
 
-  // Enhanced content extraction with comprehensive logging and format support
+  // Enhanced content extraction with validation
   const extractContentString = useCallback((contentData: any): string => {
-    console.log('=== EXTRACTING CONTENT ===');
-    console.log('Raw content data:', contentData);
-    console.log('Content type:', typeof contentData);
+    console.log('=== EXTRACTING CONTENT STRING ===');
+    console.log('Input content data:', contentData);
     
-    if (!contentData) {
-      console.log('No content data provided, returning empty string');
+    const { isValid, cleanContent } = validateContentFormat(contentData);
+    
+    if (!isValid) {
+      console.log('Content validation failed, returning empty string');
       return '';
     }
     
-    if (typeof contentData === 'string') {
-      console.log('Content is string format:', contentData.substring(0, 100) + '...');
-      return contentData;
-    }
-    
-    if (typeof contentData === 'object') {
-      console.log('Content is object format:', Object.keys(contentData));
-      
-      // Handle {html: "content"} format (most common TipTap format)
-      if (contentData.html && typeof contentData.html === 'string') {
-        console.log('Found HTML property:', contentData.html.substring(0, 100) + '...');
-        return contentData.html;
-      }
-      
-      // Handle {content: "content"} format
-      if (contentData.content && typeof contentData.content === 'string') {
-        console.log('Found content property:', contentData.content.substring(0, 100) + '...');
-        return contentData.content;
-      }
-      
-      // Handle TipTap JSON format {type: "doc", content: [...]}
-      if (contentData.type === 'doc' && Array.isArray(contentData.content)) {
-        console.log('Found TipTap JSON format, converting to HTML...');
-        try {
-          // Simple conversion for common TipTap JSON structure
-          let htmlContent = '';
-          contentData.content.forEach((node: any) => {
-            if (node.type === 'paragraph' && node.content) {
-              htmlContent += '<p>';
-              node.content.forEach((textNode: any) => {
-                if (textNode.type === 'text') {
-                  htmlContent += textNode.text || '';
-                }
-              });
-              htmlContent += '</p>';
-            } else if (node.type === 'heading' && node.content) {
-              const level = node.attrs?.level || 1;
-              htmlContent += `<h${level}>`;
-              node.content.forEach((textNode: any) => {
-                if (textNode.type === 'text') {
-                  htmlContent += textNode.text || '';
-                }
-              });
-              htmlContent += `</h${level}>`;
-            }
-          });
-          console.log('Converted TipTap JSON to HTML:', htmlContent.substring(0, 100) + '...');
-          return htmlContent;
-        } catch (e) {
-          console.error('Failed to convert TipTap JSON to HTML:', e);
-        }
-      }
-      
-      // Handle nested object formats
-      if (contentData.data && typeof contentData.data === 'string') {
-        console.log('Found data property:', contentData.data.substring(0, 100) + '...');
-        return contentData.data;
-      }
-
-      // Handle array formats (some editors use arrays)
-      if (Array.isArray(contentData) && contentData.length > 0) {
-        console.log('Content is array format, attempting to join');
-        return contentData.join('');
-      }
-
-      // Try to stringify if it's a complex object
-      try {
-        const stringified = JSON.stringify(contentData);
-        console.log('Stringified content:', stringified.substring(0, 100) + '...');
-        return stringified;
-      } catch (e) {
-        console.error('Failed to stringify content:', e);
-      }
-    }
-    
-    console.log('Could not extract content, returning empty string');
-    return '';
+    console.log('Extracted clean content:', cleanContent.substring(0, 100) + '...');
+    return cleanContent;
   }, []);
 
-  // Clear all state when creating new changelog
+  // Clear all editor state
   const clearEditorState = useCallback(() => {
     console.log('=== CLEARING EDITOR STATE ===');
     setTitle("");
@@ -174,10 +146,111 @@ const ChangelogEditor = () => {
     setAiGenerated(false);
     setContentLoaded(false);
     setLoadingContent(false);
+    setIsDirty(false);
+    setIsAutoSaving(false);
+    setAutoSaveBlocked(false);
     setCurrentChangelog(null);
-    setEditorKey(prev => prev + 1); // Force editor re-render
-    console.log('Editor state cleared');
+    setEditorKey(prev => prev + 1);
+    console.log('Editor state cleared successfully');
   }, [setCurrentChangelog]);
+
+  // Enhanced auto-save with strict validation and corruption prevention
+  const performAutoSave = useCallback(async (saveData: {
+    title: string;
+    content: string;
+    category: string;
+    featured_image_url: string;
+    video_url: string;
+    ai_generated: boolean;
+  }) => {
+    console.log('=== AUTO-SAVE TRIGGERED ===');
+    console.log('Save data:', {
+      title: saveData.title,
+      contentLength: saveData.content?.length || 0,
+      contentPreview: saveData.content?.substring(0, 100) + '...',
+      category: saveData.category
+    });
+
+    // Block auto-save during content loading or if already auto-saving
+    if (autoSaveBlocked || isAutoSaving || loadingContent) {
+      console.log('Auto-save blocked:', { autoSaveBlocked, isAutoSaving, loadingContent });
+      return;
+    }
+
+    // Validate content before saving
+    const { isValid: isTitleValid } = { isValid: Boolean(saveData.title?.trim()) };
+    const { isValid: isContentValid } = validateContentFormat(saveData.content);
+    
+    // Only save if we have meaningful content (title OR valid content)
+    if (!isTitleValid && !isContentValid) {
+      console.log('Auto-save skipped: no meaningful content');
+      return;
+    }
+
+    // Prevent empty HTML corruption
+    if (saveData.content && saveData.content.trim() === '<p></p>') {
+      console.log('Auto-save skipped: preventing empty paragraph corruption');
+      return;
+    }
+
+    setIsAutoSaving(true);
+    
+    try {
+      // Prepare clean save data
+      const cleanSaveData = {
+        ...saveData,
+        content: isContentValid ? { html: saveData.content } : { html: '' },
+        status: 'draft' as const,
+        visibility: 'public' as const,
+        tags: [],
+      };
+
+      console.log('Clean save data prepared:', {
+        title: cleanSaveData.title,
+        contentHtml: cleanSaveData.content.html?.substring(0, 100) + '...',
+        hasValidContent: isContentValid
+      });
+
+      if (isEditing && id && currentChangelog?.id === id) {
+        console.log('Auto-saving existing changelog:', id);
+        await autoSaveChangelog(id, cleanSaveData);
+        console.log('Auto-save completed successfully');
+      } else if (!isEditing && !currentChangelog) {
+        console.log('Creating new changelog draft');
+        const result = await createChangelog(cleanSaveData);
+        
+        if (result.data?.id) {
+          console.log('New changelog created:', result.data.id);
+          console.log('Redirecting to edit mode');
+          navigate(`/changelogs/${result.data.id}/edit`, { replace: true });
+        } else if (result.error) {
+          console.error('Failed to create changelog:', result.error);
+          toast({
+            title: "Auto-save Failed",
+            description: result.error,
+            variant: "destructive",
+          });
+        }
+      } else {
+        console.log('Auto-save skipped: invalid state');
+      }
+    } catch (error) {
+      console.error('Auto-save failed:', error);
+      toast({
+        title: "Auto-save Failed",
+        description: "There was an issue saving your changes",
+        variant: "destructive",
+      });
+    } finally {
+      setIsAutoSaving(false);
+    }
+  }, [isEditing, id, currentChangelog, autoSaveChangelog, createChangelog, navigate, toast, autoSaveBlocked, isAutoSaving, loadingContent]);
+
+  // Debounced auto-save with enhanced validation
+  const debouncedAutoSave = useCallback(
+    debounce(performAutoSave, 2000),
+    [performAutoSave]
+  );
 
   // Handle route changes and state management
   useEffect(() => {
@@ -186,10 +259,13 @@ const ChangelogEditor = () => {
     console.log('URL ID:', id);
     
     if (isNewChangelog) {
-      console.log('New changelog detected, clearing state');
+      console.log('New changelog route detected');
       clearEditorState();
     } else if (isEditing && id) {
-      console.log('Edit mode detected, fetching changelog:', id);
+      console.log('Edit mode detected for ID:', id);
+      
+      // Block auto-save during loading
+      setAutoSaveBlocked(true);
       setLoadingContent(true);
       setContentLoaded(false);
       
@@ -208,6 +284,10 @@ const ChangelogEditor = () => {
         })
         .finally(() => {
           setLoadingContent(false);
+          // Small delay to ensure content is fully loaded before enabling auto-save
+          setTimeout(() => {
+            setAutoSaveBlocked(false);
+          }, 500);
         });
     }
   }, [location.pathname, id, isNewChangelog, isEditing, fetchChangelog, clearEditorState, toast, navigate]);
@@ -215,117 +295,93 @@ const ChangelogEditor = () => {
   // Load content into editor when currentChangelog changes
   useEffect(() => {
     if (currentChangelog && !contentLoaded && !loadingContent && isEditing) {
-      console.log('=== LOADING CHANGELOG DATA ===');
-      console.log('Current changelog:', currentChangelog);
-      console.log('Raw content field:', currentChangelog.content);
+      console.log('=== LOADING CHANGELOG DATA INTO EDITOR ===');
+      console.log('Changelog data:', {
+        id: currentChangelog.id,
+        title: currentChangelog.title,
+        contentType: typeof currentChangelog.content,
+        contentPreview: JSON.stringify(currentChangelog.content).substring(0, 200)
+      });
+      
+      // Block auto-save during content loading
+      setAutoSaveBlocked(true);
       
       setTitle(currentChangelog.title || '');
       
-      // Enhanced content parsing with detailed logging
+      // Enhanced content parsing with validation
       const extractedContent = extractContentString(currentChangelog.content);
-      console.log('Extracted content length:', extractedContent.length);
-      console.log('Extracted content preview:', extractedContent.substring(0, 200) + '...');
+      console.log('Extracted content for editor:', {
+        length: extractedContent.length,
+        isEmpty: isContentEmpty(extractedContent),
+        preview: extractedContent.substring(0, 200) + '...'
+      });
       
-      // Validate content before setting
-      if (extractedContent && extractedContent.trim().length > 0) {
-        console.log('Setting content in editor');
-        setContent(extractedContent);
-      } else {
-        console.warn('No valid content found, setting empty string');
-        setContent('');
-      }
-      
+      setContent(extractedContent);
       setCategory(currentChangelog.category || 'announcement');
       setFeaturedImage(currentChangelog.featured_image_url || "");
       setVideoUrl(currentChangelog.video_url || "");
       setAiGenerated(currentChangelog.ai_generated || false);
       
       setContentLoaded(true);
+      setIsDirty(false);
+      
+      // Re-enable auto-save after content is loaded
+      setTimeout(() => {
+        setAutoSaveBlocked(false);
+      }, 500);
+      
       console.log('=== CONTENT LOADING COMPLETE ===');
     }
   }, [currentChangelog, contentLoaded, loadingContent, isEditing, extractContentString]);
 
-  // Enhanced auto-save with better ID management
-  const debouncedAutoSave = useCallback(
-    debounce(async (saveData: any) => {
-      // Check if we have meaningful content to save
-      const hasTitle = saveData.title && typeof saveData.title === 'string' && saveData.title.trim().length > 0;
-      const hasContent = saveData.content && 
-        ((typeof saveData.content === 'string' && saveData.content.trim().length > 0) ||
-         (typeof saveData.content === 'object' && saveData.content.html && saveData.content.html.trim().length > 0));
-      
-      if (!hasTitle && !hasContent) {
-        console.log('No meaningful content to auto-save');
-        return;
-      }
-      
-      try {
-        console.log('=== AUTO-SAVE TRIGGERED ===');
-        console.log('Current URL ID:', id);
-        console.log('Current changelog ID:', currentChangelog?.id);
-        console.log('Save data:', saveData);
-        
-        if (isEditing && id && currentChangelog?.id === id) {
-          console.log('Auto-saving existing changelog:', id);
-          await autoSaveChangelog(id, saveData);
-          console.log('Auto-save completed');
-        } else if (!isEditing && !currentChangelog) {
-          console.log('Creating new changelog draft');
-          const result = await createChangelog({
-            ...saveData,
-            status: 'draft',
-          });
-          
-          if (result.data?.id) {
-            console.log('Created new changelog, redirecting to edit page:', result.data.id);
-            navigate(`/changelogs/${result.data.id}/edit`, { replace: true });
-          } else if (result.error) {
-            console.error('Failed to create changelog:', result.error);
-            toast({
-              title: "Auto-save Failed",
-              description: result.error,
-              variant: "destructive",
-            });
-          }
-        } else {
-          console.log('Skipping auto-save - invalid state');
-        }
-      } catch (error) {
-        console.error('Auto-save failed:', error);
-        toast({
-          title: "Auto-save Failed",
-          description: "There was an issue saving your changes",
-          variant: "destructive",
-        });
-      }
-    }, 1000),
-    [isEditing, id, currentChangelog, autoSaveChangelog, createChangelog, navigate, toast]
-  );
-
-  // Auto-save on content change with enhanced data structure
+  // Enhanced auto-save trigger with validation
   useEffect(() => {
-    if ((title || content) && !loadingContent) {
+    if (!autoSaveBlocked && !loadingContent && isDirty) {
+      console.log('=== AUTO-SAVE TRIGGER CHECK ===');
+      console.log('Conditions:', {
+        autoSaveBlocked,
+        loadingContent,
+        isDirty,
+        hasTitle: Boolean(title?.trim()),
+        hasContent: Boolean(content?.trim())
+      });
+
       const saveData = {
-        title,
-        content: typeof content === 'string' ? { html: content } : content,
+        title: title || '',
+        content: content || '',
         category,
         featured_image_url: featuredImage,
         video_url: videoUrl,
-        visibility: 'public' as const,
-        tags: [],
         ai_generated: aiGenerated,
       };
       
-      console.log('Triggering auto-save with data:', saveData);
+      console.log('Triggering debounced auto-save');
       debouncedAutoSave(saveData);
     }
-  }, [title, content, category, featuredImage, videoUrl, aiGenerated, debouncedAutoSave, loadingContent]);
+  }, [title, content, category, featuredImage, videoUrl, aiGenerated, debouncedAutoSave, autoSaveBlocked, loadingContent, isDirty]);
+
+  // Track dirty state changes
+  useEffect(() => {
+    if (!loadingContent && contentLoaded) {
+      setIsDirty(true);
+    }
+  }, [title, content, category, featuredImage, videoUrl, aiGenerated, loadingContent, contentLoaded]);
 
   const handlePublish = async () => {
     if (!title.trim()) {
       toast({
         title: "Title Required",
         description: "Please add a title before publishing",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { isValid: isContentValid } = validateContentFormat(content);
+    if (!isContentValid) {
+      toast({
+        title: "Content Required",
+        description: "Please add some content before publishing",
         variant: "destructive",
       });
       return;
@@ -386,6 +442,7 @@ const ChangelogEditor = () => {
   const handleContentGenerated = (generatedContent: string) => {
     setContent(generatedContent);
     setAiGenerated(true);
+    setIsDirty(true);
     toast({
       title: "Content Generated!",
       description: "AI has created content for your changelog.",
@@ -393,13 +450,14 @@ const ChangelogEditor = () => {
   };
 
   const handleInsertContent = (contentToInsert: string) => {
-    // Insert content at current cursor position or append to existing content
-    if (content.trim()) {
+    const { isValid } = validateContentFormat(content);
+    if (isValid && content.trim()) {
       setContent(prev => prev + '\n\n' + contentToInsert);
     } else {
       setContent(contentToInsert);
     }
     setAiGenerated(true);
+    setIsDirty(true);
   };
 
   const toggleAIWriter = () => {
@@ -424,6 +482,12 @@ const ChangelogEditor = () => {
                     <span>Loading changelog...</span>
                   </div>
                 )}
+                {isAutoSaving && (
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-green-500"></div>
+                    <span>Auto-saving...</span>
+                  </div>
+                )}
               </div>
               
               <div className="flex items-center space-x-2">
@@ -439,7 +503,10 @@ const ChangelogEditor = () => {
 
                 <select
                   value={category}
-                  onChange={(e) => setCategory(e.target.value)}
+                  onChange={(e) => {
+                    setCategory(e.target.value);
+                    setIsDirty(true);
+                  }}
                   className="px-3 py-1 border border-input bg-background text-foreground rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-ring z-50"
                   style={{ backgroundColor: 'var(--background)', color: 'var(--foreground)' }}
                 >
@@ -493,7 +560,10 @@ const ChangelogEditor = () => {
                   <div className="mb-6">
                     <Input
                       value={title}
-                      onChange={(e) => setTitle(e.target.value)}
+                      onChange={(e) => {
+                        setTitle(e.target.value);
+                        setIsDirty(true);
+                      }}
                       placeholder="Enter changelog title..."
                       className="text-4xl font-bold border-none shadow-none p-0 h-auto bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
                       style={{ 
@@ -503,11 +573,18 @@ const ChangelogEditor = () => {
                     />
                   </div>
 
-                  {/* TipTap Editor with enhanced content handling */}
+                  {/* TipTap Editor */}
                   <TipTapEditor
-                    key={editorKey} // Force re-render when key changes
+                    key={editorKey}
                     content={content}
-                    onChange={setContent}
+                    onChange={(newContent) => {
+                      console.log('Editor content changed:', {
+                        length: newContent?.length || 0,
+                        preview: newContent?.substring(0, 100) + '...'
+                      });
+                      setContent(newContent);
+                      setIsDirty(true);
+                    }}
                     placeholder="Tell your story..."
                   />
                 </>

@@ -49,25 +49,86 @@ const transformDbRow = (row: any): Changelog => ({
   tags: row.tags || [],
 });
 
-// Enhanced content processing function
+// Enhanced content processing with corruption prevention
 const processContentForStorage = (content: any) => {
-  if (!content) return { html: '' };
+  console.log('=== PROCESSING CONTENT FOR STORAGE ===');
+  console.log('Input content:', content);
+  console.log('Content type:', typeof content);
+  
+  if (!content) {
+    console.log('No content provided, returning empty HTML object');
+    return { html: '' };
+  }
   
   if (typeof content === 'string') {
-    return { html: content };
+    // Prevent corruption: don't save empty or meaningless content
+    const trimmed = content.trim();
+    if (!trimmed || trimmed === '<p></p>' || trimmed === '<br>' || trimmed === '<br/>') {
+      console.log('Preventing storage of empty/meaningless HTML content');
+      return { html: '' };
+    }
+    console.log('Processing string content, length:', trimmed.length);
+    return { html: trimmed };
   }
   
   if (typeof content === 'object') {
-    // If it already has the correct structure, return as-is
-    if (content.html || content.content || content.type) {
-      return content;
+    // If it already has the correct structure, validate and clean it
+    if (content.html !== undefined) {
+      const htmlContent = content.html || '';
+      const trimmed = htmlContent.trim();
+      
+      if (!trimmed || trimmed === '<p></p>' || trimmed === '<br>' || trimmed === '<br/>') {
+        console.log('Preventing storage of empty HTML object');
+        return { html: '' };
+      }
+      
+      console.log('Processing object with html property, length:', trimmed.length);
+      return { html: trimmed };
     }
     
-    // If it's a plain object, wrap in html property
-    return { html: JSON.stringify(content) };
+    // Handle other object formats
+    if (content.content) {
+      console.log('Processing object with content property');
+      return processContentForStorage(content.content);
+    }
+    
+    // If it's a complex object without html/content, stringify it
+    try {
+      const stringified = JSON.stringify(content);
+      if (stringified && stringified !== '{}' && stringified !== 'null') {
+        console.log('Processing complex object, stringified length:', stringified.length);
+        return { html: stringified };
+      }
+    } catch (e) {
+      console.error('Failed to stringify content object:', e);
+    }
   }
   
+  console.log('Defaulting to empty HTML content');
   return { html: '' };
+};
+
+// Content validation utility
+const validateContentBeforeSave = (data: Partial<Changelog>): { isValid: boolean; reason?: string } => {
+  console.log('=== VALIDATING CONTENT BEFORE SAVE ===');
+  
+  // Check if we have at least a title or meaningful content
+  const hasTitle = Boolean(data.title?.trim());
+  const processedContent = processContentForStorage(data.content);
+  const hasContent = Boolean(processedContent.html?.trim());
+  
+  console.log('Validation check:', {
+    hasTitle,
+    hasContent,
+    titleLength: data.title?.length || 0,
+    contentLength: processedContent.html?.length || 0
+  });
+  
+  if (!hasTitle && !hasContent) {
+    return { isValid: false, reason: 'No title or content provided' };
+  }
+  
+  return { isValid: true };
 };
 
 export const useChangelogStore = create<ChangelogStore>((set, get) => ({
@@ -85,13 +146,13 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .select('*')
         .order('created_at', { ascending: false });
 
-      console.log('Fetch changelogs result:', { data, error });
+      console.log('Fetch changelogs result:', { data: data?.length, error });
       if (error) {
         console.error('Fetch changelogs error:', error);
         throw error;
       }
       const transformedData = (data || []).map(transformDbRow);
-      console.log('Transformed changelogs:', transformedData);
+      console.log('Transformed changelogs count:', transformedData.length);
       set({ changelogs: transformedData });
     } catch (error) {
       console.error('Error fetching changelogs:', error);
@@ -108,9 +169,14 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .from('changelogs')
         .select('*')
         .eq('id', id)
-        .maybeSingle(); // Use maybeSingle instead of single to handle missing records
+        .maybeSingle();
 
-      console.log('Fetch single changelog result:', { data, error });
+      console.log('Fetch single changelog result:', { 
+        found: Boolean(data), 
+        error: error?.message,
+        dataId: data?.id 
+      });
+      
       if (error) {
         console.error('Fetch changelog error:', error);
         throw error;
@@ -123,17 +189,18 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       }
       
       const transformedData = transformDbRow(data);
-      console.log('Transformed changelog:', transformedData);
-      console.log('Content details:', {
-        rawContent: data.content,
-        transformedContent: transformedData.content,
-        contentType: typeof data.content
+      console.log('Fetched changelog:', {
+        id: transformedData.id,
+        title: transformedData.title,
+        contentType: typeof transformedData.content,
+        contentKeys: transformedData.content ? Object.keys(transformedData.content) : []
       });
+      
       set({ currentChangelog: transformedData });
     } catch (error) {
       console.error('Error fetching changelog:', error);
       set({ currentChangelog: null });
-      throw error; // Re-throw to allow caller to handle
+      throw error;
     } finally {
       set({ loading: false });
     }
@@ -142,12 +209,23 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
   createChangelog: async (changelogData: Partial<Changelog>) => {
     try {
       console.log('=== CREATE CHANGELOG START ===');
-      console.log('Input data:', JSON.stringify(changelogData, null, 2));
+      console.log('Input data:', {
+        title: changelogData.title,
+        hasContent: Boolean(changelogData.content),
+        category: changelogData.category
+      });
       
-      // Step 1: Check authentication
-      console.log('Step 1: Checking authentication...');
+      // Validate content before proceeding
+      const validation = validateContentBeforeSave(changelogData);
+      if (!validation.isValid) {
+        console.log('Content validation failed:', validation.reason);
+        return { error: `Validation failed: ${validation.reason}` };
+      }
+      
+      // Check authentication
+      console.log('Checking authentication...');
       const { data: { user }, error: authError } = await supabase.auth.getUser();
-      console.log('Auth check result:', { user: user?.id, authError });
+      console.log('Auth check result:', { userId: user?.id, authError: authError?.message });
       
       if (authError) {
         console.error('Authentication error:', authError);
@@ -159,15 +237,18 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         return { error: 'User not authenticated - please log in' };
       }
 
-      // Step 2: Get user's company
-      console.log('Step 2: Getting user company...');
+      // Get user's company
+      console.log('Getting user company...');
       const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('company_id')
         .eq('id', user.id)
         .single();
       
-      console.log('Profile query result:', { profile, profileError });
+      console.log('Profile query result:', { 
+        companyId: profile?.company_id, 
+        profileError: profileError?.message 
+      });
 
       if (profileError) {
         console.error('Profile error:', profileError);
@@ -179,9 +260,8 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         return { error: 'No company found for user - please complete onboarding' };
       }
 
-      // Step 3: Prepare insert data with improved content handling
-      console.log('Step 3: Preparing insert data...');
-      
+      // Process content with corruption prevention
+      console.log('Processing content for storage...');
       const processedContent = processContentForStorage(changelogData.content);
       
       const insertData = {
@@ -198,25 +278,29 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         ai_generated: changelogData.ai_generated || false,
       };
 
-      console.log('Final insert data:', JSON.stringify(insertData, null, 2));
+      console.log('Final insert data:', {
+        title: insertData.title,
+        contentHtml: insertData.content.html?.substring(0, 100) + '...',
+        category: insertData.category,
+        status: insertData.status
+      });
 
-      // Step 4: Insert into database
-      console.log('Step 4: Inserting into database...');
+      // Insert into database
+      console.log('Inserting into database...');
       const { data, error } = await supabase
         .from('changelogs')
         .insert(insertData)
         .select()
         .single();
 
-      console.log('Database insert result:', { data, error });
+      console.log('Database insert result:', { 
+        success: Boolean(data), 
+        error: error?.message,
+        newId: data?.id 
+      });
 
       if (error) {
-        console.error('Database insert error details:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
+        console.error('Database insert error:', error);
         return { error: `Database error: ${error.message}` };
       }
 
@@ -225,10 +309,9 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         return { error: 'No data returned from database' };
       }
 
-      // Step 5: Transform and update state
-      console.log('Step 5: Updating state...');
+      // Transform and update state
       const transformedData = transformDbRow(data);
-      console.log('Transformed data:', transformedData);
+      console.log('Created changelog:', transformedData.id);
       
       set(state => ({
         changelogs: [transformedData, ...state.changelogs],
@@ -241,7 +324,6 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
     } catch (error: any) {
       console.error('=== CREATE CHANGELOG ERROR ===');
       console.error('Unexpected error:', error);
-      console.error('Error stack:', error.stack);
       return { error: `Unexpected error: ${error.message}` };
     }
   },
@@ -250,29 +332,51 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
     try {
       console.log('=== UPDATE CHANGELOG START ===');
       console.log('Updating changelog ID:', id);
-      console.log('Update data:', JSON.stringify(updateData, null, 2));
+      console.log('Update data keys:', Object.keys(updateData));
+
+      // Validate content before proceeding
+      const validation = validateContentBeforeSave(updateData);
+      if (!validation.isValid) {
+        console.log('Update validation failed:', validation.reason);
+        // For updates, we allow empty content as it might be a partial update
+        if (!updateData.title?.trim() && !updateData.content) {
+          console.log('Skipping update: no meaningful changes');
+          return {};
+        }
+      }
 
       const processedContent = processContentForStorage(updateData.content);
 
+      const updatePayload = {
+        title: updateData.title,
+        content: processedContent,
+        category: updateData.category,
+        status: updateData.status,
+        visibility: updateData.visibility,
+        featured_image_url: updateData.featured_image_url,
+        video_url: updateData.video_url,
+        tags: updateData.tags,
+        ai_generated: updateData.ai_generated,
+        updated_at: new Date().toISOString(),
+      };
+
+      console.log('Update payload:', {
+        title: updatePayload.title,
+        contentHtml: updatePayload.content.html?.substring(0, 100) + '...',
+        category: updatePayload.category
+      });
+
       const { data, error } = await supabase
         .from('changelogs')
-        .update({
-          title: updateData.title,
-          content: processedContent,
-          category: updateData.category,
-          status: updateData.status,
-          visibility: updateData.visibility,
-          featured_image_url: updateData.featured_image_url,
-          video_url: updateData.video_url,
-          tags: updateData.tags,
-          ai_generated: updateData.ai_generated,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updatePayload)
         .eq('id', id)
         .select()
         .single();
 
-      console.log('Update result:', { data, error });
+      console.log('Update result:', { 
+        success: Boolean(data), 
+        error: error?.message 
+      });
 
       if (error) {
         console.error('Database update error:', error);
@@ -296,6 +400,8 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
 
   publishChangelog: async (id: string) => {
     try {
+      console.log('=== PUBLISH CHANGELOG START ===', id);
+      
       const { data: { user } } = await supabase.auth.getUser();
       
       if (!user) {
@@ -353,7 +459,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         currentChangelog: transformedData
       }));
 
-      console.log('Changelog published with shareable URL:', shareableUrl);
+      console.log('Changelog published with URL:', shareableUrl);
 
       return {};
     } catch (error: any) {
@@ -371,7 +477,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .delete()
         .eq('id', id);
 
-      console.log('Delete result:', { error });
+      console.log('Delete result:', { error: error?.message });
 
       if (error) {
         console.error('Database delete error:', error);
@@ -401,14 +507,21 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       clearTimeout(autoSaveTimeout);
     }
 
-    // Set new timeout for auto-save (reduced to 2 seconds for better responsiveness)
+    // Set new timeout for auto-save
     const newTimeout = setTimeout(async () => {
       try {
-        console.log('Auto-saving changelog:', id);
+        console.log('=== AUTO-SAVE EXECUTING ===', id);
+        
+        // Validate before auto-save
+        const validation = validateContentBeforeSave(data);
+        if (!validation.isValid) {
+          console.log('Auto-save validation failed:', validation.reason);
+          return;
+        }
         
         const processedContent = processContentForStorage(data.content);
         
-        await supabase
+        const { error } = await supabase
           .from('changelogs')
           .update({
             title: data.title,
@@ -422,16 +535,22 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
             auto_saved_at: new Date().toISOString(),
           })
           .eq('id', id);
-        console.log('Auto-save completed for:', id);
+          
+        if (error) {
+          console.error('Auto-save failed:', error);
+        } else {
+          console.log('Auto-save completed successfully for:', id);
+        }
       } catch (error) {
         console.error('Auto-save failed:', error);
       }
-    }, 2000); // Auto-save after 2 seconds of inactivity
+    }, 1500); // Reduced timeout for more responsive auto-save
 
     set({ autoSaveTimeout: newTimeout });
   },
 
   setCurrentChangelog: (changelog: Changelog | null) => {
+    console.log('=== SETTING CURRENT CHANGELOG ===', changelog?.id || 'null');
     set({ currentChangelog: changelog });
   },
 }));
