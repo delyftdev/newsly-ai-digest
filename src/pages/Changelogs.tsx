@@ -10,16 +10,39 @@ import {
   Edit, 
   Calendar, 
   Tag, 
-  Share
+  Share,
+  Trash2,
+  MoreHorizontal
 } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useCompanyStore } from "@/stores/companyStore";
 import ShareDialog from "@/components/ShareDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useToast } from "@/hooks/use-toast";
 
 const Changelogs = () => {
-  const { changelogs, fetchChangelogs, loading } = useChangelogStore();
+  const { changelogs, fetchChangelogs, deleteChangelog, loading } = useChangelogStore();
   const { company } = useCompanyStore();
+  const { toast } = useToast();
   const [shareDialogOpen, setShareDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [changelogToDelete, setChangelogToDelete] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
   useEffect(() => {
     fetchChangelogs();
@@ -66,6 +89,47 @@ const Changelogs = () => {
     setShareDialogOpen(true);
   };
 
+  const handleDeleteClick = (changelogId: string) => {
+    setChangelogToDelete(changelogId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!changelogToDelete) return;
+
+    setDeletingId(changelogToDelete);
+    
+    try {
+      const { error } = await deleteChangelog(changelogToDelete);
+      
+      if (error) {
+        throw new Error(error);
+      }
+      
+      toast({
+        title: "Changelog deleted successfully",
+        description: "The changelog has been permanently removed.",
+      });
+      
+    } catch (error: any) {
+      console.error('Delete error:', error);
+      toast({
+        title: "Failed to delete changelog",
+        description: error.message || "There was an error deleting the changelog. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDeletingId(null);
+      setDeleteDialogOpen(false);
+      setChangelogToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setDeleteDialogOpen(false);
+    setChangelogToDelete(null);
+  };
+
   return (
     <DashboardLayout>
       <div className="space-y-6">
@@ -89,6 +153,7 @@ const Changelogs = () => {
           <CardContent className="p-0">
             {loading ? (
               <div className="text-center py-8 text-muted-foreground">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
                 <p>Loading changelogs...</p>
               </div>
             ) : changelogs.length === 0 ? (
@@ -104,7 +169,7 @@ const Changelogs = () => {
             ) : (
               <div className="divide-y divide-border">
                 {changelogs.map((changelog) => (
-                  <div key={changelog.id} className="p-6 hover:bg-accent/50 transition-colors">
+                  <div key={changelog.id} className="p-6 hover:bg-accent/50 transition-colors group">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-3 mb-2">
@@ -138,11 +203,27 @@ const Changelogs = () => {
                       </div>
 
                       <div className="flex items-center space-x-2">
+                        {/* Edit Button */}
                         <Link to={`/changelogs/${changelog.id}/edit`}>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
                             <Edit className="h-4 w-4" />
                           </Button>
                         </Link>
+                        
+                        {/* Delete Button */}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDeleteClick(changelog.id)}
+                          disabled={deletingId === changelog.id}
+                          className="opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive hover:bg-destructive/10"
+                        >
+                          {deletingId === changelog.id ? (
+                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-destructive"></div>
+                          ) : (
+                            <Trash2 className="h-4 w-4" />
+                          )}
+                        </Button>
                       </div>
                     </div>
                   </div>
@@ -151,6 +232,36 @@ const Changelogs = () => {
             )}
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you sure you want to delete this changelog?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete the changelog entry
+                and remove it from your changelog history.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={handleDeleteCancel}>Cancel</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={handleDeleteConfirm}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                disabled={deletingId !== null}
+              >
+                {deletingId ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Deleting...
+                  </>
+                ) : (
+                  'Delete'
+                )}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
 
         <ShareDialog
           isOpen={shareDialogOpen}

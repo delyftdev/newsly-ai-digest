@@ -49,6 +49,27 @@ const transformDbRow = (row: any): Changelog => ({
   tags: row.tags || [],
 });
 
+// Enhanced content processing function
+const processContentForStorage = (content: any) => {
+  if (!content) return { html: '' };
+  
+  if (typeof content === 'string') {
+    return { html: content };
+  }
+  
+  if (typeof content === 'object') {
+    // If it already has the correct structure, return as-is
+    if (content.html || content.content || content.type) {
+      return content;
+    }
+    
+    // If it's a plain object, wrap in html property
+    return { html: JSON.stringify(content) };
+  }
+  
+  return { html: '' };
+};
+
 export const useChangelogStore = create<ChangelogStore>((set, get) => ({
   changelogs: [],
   currentChangelog: null,
@@ -153,13 +174,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       // Step 3: Prepare insert data with improved content handling
       console.log('Step 3: Preparing insert data...');
       
-      // Ensure content is properly formatted
-      let processedContent = changelogData.content;
-      if (typeof changelogData.content === 'string') {
-        processedContent = { html: changelogData.content };
-      } else if (!changelogData.content) {
-        processedContent = { html: '' };
-      }
+      const processedContent = processContentForStorage(changelogData.content);
       
       const insertData = {
         title: changelogData.title || '',
@@ -229,13 +244,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       console.log('Updating changelog ID:', id);
       console.log('Update data:', JSON.stringify(updateData, null, 2));
 
-      // Ensure content is properly formatted
-      let processedContent = updateData.content;
-      if (typeof updateData.content === 'string') {
-        processedContent = { html: updateData.content };
-      } else if (updateData.content && !updateData.content.html) {
-        processedContent = { html: updateData.content };
-      }
+      const processedContent = processContentForStorage(updateData.content);
 
       const { data, error } = await supabase
         .from('changelogs')
@@ -347,20 +356,29 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
 
   deleteChangelog: async (id: string) => {
     try {
+      console.log('=== DELETE CHANGELOG START ===', id);
+      
       const { error } = await supabase
         .from('changelogs')
         .delete()
         .eq('id', id);
 
-      if (error) throw error;
+      console.log('Delete result:', { error });
+
+      if (error) {
+        console.error('Database delete error:', error);
+        throw error;
+      }
 
       set(state => ({
         changelogs: state.changelogs.filter(c => c.id !== id),
         currentChangelog: state.currentChangelog?.id === id ? null : state.currentChangelog
       }));
 
+      console.log('=== DELETE CHANGELOG SUCCESS ===');
       return {};
     } catch (error: any) {
+      console.error('=== DELETE CHANGELOG ERROR ===');
       console.error('Error deleting changelog:', error);
       return { error: error.message };
     }
@@ -379,13 +397,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       try {
         console.log('Auto-saving changelog:', id);
         
-        // Ensure content is properly formatted for auto-save
-        let processedContent = data.content;
-        if (typeof data.content === 'string') {
-          processedContent = { html: data.content };
-        } else if (data.content && !data.content.html) {
-          processedContent = { html: data.content };
-        }
+        const processedContent = processContentForStorage(data.content);
         
         await supabase
           .from('changelogs')

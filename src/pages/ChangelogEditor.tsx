@@ -33,7 +33,8 @@ const ChangelogEditor = () => {
     createChangelog, 
     updateChangelog, 
     publishChangelog,
-    autoSaveChangelog 
+    autoSaveChangelog,
+    loading 
   } = useChangelogStore();
   
   const [title, setTitle] = useState("");
@@ -45,6 +46,7 @@ const ChangelogEditor = () => {
   const [showAIWriter, setShowAIWriter] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [contentLoaded, setContentLoaded] = useState(false);
+  const [loadingContent, setLoadingContent] = useState(false);
 
   const isEditing = Boolean(id);
 
@@ -59,15 +61,7 @@ const ChangelogEditor = () => {
     ? currentChangelog?.status === 'draft'
     : hasContent;
 
-  useEffect(() => {
-    if (isEditing && id) {
-      console.log('=== FETCHING CHANGELOG ===');
-      console.log('Changelog ID:', id);
-      fetchChangelog(id);
-    }
-  }, [isEditing, id, fetchChangelog]);
-
-  // Enhanced content extraction with comprehensive logging
+  // Enhanced content extraction with comprehensive logging and format support
   const extractContentString = useCallback((contentData: any): string => {
     console.log('=== EXTRACTING CONTENT ===');
     console.log('Raw content data:', contentData);
@@ -86,7 +80,7 @@ const ChangelogEditor = () => {
     if (typeof contentData === 'object') {
       console.log('Content is object format:', Object.keys(contentData));
       
-      // Handle {html: "content"} format (most common)
+      // Handle {html: "content"} format (most common TipTap format)
       if (contentData.html && typeof contentData.html === 'string') {
         console.log('Found HTML property:', contentData.html.substring(0, 100) + '...');
         return contentData.html;
@@ -96,6 +90,39 @@ const ChangelogEditor = () => {
       if (contentData.content && typeof contentData.content === 'string') {
         console.log('Found content property:', contentData.content.substring(0, 100) + '...');
         return contentData.content;
+      }
+      
+      // Handle TipTap JSON format {type: "doc", content: [...]}
+      if (contentData.type === 'doc' && Array.isArray(contentData.content)) {
+        console.log('Found TipTap JSON format, converting to HTML...');
+        try {
+          // Simple conversion for common TipTap JSON structure
+          let htmlContent = '';
+          contentData.content.forEach((node: any) => {
+            if (node.type === 'paragraph' && node.content) {
+              htmlContent += '<p>';
+              node.content.forEach((textNode: any) => {
+                if (textNode.type === 'text') {
+                  htmlContent += textNode.text || '';
+                }
+              });
+              htmlContent += '</p>';
+            } else if (node.type === 'heading' && node.content) {
+              const level = node.attrs?.level || 1;
+              htmlContent += `<h${level}>`;
+              node.content.forEach((textNode: any) => {
+                if (textNode.type === 'text') {
+                  htmlContent += textNode.text || '';
+                }
+              });
+              htmlContent += `</h${level}>`;
+            }
+          });
+          console.log('Converted TipTap JSON to HTML:', htmlContent.substring(0, 100) + '...');
+          return htmlContent;
+        } catch (e) {
+          console.error('Failed to convert TipTap JSON to HTML:', e);
+        }
       }
       
       // Handle nested object formats
@@ -124,8 +151,22 @@ const ChangelogEditor = () => {
     return '';
   }, []);
 
+  // Fetch changelog data when editing
   useEffect(() => {
-    if (currentChangelog && !contentLoaded) {
+    if (isEditing && id) {
+      console.log('=== FETCHING CHANGELOG ===');
+      console.log('Changelog ID:', id);
+      setLoadingContent(true);
+      setContentLoaded(false);
+      fetchChangelog(id).finally(() => {
+        setLoadingContent(false);
+      });
+    }
+  }, [isEditing, id, fetchChangelog]);
+
+  // Load content into editor when currentChangelog changes
+  useEffect(() => {
+    if (currentChangelog && !contentLoaded && !loadingContent) {
       console.log('=== LOADING CHANGELOG DATA ===');
       console.log('Current changelog:', currentChangelog);
       console.log('Raw content field:', currentChangelog.content);
@@ -154,7 +195,14 @@ const ChangelogEditor = () => {
       setContentLoaded(true);
       console.log('=== CONTENT LOADING COMPLETE ===');
     }
-  }, [currentChangelog, contentLoaded, extractContentString]);
+  }, [currentChangelog, contentLoaded, loadingContent, extractContentString]);
+
+  // Reset content loaded flag when switching changelogs
+  useEffect(() => {
+    if (isEditing && id) {
+      setContentLoaded(false);
+    }
+  }, [id, isEditing]);
 
   // Enhanced auto-save with better content handling
   const debouncedAutoSave = useCallback(
@@ -355,6 +403,12 @@ const ChangelogEditor = () => {
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
+                {(loading || loadingContent) && (
+                  <div className="flex items-center space-x-2 text-sm text-muted-foreground">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary"></div>
+                    <span>Loading changelog...</span>
+                  </div>
+                )}
               </div>
               
               <div className="flex items-center space-x-2">
@@ -396,37 +450,52 @@ const ChangelogEditor = () => {
           {/* Editor Canvas */}
           <div className={`flex-1 transition-all duration-300 ${showAIWriter ? 'mr-96' : ''}`}>
             <div className="max-w-4xl mx-auto px-6 py-8 h-full overflow-y-auto">
-              {/* Featured Image */}
-              {featuredImage && (
-                <div className="mb-8">
-                  <img 
-                    src={featuredImage} 
-                    alt="Featured" 
-                    className="w-full rounded-lg shadow-sm max-h-96 object-cover"
-                  />
+              {/* Loading State */}
+              {loadingContent && (
+                <div className="flex items-center justify-center py-12">
+                  <div className="text-center">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+                    <p className="text-muted-foreground">Loading changelog content...</p>
+                  </div>
                 </div>
               )}
 
-              {/* Title */}
-              <div className="mb-6">
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Untitled"
-                  className="text-4xl font-bold border-none shadow-none p-0 h-auto bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
-                  style={{ 
-                    fontSize: '2.25rem', 
-                    lineHeight: '2.5rem',
-                  }}
-                />
-              </div>
+              {/* Content Area */}
+              {!loadingContent && (
+                <>
+                  {/* Featured Image */}
+                  {featuredImage && (
+                    <div className="mb-8">
+                      <img 
+                        src={featuredImage} 
+                        alt="Featured" 
+                        className="w-full rounded-lg shadow-sm max-h-96 object-cover"
+                      />
+                    </div>
+                  )}
 
-              {/* TipTap Editor with enhanced content handling */}
-              <TipTapEditor
-                content={content}
-                onChange={setContent}
-                placeholder="Tell your story..."
-              />
+                  {/* Title */}
+                  <div className="mb-6">
+                    <Input
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="Untitled"
+                      className="text-4xl font-bold border-none shadow-none p-0 h-auto bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
+                      style={{ 
+                        fontSize: '2.25rem', 
+                        lineHeight: '2.5rem',
+                      }}
+                    />
+                  </div>
+
+                  {/* TipTap Editor with enhanced content handling */}
+                  <TipTapEditor
+                    content={content}
+                    onChange={setContent}
+                    placeholder="Tell your story..."
+                  />
+                </>
+              )}
             </div>
           </div>
 
