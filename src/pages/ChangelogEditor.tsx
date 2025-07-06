@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ArrowLeft, Send, MessageSquare, X } from "lucide-react";
@@ -26,6 +26,7 @@ const debounce = (func: Function, wait: number) => {
 const ChangelogEditor = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
   const { 
     currentChangelog, 
@@ -34,6 +35,7 @@ const ChangelogEditor = () => {
     updateChangelog, 
     publishChangelog,
     autoSaveChangelog,
+    setCurrentChangelog,
     loading 
   } = useChangelogStore();
   
@@ -47,8 +49,18 @@ const ChangelogEditor = () => {
   const [isPublishing, setIsPublishing] = useState(false);
   const [contentLoaded, setContentLoaded] = useState(false);
   const [loadingContent, setLoadingContent] = useState(false);
+  const [editorKey, setEditorKey] = useState(0); // Force re-render of editor
 
   const isEditing = Boolean(id);
+  const isNewChangelog = location.pathname === '/changelogs/new';
+
+  console.log('=== EDITOR STATE DEBUG ===');
+  console.log('Current ID from URL:', id);
+  console.log('Is editing:', isEditing);
+  console.log('Is new changelog:', isNewChangelog);
+  console.log('Current changelog ID:', currentChangelog?.id);
+  console.log('Content loaded:', contentLoaded);
+  console.log('Loading content:', loadingContent);
 
   // Determine if there's content for showing the publish button
   const hasContent = useMemo(() => 
@@ -151,22 +163,58 @@ const ChangelogEditor = () => {
     return '';
   }, []);
 
-  // Fetch changelog data when editing
+  // Clear all state when creating new changelog
+  const clearEditorState = useCallback(() => {
+    console.log('=== CLEARING EDITOR STATE ===');
+    setTitle("");
+    setContent("");
+    setCategory("announcement");
+    setFeaturedImage("");
+    setVideoUrl("");
+    setAiGenerated(false);
+    setContentLoaded(false);
+    setLoadingContent(false);
+    setCurrentChangelog(null);
+    setEditorKey(prev => prev + 1); // Force editor re-render
+    console.log('Editor state cleared');
+  }, [setCurrentChangelog]);
+
+  // Handle route changes and state management
   useEffect(() => {
-    if (isEditing && id) {
-      console.log('=== FETCHING CHANGELOG ===');
-      console.log('Changelog ID:', id);
+    console.log('=== ROUTE CHANGE EFFECT ===');
+    console.log('Location pathname:', location.pathname);
+    console.log('URL ID:', id);
+    
+    if (isNewChangelog) {
+      console.log('New changelog detected, clearing state');
+      clearEditorState();
+    } else if (isEditing && id) {
+      console.log('Edit mode detected, fetching changelog:', id);
       setLoadingContent(true);
       setContentLoaded(false);
-      fetchChangelog(id).finally(() => {
-        setLoadingContent(false);
-      });
+      
+      fetchChangelog(id)
+        .then(() => {
+          console.log('Changelog fetch completed');
+        })
+        .catch((error) => {
+          console.error('Failed to fetch changelog:', error);
+          toast({
+            title: "Failed to load changelog",
+            description: "The changelog might not exist or you don't have permission to view it.",
+            variant: "destructive",
+          });
+          navigate('/changelogs');
+        })
+        .finally(() => {
+          setLoadingContent(false);
+        });
     }
-  }, [isEditing, id, fetchChangelog]);
+  }, [location.pathname, id, isNewChangelog, isEditing, fetchChangelog, clearEditorState, toast, navigate]);
 
   // Load content into editor when currentChangelog changes
   useEffect(() => {
-    if (currentChangelog && !contentLoaded && !loadingContent) {
+    if (currentChangelog && !contentLoaded && !loadingContent && isEditing) {
       console.log('=== LOADING CHANGELOG DATA ===');
       console.log('Current changelog:', currentChangelog);
       console.log('Raw content field:', currentChangelog.content);
@@ -195,16 +243,9 @@ const ChangelogEditor = () => {
       setContentLoaded(true);
       console.log('=== CONTENT LOADING COMPLETE ===');
     }
-  }, [currentChangelog, contentLoaded, loadingContent, extractContentString]);
+  }, [currentChangelog, contentLoaded, loadingContent, isEditing, extractContentString]);
 
-  // Reset content loaded flag when switching changelogs
-  useEffect(() => {
-    if (isEditing && id) {
-      setContentLoaded(false);
-    }
-  }, [id, isEditing]);
-
-  // Enhanced auto-save with better content handling
+  // Enhanced auto-save with better ID management
   const debouncedAutoSave = useCallback(
     debounce(async (saveData: any) => {
       // Check if we have meaningful content to save
@@ -220,13 +261,15 @@ const ChangelogEditor = () => {
       
       try {
         console.log('=== AUTO-SAVE TRIGGERED ===');
+        console.log('Current URL ID:', id);
+        console.log('Current changelog ID:', currentChangelog?.id);
         console.log('Save data:', saveData);
         
-        if (isEditing && id) {
+        if (isEditing && id && currentChangelog?.id === id) {
           console.log('Auto-saving existing changelog:', id);
           await autoSaveChangelog(id, saveData);
           console.log('Auto-save completed');
-        } else {
+        } else if (!isEditing && !currentChangelog) {
           console.log('Creating new changelog draft');
           const result = await createChangelog({
             ...saveData,
@@ -244,6 +287,8 @@ const ChangelogEditor = () => {
               variant: "destructive",
             });
           }
+        } else {
+          console.log('Skipping auto-save - invalid state');
         }
       } catch (error) {
         console.error('Auto-save failed:', error);
@@ -253,13 +298,13 @@ const ChangelogEditor = () => {
           variant: "destructive",
         });
       }
-    }, 500),
-    [isEditing, id, autoSaveChangelog, createChangelog, navigate, toast]
+    }, 1000),
+    [isEditing, id, currentChangelog, autoSaveChangelog, createChangelog, navigate, toast]
   );
 
   // Auto-save on content change with enhanced data structure
   useEffect(() => {
-    if (title || content) {
+    if ((title || content) && !loadingContent) {
       const saveData = {
         title,
         content: typeof content === 'string' ? { html: content } : content,
@@ -274,37 +319,7 @@ const ChangelogEditor = () => {
       console.log('Triggering auto-save with data:', saveData);
       debouncedAutoSave(saveData);
     }
-  }, [title, content, category, featuredImage, videoUrl, aiGenerated, debouncedAutoSave]);
-
-  // Save draft before leaving page
-  useEffect(() => {
-    const handleBeforeUnload = async (e: BeforeUnloadEvent) => {
-      if ((title?.trim() || content?.trim()) && !isEditing) {
-        e.preventDefault();
-        e.returnValue = '';
-        
-        // Try to save as draft
-        try {
-          await createChangelog({
-            title: title || "Untitled Changelog",
-            content: { html: content },
-            category,
-            status: 'draft',
-            featured_image_url: featuredImage,
-            video_url: videoUrl,
-            visibility: 'public' as const,
-            tags: [],
-            ai_generated: aiGenerated,
-          });
-        } catch (error) {
-          console.error('Failed to save draft on page unload:', error);
-        }
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [title, content, category, featuredImage, videoUrl, aiGenerated, isEditing, createChangelog]);
+  }, [title, content, category, featuredImage, videoUrl, aiGenerated, debouncedAutoSave, loadingContent]);
 
   const handlePublish = async () => {
     if (!title.trim()) {
@@ -322,7 +337,7 @@ const ChangelogEditor = () => {
       let changelogId = id;
       
       // If this is a new changelog, save it first
-      if (!isEditing) {
+      if (!isEditing || !currentChangelog) {
         const result = await createChangelog({
           title,
           content: { html: content },
@@ -479,7 +494,7 @@ const ChangelogEditor = () => {
                     <Input
                       value={title}
                       onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Untitled"
+                      placeholder="Enter changelog title..."
                       className="text-4xl font-bold border-none shadow-none p-0 h-auto bg-transparent focus-visible:ring-0 placeholder:text-muted-foreground/50"
                       style={{ 
                         fontSize: '2.25rem', 
@@ -490,6 +505,7 @@ const ChangelogEditor = () => {
 
                   {/* TipTap Editor with enhanced content handling */}
                   <TipTapEditor
+                    key={editorKey} // Force re-render when key changes
                     content={content}
                     onChange={setContent}
                     placeholder="Tell your story..."

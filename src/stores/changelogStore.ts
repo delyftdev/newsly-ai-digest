@@ -108,13 +108,20 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         .from('changelogs')
         .select('*')
         .eq('id', id)
-        .single();
+        .maybeSingle(); // Use maybeSingle instead of single to handle missing records
 
       console.log('Fetch single changelog result:', { data, error });
       if (error) {
         console.error('Fetch changelog error:', error);
         throw error;
       }
+      
+      if (!data) {
+        console.warn('Changelog not found:', id);
+        set({ currentChangelog: null });
+        throw new Error('Changelog not found');
+      }
+      
       const transformedData = transformDbRow(data);
       console.log('Transformed changelog:', transformedData);
       console.log('Content details:', {
@@ -126,6 +133,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
     } catch (error) {
       console.error('Error fetching changelog:', error);
       set({ currentChangelog: null });
+      throw error; // Re-throw to allow caller to handle
     } finally {
       set({ loading: false });
     }
@@ -370,6 +378,7 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         throw error;
       }
 
+      // Immediately update the state to remove the deleted changelog
       set(state => ({
         changelogs: state.changelogs.filter(c => c.id !== id),
         currentChangelog: state.currentChangelog?.id === id ? null : state.currentChangelog

@@ -12,7 +12,6 @@ import {
   Tag, 
   Share,
   Trash2,
-  MoreHorizontal
 } from "lucide-react";
 import { useChangelogStore } from "@/stores/changelogStore";
 import { useCompanyStore } from "@/stores/companyStore";
@@ -27,12 +26,6 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 
 const Changelogs = () => {
@@ -90,6 +83,7 @@ const Changelogs = () => {
   };
 
   const handleDeleteClick = (changelogId: string) => {
+    console.log('Delete button clicked for changelog:', changelogId);
     setChangelogToDelete(changelogId);
     setDeleteDialogOpen(true);
   };
@@ -97,6 +91,7 @@ const Changelogs = () => {
   const handleDeleteConfirm = async () => {
     if (!changelogToDelete) return;
 
+    console.log('Confirming delete for changelog:', changelogToDelete);
     setDeletingId(changelogToDelete);
     
     try {
@@ -110,6 +105,10 @@ const Changelogs = () => {
         title: "Changelog deleted successfully",
         description: "The changelog has been permanently removed.",
       });
+      
+      // Force refresh the changelogs list to ensure UI is updated
+      console.log('Refreshing changelogs list after delete');
+      await fetchChangelogs();
       
     } catch (error: any) {
       console.error('Delete error:', error);
@@ -126,6 +125,7 @@ const Changelogs = () => {
   };
 
   const handleDeleteCancel = () => {
+    console.log('Delete cancelled');
     setDeleteDialogOpen(false);
     setChangelogToDelete(null);
   };
