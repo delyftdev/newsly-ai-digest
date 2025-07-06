@@ -1,4 +1,3 @@
-
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Image from '@tiptap/extension-image';
@@ -91,24 +90,24 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
       // Check if it's an SVG
       const isSVG = url.toLowerCase().includes('.svg') || url.includes('image/svg');
       
+      // Insert the image using TipTap's setImage command
+      editor.chain().focus().setImage({ 
+        src: url, 
+        alt: alt || 'Image'
+      }).run();
+      
+      // After insertion, we can add custom classes via HTML manipulation if needed
       if (isSVG) {
-        // For SVG files, add special handling
-        editor.chain().focus().setImage({ 
-          src: url, 
-          alt: alt || 'SVG Image',
-          class: 'svg-image'
-        }).run();
-      } else {
-        // Regular image insertion
-        editor.chain().focus().setImage({ 
-          src: url, 
-          alt: alt || 'Image'
-        }).run();
+        setTimeout(() => {
+          const images = editor.view.dom.querySelectorAll('img[src*=".svg"], img[src*="image/svg"]');
+          images.forEach(img => {
+            img.classList.add('svg-image');
+          });
+        }, 100);
       }
     }
   };
 
-  // Enhanced image upload with comprehensive format support
   const handleImageUpload = async (file: File) => {
     try {
       console.log('=== IMAGE UPLOAD STARTED ===');
@@ -167,7 +166,7 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
 
         console.log('SVG uploaded successfully:', publicUrl);
         
-        // Add SVG to editor with special class for styling
+        // Add SVG to editor
         addImage(publicUrl, `SVG Image${isAnimated ? ' (Animated)' : ''}`);
         
         toast({
