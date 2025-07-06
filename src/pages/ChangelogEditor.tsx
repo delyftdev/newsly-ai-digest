@@ -65,14 +65,50 @@ const ChangelogEditor = () => {
     }
   }, [isEditing, id, fetchChangelog]);
 
+  // Helper function to extract content string from various formats
+  const extractContentString = (contentData: any): string => {
+    console.log('Extracting content from:', contentData);
+    
+    if (!contentData) {
+      console.log('No content data provided');
+      return '';
+    }
+    
+    if (typeof contentData === 'string') {
+      console.log('Content is string format');
+      return contentData;
+    }
+    
+    if (typeof contentData === 'object') {
+      // Handle {html: "content"} format
+      if (contentData.html) {
+        console.log('Content has html property');
+        return contentData.html;
+      }
+      
+      // Handle other object formats
+      if (contentData.content) {
+        console.log('Content has content property');
+        return contentData.content;
+      }
+    }
+    
+    console.log('Could not extract content, returning empty string');
+    return '';
+  };
+
   useEffect(() => {
     if (currentChangelog) {
       console.log('Loading changelog data:', currentChangelog);
+      console.log('Raw content:', currentChangelog.content);
+      
       setTitle(currentChangelog.title);
-      setContent(typeof currentChangelog.content === 'string' 
-        ? currentChangelog.content 
-        : currentChangelog.content?.html || ''
-      );
+      
+      // Improved content parsing with validation
+      const extractedContent = extractContentString(currentChangelog.content);
+      console.log('Extracted content:', extractedContent);
+      setContent(extractedContent);
+      
       setCategory(currentChangelog.category);
       setFeaturedImage(currentChangelog.featured_image_url || "");
       setVideoUrl(currentChangelog.video_url || "");
@@ -88,22 +124,38 @@ const ChangelogEditor = () => {
       try {
         if (isEditing && id) {
           // Update existing changelog
+          console.log('Auto-saving existing changelog:', id);
           await autoSaveChangelog(id, saveData);
         } else {
-          // Create new draft and redirect
+          // Create new draft and redirect to edit page
+          console.log('Creating new changelog draft');
           const result = await createChangelog({
             ...saveData,
             status: 'draft',
           });
           if (result.data?.id) {
-            navigate(`/changelogs/${result.data.id}`, { replace: true });
+            console.log('Created new changelog, redirecting to edit page:', result.data.id);
+            // Fixed: Redirect to the correct edit route
+            navigate(`/changelogs/${result.data.id}/edit`, { replace: true });
+          } else if (result.error) {
+            console.error('Failed to create changelog:', result.error);
+            toast({
+              title: "Auto-save Failed",
+              description: "Failed to create changelog draft",
+              variant: "destructive",
+            });
           }
         }
       } catch (error) {
         console.error('Auto-save failed:', error);
+        toast({
+          title: "Auto-save Failed",
+          description: "There was an issue saving your changes",
+          variant: "destructive",
+        });
       }
     }, 500),
-    [isEditing, id, autoSaveChangelog, createChangelog, navigate]
+    [isEditing, id, autoSaveChangelog, createChangelog, navigate, toast]
   );
 
   // Auto-save on content change
@@ -120,6 +172,7 @@ const ChangelogEditor = () => {
         ai_generated: aiGenerated,
       };
       
+      console.log('Triggering auto-save with data:', saveData);
       debouncedAutoSave(saveData);
     }
   }, [title, content, category, featuredImage, videoUrl, aiGenerated, debouncedAutoSave]);
@@ -201,7 +254,7 @@ const ChangelogEditor = () => {
         
         // Navigate to the published changelog if we were creating a new one
         if (!isEditing) {
-          navigate(`/changelogs/${changelogId}`);
+          navigate(`/changelogs/${changelogId}/edit`);
         }
       }
     } catch (error: any) {

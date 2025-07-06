@@ -1,129 +1,58 @@
 
-import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useAuthStore } from "@/stores/authStore";
-import { ThemeProvider } from "@/contexts/ThemeContext";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import AuthPage from "./pages/AuthPage";
-import DashboardPage from "./pages/DashboardPage";
 import OnboardingPage from "./pages/OnboardingPage";
-import ReleaseEditor from "./pages/ReleaseEditor";
-import Releases from "./pages/Releases";
-import Changelogs from "./pages/Changelogs";
-import InboxPage from "./pages/InboxPage";
+import DashboardPage from "./pages/DashboardPage";
 import SettingsPage from "./pages/SettingsPage";
-import PublicChangelog from "./pages/PublicChangelog";
+import InboxPage from "./pages/InboxPage";
 import Feedback from "./pages/Feedback";
+import Changelogs from "./pages/Changelogs";
+import ChangelogEditor from "./pages/ChangelogEditor";
+import Releases from "./pages/Releases";
+import ReleaseEditor from "./pages/ReleaseEditor";
 import Roadmap from "./pages/Roadmap";
+import PublicChangelog from "./pages/PublicChangelog";
+import PublicChangelogView from "./pages/PublicChangelogView";
+import PublicChangelogEntry from "./pages/PublicChangelogEntry";
 import PublicGlossary from "./pages/PublicGlossary";
 import NotFound from "./pages/NotFound";
-import ChangelogEditor from "./pages/ChangelogEditor";
-import PublicChangelogEntry from "./pages/PublicChangelogEntry";
-import PublicChangelogView from "./pages/PublicChangelogView";
 
 const queryClient = new QueryClient();
 
 function App() {
-  const { user, isLoading, initialize } = useAuthStore();
-
-  useEffect(() => {
-    initialize();
-  }, [initialize]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
-    );
-  }
-
   return (
     <QueryClientProvider client={queryClient}>
-      <ThemeProvider>
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
         <TooltipProvider>
           <Toaster />
           <Sonner />
           <BrowserRouter>
             <Routes>
-              {/* Public routes */}
-              <Route path="/glossary/:userId" element={<PublicGlossary />} />
+              <Route path="/" element={<Index />} />
+              <Route path="/auth" element={<AuthPage />} />
+              <Route path="/onboarding" element={<OnboardingPage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/settings" element={<SettingsPage />} />
+              <Route path="/inbox" element={<InboxPage />} />
+              <Route path="/feedback" element={<Feedback />} />
+              <Route path="/changelogs" element={<Changelogs />} />
+              <Route path="/changelogs/new" element={<ChangelogEditor />} />
+              <Route path="/changelogs/:id/edit" element={<ChangelogEditor />} />
+              <Route path="/releases" element={<Releases />} />
+              <Route path="/releases/new" element={<ReleaseEditor />} />
+              <Route path="/releases/:id/edit" element={<ReleaseEditor />} />
+              <Route path="/roadmap" element={<Roadmap />} />
               <Route path="/public/:companySlug/changelog" element={<PublicChangelog />} />
-              <Route path="/changelog/:companySlug/:changelogSlug" element={<PublicChangelogView />} />
-              
-              {/* Auth routes */}
-              <Route 
-                path="/auth" 
-                element={user ? <Navigate to="/dashboard" replace /> : <AuthPage />} 
-              />
-              
-              {/* Onboarding route */}
-              <Route 
-                path="/onboarding" 
-                element={user ? <OnboardingPage /> : <Navigate to="/auth" replace />} 
-              />
-              
-              {/* Protected routes */}
-              <Route 
-                path="/dashboard" 
-                element={user ? <DashboardPage /> : <Navigate to="/auth" replace />} 
-              />
-              <Route 
-                path="/releases" 
-                element={user ? <Releases /> : <Navigate to="/auth" replace />} 
-              />
-              <Route 
-                path="/releases/new" 
-                element={user ? <ReleaseEditor /> : <Navigate to="/auth" replace />} 
-              />
-              <Route 
-                path="/releases/:id/edit" 
-                element={user ? <ReleaseEditor /> : <Navigate to="/auth" replace />} 
-              />
-              <Route 
-                path="/inbox" 
-                element={user ? <InboxPage /> : <Navigate to="/auth" replace />} 
-              />
-              <Route 
-                path="/changelogs" 
-                element={user ? <Changelogs /> : <Navigate to="/auth" replace />} 
-              />
-              <Route 
-                path="/changelogs/new" 
-                element={<ChangelogEditor />} 
-              />
-              <Route 
-                path="/changelogs/:id/edit" 
-                element={<ChangelogEditor />} 
-              />
-              <Route 
-                path="/changelog/:slug" 
-                element={<PublicChangelogEntry />} 
-              />
-              <Route 
-                path="/settings" 
-                element={user ? <SettingsPage /> : <Navigate to="/auth" replace />} 
-              />
-              <Route 
-                path="/feedback" 
-                element={user ? <Feedback /> : <Navigate to="/auth" replace />} 
-              />
-              <Route 
-                path="/roadmap" 
-                element={user ? <Roadmap /> : <Navigate to="/auth" replace />} 
-              />
-              
-              {/* Landing page */}
-              <Route 
-                path="/" 
-                element={user ? <Navigate to="/dashboard" replace /> : <Index />} 
-              />
-              
-              {/* Catch all */}
+              <Route path="/public/:companySlug/changelog/:slug" element={<PublicChangelogEntry />} />
+              <Route path="/changelog/:companySlug" element={<PublicChangelogView />} />
+              <Route path="/changelog/:companySlug/:slug" element={<PublicChangelogEntry />} />
+              <Route path="/public/:companySlug/glossary" element={<PublicGlossary />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

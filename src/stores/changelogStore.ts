@@ -96,6 +96,11 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       }
       const transformedData = transformDbRow(data);
       console.log('Transformed changelog:', transformedData);
+      console.log('Content details:', {
+        rawContent: data.content,
+        transformedContent: transformedData.content,
+        contentType: typeof data.content
+      });
       set({ currentChangelog: transformedData });
     } catch (error) {
       console.error('Error fetching changelog:', error);
@@ -145,11 +150,20 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         return { error: 'No company found for user - please complete onboarding' };
       }
 
-      // Step 3: Prepare insert data
+      // Step 3: Prepare insert data with improved content handling
       console.log('Step 3: Preparing insert data...');
+      
+      // Ensure content is properly formatted
+      let processedContent = changelogData.content;
+      if (typeof changelogData.content === 'string') {
+        processedContent = { html: changelogData.content };
+      } else if (!changelogData.content) {
+        processedContent = { html: '' };
+      }
+      
       const insertData = {
         title: changelogData.title || '',
-        content: changelogData.content,
+        content: processedContent,
         category: changelogData.category || 'announcement',
         status: changelogData.status || 'draft',
         visibility: changelogData.visibility || 'public',
@@ -215,11 +229,19 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
       console.log('Updating changelog ID:', id);
       console.log('Update data:', JSON.stringify(updateData, null, 2));
 
+      // Ensure content is properly formatted
+      let processedContent = updateData.content;
+      if (typeof updateData.content === 'string') {
+        processedContent = { html: updateData.content };
+      } else if (updateData.content && !updateData.content.html) {
+        processedContent = { html: updateData.content };
+      }
+
       const { data, error } = await supabase
         .from('changelogs')
         .update({
           title: updateData.title,
-          content: updateData.content,
+          content: processedContent,
           category: updateData.category,
           status: updateData.status,
           visibility: updateData.visibility,
@@ -356,11 +378,20 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
     const newTimeout = setTimeout(async () => {
       try {
         console.log('Auto-saving changelog:', id);
+        
+        // Ensure content is properly formatted for auto-save
+        let processedContent = data.content;
+        if (typeof data.content === 'string') {
+          processedContent = { html: data.content };
+        } else if (data.content && !data.content.html) {
+          processedContent = { html: data.content };
+        }
+        
         await supabase
           .from('changelogs')
           .update({
             title: data.title,
-            content: data.content,
+            content: processedContent,
             category: data.category,
             status: data.status,
             visibility: data.visibility,
