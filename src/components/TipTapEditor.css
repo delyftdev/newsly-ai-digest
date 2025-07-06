@@ -82,12 +82,40 @@
   padding: 0;
 }
 
+/* Enhanced image styling with SVG support */
 .ProseMirror img {
   max-width: 100%;
   height: auto;
   border-radius: 0.5rem;
   margin: 1rem 0;
   display: block;
+}
+
+/* Special styling for SVG images */
+.ProseMirror img.svg-image {
+  border: 1px solid hsl(var(--border));
+  padding: 0.5rem;
+  background: hsl(var(--background));
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Animated SVG container */
+.ProseMirror .animated-svg-container {
+  border: 2px dashed hsl(var(--primary));
+  padding: 1rem;
+  background: hsl(var(--muted)/0.5);
+  border-radius: 0.5rem;
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.ProseMirror .animated-svg-container::before {
+  content: "🎬 Animated SVG";
+  display: block;
+  font-size: 0.75rem;
+  color: hsl(var(--primary));
+  margin-bottom: 0.5rem;
+  font-weight: 600;
 }
 
 /* Image resize functionality */
@@ -156,4 +184,30 @@
 
 .ProseMirror li p {
   margin: 0;
+}
+
+/* Enhanced editor content styling */
+.editor-content {
+  min-height: 400px;
+}
+
+.editor-image {
+  transition: all 0.2s ease;
+}
+
+.editor-image:hover {
+  transform: scale(1.02);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* SVG specific enhancements */
+.ProseMirror svg {
+  max-width: 100%;
+  height: auto;
+  margin: 1rem 0;
+}
+
+/* Preserve SVG animations */
+.ProseMirror svg * {
+  animation-play-state: running !important;
 }

@@ -49,7 +49,7 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
         inline: false,
         allowBase64: false,
         HTMLAttributes: {
-          class: 'rounded-lg cursor-pointer',
+          class: 'rounded-lg cursor-pointer editor-image',
         },
       }),
       Youtube.configure({
@@ -68,11 +68,13 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
     ],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      const html = editor.getHTML();
+      console.log('Editor content updated:', html.substring(0, 100) + '...');
+      onChange(html);
     },
     editorProps: {
       attributes: {
-        class: 'min-h-[400px] focus:outline-none p-4 prose prose-slate max-w-none text-foreground',
+        class: 'min-h-[400px] focus:outline-none p-4 prose prose-slate max-w-none text-foreground editor-content',
       },
     },
   });
@@ -81,49 +83,138 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
     return null;
   }
 
-  const addImage = (url: string) => {
+  // Enhanced image insertion with SVG support
+  const addImage = (url: string, alt?: string) => {
     if (url) {
-      editor.chain().focus().setImage({ src: url }).run();
+      console.log('Adding image to editor:', url);
+      
+      // Check if it's an SVG
+      const isSVG = url.toLowerCase().includes('.svg') || url.includes('image/svg');
+      
+      if (isSVG) {
+        // For SVG files, add special handling
+        editor.chain().focus().setImage({ 
+          src: url, 
+          alt: alt || 'SVG Image',
+          class: 'svg-image'
+        }).run();
+      } else {
+        // Regular image insertion
+        editor.chain().focus().setImage({ 
+          src: url, 
+          alt: alt || 'Image'
+        }).run();
+      }
     }
   };
 
+  // Enhanced image upload with comprehensive format support
   const handleImageUpload = async (file: File) => {
     try {
-      // Create a unique filename
+      console.log('=== IMAGE UPLOAD STARTED ===');
+      console.log('File details:', {
+        name: file.name,
+        type: file.type,
+        size: file.size
+      });
+
+      // Validate file type - now including SVG
+      const allowedTypes = [
+        'image/jpeg', 'image/jpg', 'image/png', 'image/gif', 
+        'image/webp', 'image/svg+xml', 'image/bmp', 'image/tiff'
+      ];
+
+      if (!allowedTypes.includes(file.type)) {
+        throw new Error(`Unsupported file type: ${file.type}. Supported types: ${allowedTypes.join(', ')}`);
+      }
+
+      // Generate unique filename
       const fileExt = file.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
       
-      // Upload to Supabase storage
-      const { data, error } = await supabase.storage
-        .from('changelog-images')
-        .upload(fileName, file);
+      console.log('Generated filename:', fileName);
 
-      if (error) {
-        console.error('Error uploading image:', error);
+      // Special handling for SVG files
+      if (file.type === 'image/svg+xml') {
+        console.log('Processing SVG file');
+        
+        // Read SVG content to check for animations
+        const svgText = await file.text();
+        const isAnimated = svgText.includes('<animate') || 
+                          svgText.includes('<animateTransform') || 
+                          svgText.includes('animation');
+        
+        console.log('SVG is animated:', isAnimated);
+        
+        // Upload to Supabase storage
+        const { data, error } = await supabase.storage
+          .from('changelog-images')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type
+          });
+
+        if (error) {
+          console.error('SVG upload error:', error);
+          throw error;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('changelog-images')
+          .getPublicUrl(data.path);
+
+        console.log('SVG uploaded successfully:', publicUrl);
+        
+        // Add SVG to editor with special class for styling
+        addImage(publicUrl, `SVG Image${isAnimated ? ' (Animated)' : ''}`);
+        
         toast({
-          title: "Upload Failed",
-          description: "Failed to upload image. Please try again.",
-          variant: "destructive",
+          title: "SVG Added",
+          description: `SVG image has been successfully uploaded${isAnimated ? ' with animations preserved' : ''}.`,
         });
-        return;
+        
+      } else {
+        // Regular image upload
+        console.log('Processing regular image');
+        
+        const { data, error } = await supabase.storage
+          .from('changelog-images')
+          .upload(fileName, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (error) {
+          console.error('Image upload error:', error);
+          throw error;
+        }
+
+        // Get public URL
+        const { data: { publicUrl } } = supabase.storage
+          .from('changelog-images')
+          .getPublicUrl(data.path);
+
+        console.log('Image uploaded successfully:', publicUrl);
+        
+        addImage(publicUrl, file.name);
+        
+        toast({
+          title: "Image Added",
+          description: "Image has been successfully uploaded and added to your changelog.",
+        });
       }
 
-      // Get the public URL
-      const { data: { publicUrl } } = supabase.storage
-        .from('changelog-images')
-        .getPublicUrl(data.path);
-
-      addImage(publicUrl);
       setShowImageDialog(false);
-      toast({
-        title: "Image Added",
-        description: "Image has been successfully uploaded and added to your changelog.",
-      });
+      console.log('=== IMAGE UPLOAD COMPLETE ===');
+      
     } catch (error) {
-      console.error('Error uploading image:', error);
+      console.error('=== IMAGE UPLOAD FAILED ===');
+      console.error('Upload error details:', error);
       toast({
-        title: "Upload Error",
-        description: "An unexpected error occurred while uploading the image.",
+        title: "Upload Failed",
+        description: error instanceof Error ? error.message : "Failed to upload image. Please try again.",
         variant: "destructive",
       });
     }
@@ -131,6 +222,7 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
 
   const addVideo = () => {
     if (videoUrl) {
+      console.log('Adding video:', videoUrl);
       editor.commands.setYoutubeVideo({
         src: videoUrl,
       });
@@ -145,6 +237,7 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
 
   const addLink = () => {
     if (linkUrl) {
+      console.log('Adding link:', linkUrl, linkText);
       if (linkText) {
         editor.chain().focus().insertContent(`<a href="${linkUrl}">${linkText}</a>`).run();
       } else {
@@ -231,7 +324,7 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
             variant="ghost"
             size="sm"
             onClick={() => setShowImageDialog(true)}
-            title="Add Image"
+            title="Add Image (includes SVG support)"
           >
             <ImageIcon className="h-4 w-4" />
           </Button>
@@ -270,13 +363,18 @@ const TipTapEditor = ({ content, onChange, placeholder = "Start writing..." }: T
       <Dialog open={showImageDialog} onOpenChange={setShowImageDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Add Image</DialogTitle>
+            <DialogTitle>Add Image (JPG, PNG, GIF, WebP, SVG)</DialogTitle>
           </DialogHeader>
-          <ImageUpload
-            onImageUpload={handleImageUpload}
-            currentImage=""
-            onImageRemove={() => {}}
-          />
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Upload images including animated SVGs. All formats are supported with full animation preservation.
+            </p>
+            <ImageUpload
+              onImageUpload={handleImageUpload}
+              currentImage=""
+              onImageRemove={() => {}}
+            />
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -44,6 +44,7 @@ const ChangelogEditor = () => {
   const [aiGenerated, setAiGenerated] = useState(false);
   const [showAIWriter, setShowAIWriter] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
+  const [contentLoaded, setContentLoaded] = useState(false);
 
   const isEditing = Boolean(id);
 
@@ -60,88 +61,138 @@ const ChangelogEditor = () => {
 
   useEffect(() => {
     if (isEditing && id) {
-      console.log('Fetching changelog with ID:', id);
+      console.log('=== FETCHING CHANGELOG ===');
+      console.log('Changelog ID:', id);
       fetchChangelog(id);
     }
   }, [isEditing, id, fetchChangelog]);
 
-  // Helper function to extract content string from various formats
-  const extractContentString = (contentData: any): string => {
-    console.log('Extracting content from:', contentData);
+  // Enhanced content extraction with comprehensive logging
+  const extractContentString = useCallback((contentData: any): string => {
+    console.log('=== EXTRACTING CONTENT ===');
+    console.log('Raw content data:', contentData);
+    console.log('Content type:', typeof contentData);
     
     if (!contentData) {
-      console.log('No content data provided');
+      console.log('No content data provided, returning empty string');
       return '';
     }
     
     if (typeof contentData === 'string') {
-      console.log('Content is string format');
+      console.log('Content is string format:', contentData.substring(0, 100) + '...');
       return contentData;
     }
     
     if (typeof contentData === 'object') {
-      // Handle {html: "content"} format
-      if (contentData.html) {
-        console.log('Content has html property');
+      console.log('Content is object format:', Object.keys(contentData));
+      
+      // Handle {html: "content"} format (most common)
+      if (contentData.html && typeof contentData.html === 'string') {
+        console.log('Found HTML property:', contentData.html.substring(0, 100) + '...');
         return contentData.html;
       }
       
-      // Handle other object formats
-      if (contentData.content) {
-        console.log('Content has content property');
+      // Handle {content: "content"} format
+      if (contentData.content && typeof contentData.content === 'string') {
+        console.log('Found content property:', contentData.content.substring(0, 100) + '...');
         return contentData.content;
+      }
+      
+      // Handle nested object formats
+      if (contentData.data && typeof contentData.data === 'string') {
+        console.log('Found data property:', contentData.data.substring(0, 100) + '...');
+        return contentData.data;
+      }
+
+      // Handle array formats (some editors use arrays)
+      if (Array.isArray(contentData) && contentData.length > 0) {
+        console.log('Content is array format, attempting to join');
+        return contentData.join('');
+      }
+
+      // Try to stringify if it's a complex object
+      try {
+        const stringified = JSON.stringify(contentData);
+        console.log('Stringified content:', stringified.substring(0, 100) + '...');
+        return stringified;
+      } catch (e) {
+        console.error('Failed to stringify content:', e);
       }
     }
     
     console.log('Could not extract content, returning empty string');
     return '';
-  };
+  }, []);
 
   useEffect(() => {
-    if (currentChangelog) {
-      console.log('Loading changelog data:', currentChangelog);
-      console.log('Raw content:', currentChangelog.content);
+    if (currentChangelog && !contentLoaded) {
+      console.log('=== LOADING CHANGELOG DATA ===');
+      console.log('Current changelog:', currentChangelog);
+      console.log('Raw content field:', currentChangelog.content);
       
-      setTitle(currentChangelog.title);
+      setTitle(currentChangelog.title || '');
       
-      // Improved content parsing with validation
+      // Enhanced content parsing with detailed logging
       const extractedContent = extractContentString(currentChangelog.content);
-      console.log('Extracted content:', extractedContent);
-      setContent(extractedContent);
+      console.log('Extracted content length:', extractedContent.length);
+      console.log('Extracted content preview:', extractedContent.substring(0, 200) + '...');
       
-      setCategory(currentChangelog.category);
+      // Validate content before setting
+      if (extractedContent && extractedContent.trim().length > 0) {
+        console.log('Setting content in editor');
+        setContent(extractedContent);
+      } else {
+        console.warn('No valid content found, setting empty string');
+        setContent('');
+      }
+      
+      setCategory(currentChangelog.category || 'announcement');
       setFeaturedImage(currentChangelog.featured_image_url || "");
       setVideoUrl(currentChangelog.video_url || "");
       setAiGenerated(currentChangelog.ai_generated || false);
+      
+      setContentLoaded(true);
+      console.log('=== CONTENT LOADING COMPLETE ===');
     }
-  }, [currentChangelog]);
+  }, [currentChangelog, contentLoaded, extractContentString]);
 
-  // Debounced auto-save function
+  // Enhanced auto-save with better content handling
   const debouncedAutoSave = useCallback(
     debounce(async (saveData: any) => {
-      if (!saveData.title?.trim() && !saveData.content?.trim()) return;
+      // Check if we have meaningful content to save
+      const hasTitle = saveData.title && typeof saveData.title === 'string' && saveData.title.trim().length > 0;
+      const hasContent = saveData.content && 
+        ((typeof saveData.content === 'string' && saveData.content.trim().length > 0) ||
+         (typeof saveData.content === 'object' && saveData.content.html && saveData.content.html.trim().length > 0));
+      
+      if (!hasTitle && !hasContent) {
+        console.log('No meaningful content to auto-save');
+        return;
+      }
       
       try {
+        console.log('=== AUTO-SAVE TRIGGERED ===');
+        console.log('Save data:', saveData);
+        
         if (isEditing && id) {
-          // Update existing changelog
           console.log('Auto-saving existing changelog:', id);
           await autoSaveChangelog(id, saveData);
+          console.log('Auto-save completed');
         } else {
-          // Create new draft and redirect to edit page
           console.log('Creating new changelog draft');
           const result = await createChangelog({
             ...saveData,
             status: 'draft',
           });
+          
           if (result.data?.id) {
             console.log('Created new changelog, redirecting to edit page:', result.data.id);
-            // Fixed: Redirect to the correct edit route
             navigate(`/changelogs/${result.data.id}/edit`, { replace: true });
           } else if (result.error) {
             console.error('Failed to create changelog:', result.error);
             toast({
               title: "Auto-save Failed",
-              description: "Failed to create changelog draft",
+              description: result.error,
               variant: "destructive",
             });
           }
@@ -158,12 +209,12 @@ const ChangelogEditor = () => {
     [isEditing, id, autoSaveChangelog, createChangelog, navigate, toast]
   );
 
-  // Auto-save on content change
+  // Auto-save on content change with enhanced data structure
   useEffect(() => {
     if (title || content) {
       const saveData = {
         title,
-        content: { html: content },
+        content: typeof content === 'string' ? { html: content } : content,
         category,
         featured_image_url: featuredImage,
         video_url: videoUrl,
@@ -370,7 +421,7 @@ const ChangelogEditor = () => {
                 />
               </div>
 
-              {/* TipTap Editor */}
+              {/* TipTap Editor with enhanced content handling */}
               <TipTapEditor
                 content={content}
                 onChange={setContent}
