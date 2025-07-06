@@ -1,9 +1,10 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Sun, Moon } from "lucide-react";
 import { Link } from "react-router-dom";
 import DelyftLogo from "@/components/DelyftLogo";
-import { useTheme } from "@/contexts/ThemeContext";
+import { useTheme } from "next-themes";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 
 const Header = () => {
-  const { theme, toggleTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   const productItems = [
     { name: "Smart Inbox", description: "Organize all customer updates" },
@@ -20,6 +21,10 @@ const Header = () => {
     { name: "Feedback", description: "Collect and prioritize feedback" },
     { name: "Insights", description: "Track engagement and performance" },
   ];
+
+  const toggleTheme = () => {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  };
 
   return (
     <header className="border-b border-border backdrop-blur-xl bg-background/80 sticky top-0 z-50">
@@ -62,7 +67,7 @@ const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => toggleTheme()}>
+                <DropdownMenuItem onClick={toggleTheme}>
                   {theme === 'dark' ? (
                     <>
                       <Sun className="h-4 w-4 mr-2" />
