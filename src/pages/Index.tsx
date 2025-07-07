@@ -4,8 +4,10 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, CheckCircle } from "lucide-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import CompanyLogosSection from "@/components/CompanyLogosSection";
 import ValuePropsSection from "@/components/ValuePropsSection";
 import IntegrationsSection from "@/components/IntegrationsSection";
+import TestimonialsSection from "@/components/TestimonialsSection";
 import WaitlistSection from "@/components/WaitlistSection";
 
 const Index = () => {
@@ -68,15 +70,17 @@ const Index = () => {
         
         <div className="relative max-w-5xl mx-auto text-center">
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold text-foreground mb-8 leading-tight">
-            Your shortcut to{" "}
+            Customer communication{" "}
             <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              customer-focused releases
+              shouldn't be this hard
             </span>
           </h1>
           
-          <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed">
-            Create feedback loops, personalized changelogs, and track engagement — all in one place
-          </p>
+          <div className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-4xl mx-auto leading-relaxed space-y-4">
+            <p>Your team spends hours crafting customer updates, going back and forth between product and design just to get content right. The result?</p>
+            <p className="font-semibold">Delayed communications and confused customers.</p>
+            <p>It's not anyone's fault. Streamlining customer communication has always been tough. Until now.</p>
+          </div>
 
           <Button 
             size="lg" 
@@ -104,11 +108,17 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Company Logos Section */}
+      <CompanyLogosSection />
+
       {/* Value Propositions Section */}
       <ValuePropsSection />
 
       {/* Integrations Section */}
       <IntegrationsSection />
+
+      {/* Testimonials Section */}
+      <TestimonialsSection />
 
       {/* Waitlist Section */}
       <WaitlistSection 

@@ -79,8 +79,8 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
       if (subscriberError) {
         if (subscriberError.code === '23505') {
           toast({
-            title: "Already in the squa d!",
-            description: "You're already on our waitlist. We'll notify you when your AI agents are ready!",
+            title: "Already joined!",
+            description: "You're already on our waitlist. We'll notify you when we're ready!",
           });
           setIsSubmitted(true);
           return;
@@ -152,7 +152,7 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
 
       setIsSubmitted(true);
       toast({
-        title: "Welcome to your AI GTM squad!",
+        title: "Welcome to the beta!",
         description: referredBy 
           ? "You've joined via referral - your friend earned 10 credits! We'll be in touch soon."
           : "We'll be in touch soon with early access to your specialized agents.",
@@ -179,9 +179,9 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
           <div className="w-16 h-16 bg-gradient-to-br from-green-500/20 to-green-600/10 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <CheckCircle className="h-8 w-8 text-green-400" />
           </div>
-          <h3 className="text-xl font-semibold text-green-400 mb-2">Your AI squad is assembling!</h3>
+          <h3 className="text-xl font-semibold text-green-400 mb-2">You're in!</h3>
           <p className="text-muted-foreground mb-4">
-            We'll send you early access details and agent use cases for your role soon.
+            We'll send you early access details soon.
           </p>
           {referredBy && (
             <div className="p-3 bg-primary/10 border border-primary/20 rounded-lg mb-4">
@@ -245,12 +245,12 @@ const WaitlistForm = ({ onSuccess }: WaitlistFormProps) => {
           {isLoading ? (
             <div className="flex items-center">
               <Sparkles className="mr-2 h-4 w-4 animate-spin" />
-              Building Your AI Squad...
+              Joining Beta...
             </div>
           ) : (
             <div className="flex items-center">
               <Sparkles className="mr-2 h-4 w-4" />
-              Build Your AI Squad
+              Join Beta
               <ArrowRight className="ml-2 h-4 w-4" />
             </div>
           )}

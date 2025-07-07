@@ -13,24 +13,52 @@ const AnimatedJiraIcon = () => (
   </div>
 );
 
-const AnimatedConfluenceIcon = () => (
-  <div className="w-8 h-8 bg-blue-500 rounded-lg flex items-center justify-center transform hover:scale-110 transition-transform">
-    <span className="text-white font-bold text-xs">C</span>
+const AnimatedSlackIcon = () => (
+  <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center transform hover:scale-110 transition-transform">
+    <span className="text-white font-bold text-xs">#</span>
   </div>
 );
 
-const AnimatedGmailIcon = () => (
-  <div className="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center transform hover:bounce transition-transform">
-    <span className="text-white font-bold text-xs">@</span>
+const AnimatedNotionIcon = () => (
+  <div className="w-8 h-8 bg-black dark:bg-white rounded flex items-center justify-center transform hover:rotate-12 transition-transform">
+    <span className="text-white dark:text-black font-bold text-xs">N</span>
+  </div>
+);
+
+const AnimatedLinearIcon = () => (
+  <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center transform hover:scale-110 transition-transform">
+    <span className="text-white font-bold text-xs">L</span>
+  </div>
+);
+
+const AnimatedFigmaIcon = () => (
+  <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center transform hover:rotate-12 transition-transform">
+    <span className="text-white font-bold text-xs">F</span>
+  </div>
+);
+
+const AnimatedDiscordIcon = () => (
+  <div className="w-8 h-8 bg-indigo-500 rounded-full flex items-center justify-center transform hover:bounce transition-transform">
+    <span className="text-white font-bold text-xs">D</span>
+  </div>
+);
+
+const AnimatedIntercomIcon = () => (
+  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center transform hover:scale-110 transition-transform">
+    <span className="text-white font-bold text-xs">I</span>
   </div>
 );
 
 const IntegrationsSection = () => {
   const integrations = [
-    { name: 'GitHub', logo: AnimatedGitHubIcon },
-    { name: 'Jira', logo: AnimatedJiraIcon },
-    { name: 'Confluence', logo: AnimatedConfluenceIcon },
-    { name: 'Gmail', logo: AnimatedGmailIcon },
+    { name: 'GitHub', logo: AnimatedGitHubIcon, delay: '0ms' },
+    { name: 'Jira', logo: AnimatedJiraIcon, delay: '100ms' },
+    { name: 'Slack', logo: AnimatedSlackIcon, delay: '200ms' },
+    { name: 'Notion', logo: AnimatedNotionIcon, delay: '300ms' },
+    { name: 'Linear', logo: AnimatedLinearIcon, delay: '400ms' },
+    { name: 'Figma', logo: AnimatedFigmaIcon, delay: '500ms' },
+    { name: 'Discord', logo: AnimatedDiscordIcon, delay: '600ms' },
+    { name: 'Intercom', logo: AnimatedIntercomIcon, delay: '700ms' },
   ];
 
   return (
@@ -49,7 +77,11 @@ const IntegrationsSection = () => {
           {integrations.map((integration, index) => (
             <div 
               key={integration.name}
-              className="flex flex-col items-center p-8 rounded-xl border border-border bg-card hover:bg-accent/50 transition-all duration-300 hover:scale-105 hover:shadow-lg"
+              className="flex flex-col items-center p-8 rounded-xl border border-border bg-card hover:bg-accent/50 transition-all duration-300 hover:scale-105 hover:shadow-lg animate-fade-in"
+              style={{
+                animationDelay: integration.delay,
+                animationFillMode: 'both'
+              }}
             >
               <div className="mb-6">
                 <integration.logo />

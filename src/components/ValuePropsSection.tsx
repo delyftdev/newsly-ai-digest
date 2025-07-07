@@ -1,3 +1,4 @@
+
 import { useEffect, useRef, useState } from "react";
 import { Inbox, Edit, MessageCircle, BarChart3 } from "lucide-react";
 import FeedbackSvg from "./FeedbackSvg";
@@ -186,8 +187,8 @@ const ValuePropsSection = () => {
 
       <section className="py-8 px-4">
         {/* Header */}
-        <div className="max-w-6xl mx-auto text-center mb-20">
-          <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold text-foreground mb-6 leading-tight">
+        <div className="max-w-6xl mx-auto text-center mb-16">
+          <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight">
             Everything you need for{" "}
             <span className="highlight-glow">customer-focused releases</span>
           </h2>
@@ -202,7 +203,7 @@ const ValuePropsSection = () => {
             key={index}
             ref={(el) => (sectionRefs.current[index] = el)}
             data-section={index}
-            className={`min-h-screen flex items-center py-20 section-animate ${
+            className={`py-16 flex items-center section-animate ${
               visibleSections.has(index) ? 'section-visible' : 'section-hidden'
             }`}
           >
@@ -227,19 +228,19 @@ const ValuePropsSection = () => {
                     }`}>
                       <prop.icon className="h-8 w-8 text-primary" />
                     </div>
-                    <h3 className="text-3xl md:text-4xl font-bold text-foreground">
+                    <h3 className="text-4xl md:text-5xl font-bold text-foreground">
                       {prop.title}
                     </h3>
                   </div>
                   
                   <div 
-                    className="text-2xl md:text-3xl font-semibold leading-relaxed mb-6"
+                    className="text-3xl md:text-4xl font-semibold leading-relaxed mb-6"
                     dangerouslySetInnerHTML={{
                       __html: highlightText(prop.benefit, prop.highlightWords)
                     }}
                   />
                   
-                  <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-2xl">
+                  <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl">
                     {prop.description}
                   </p>
                 </div>
@@ -252,7 +253,7 @@ const ValuePropsSection = () => {
                 }`}>
                   <div className="relative">
                     {prop.useSvg ? (
-                      <div className="w-full max-w-4xl mx-auto">
+                      <div className="w-full max-w-6xl mx-auto">
                         {prop.title === "Smart Inbox" ? (
                           <SmartInboxSvg />
                         ) : prop.title === "Feedback" ? (
@@ -266,7 +267,7 @@ const ValuePropsSection = () => {
                     ) : (
                       <div className="bg-accent/30 rounded-3xl p-12 text-center text-muted-foreground min-h-[400px] flex items-center justify-center border border-primary/20">
                         <div className="text-4xl md:text-6xl font-light">
-                          {prop.placeholder}
+                          Visual Placeholder
                         </div>
                       </div>
                     )}

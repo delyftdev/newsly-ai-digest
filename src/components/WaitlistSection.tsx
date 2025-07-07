@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Trophy } from "lucide-react";
@@ -29,46 +30,46 @@ const WaitlistSection = ({ submittedEmail, submittedReferralCode, onWaitlistSucc
         <SocialProofCounter />
         
         <h2 className="text-4xl md:text-5xl font-bold text-foreground mb-6">
-          Join the waitlist
+          Get early access
         </h2>
         
         <p className="text-xl md:text-2xl text-muted-foreground mb-12 max-w-3xl mx-auto leading-relaxed">
-          Get early access to delyft and start building better customer relationships
+          Join thousands of product teams already transforming their customer communication
         </p>
 
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-12">
+        <div className="flex flex-col items-center space-y-6 mb-12">
           <WaitlistForm onSuccess={onWaitlistSuccess} />
           
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" size="lg" className="min-w-[140px]">
-                Join Beta
-              </Button>
-            </SheetTrigger>
-            <SheetContent className="w-full sm:max-w-2xl lg:max-w-4xl">
-              <SheetHeader className="mb-6">
-                <SheetTitle className="text-2xl">Join Our Beta Program</SheetTitle>
-                <SheetDescription className="text-lg">
-                  Get exclusive early access and special benefits
-                </SheetDescription>
-              </SheetHeader>
-              <div className="overflow-y-auto max-h-[80vh]">
-                <WhyJoinWaitlist />
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
+          <div className="flex flex-col items-center space-y-4">
+            <Sheet>
+              <SheetTrigger asChild>
+                <Button variant="outline" size="lg" className="min-w-[160px]">
+                  Why Join Beta?
+                </Button>
+              </SheetTrigger>
+              <SheetContent className="w-full sm:max-w-2xl lg:max-w-4xl">
+                <SheetHeader className="mb-6">
+                  <SheetTitle className="text-2xl">Join Our Beta Program</SheetTitle>
+                  <SheetDescription className="text-lg">
+                    Get exclusive early access and special benefits
+                  </SheetDescription>
+                </SheetHeader>
+                <div className="overflow-y-auto max-h-[80vh]">
+                  <WhyJoinWaitlist />
+                </div>
+              </SheetContent>
+            </Sheet>
 
-        <div className="flex items-center justify-center">
-          <Button
-            variant="ghost"
-            size="lg"
-            onClick={() => setShowLeaderboard(true)}
-            className="flex items-center space-x-2 text-base"
-          >
-            <Trophy className="h-5 w-5" />
-            <span>View Top Referrers</span>
-          </Button>
+            <Button
+              variant="ghost"
+              size="lg"
+              onClick={() => setShowLeaderboard(true)}
+              className="flex items-center space-x-2 text-base"
+            >
+              <Trophy className="h-5 w-5" />
+              <span>View Top Referrers</span>
+            </Button>
+          </div>
         </div>
 
         <LeaderboardPanel open={showLeaderboard} onOpenChange={setShowLeaderboard} />
