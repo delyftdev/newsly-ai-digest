@@ -53,6 +53,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   signUp: async (email: string, password: string, fullName: string) => {
     try {
+      set({ isLoading: true });
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -64,28 +66,36 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
       if (error) {
+        set({ isLoading: false });
         return { error: error.message };
       }
 
+      set({ isLoading: false });
       return {};
     } catch (error) {
+      set({ isLoading: false });
       return { error: 'An unexpected error occurred' };
     }
   },
 
   signIn: async (email: string, password: string) => {
     try {
+      set({ isLoading: true });
+      
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
 
       if (error) {
+        set({ isLoading: false });
         return { error: error.message };
       }
 
+      set({ isLoading: false });
       return {};
     } catch (error) {
+      set({ isLoading: false });
       return { error: 'An unexpected error occurred' };
     }
   },
