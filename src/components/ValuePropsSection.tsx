@@ -3,6 +3,7 @@ import { Inbox, Edit, MessageCircle, BarChart3 } from "lucide-react";
 import FeedbackSvg from "./FeedbackSvg";
 import InsightsSvg from "./InsightsSvg";
 import ChangelogSvg from "./ChangelogSvg";
+import SmartInboxSvg from "./SmartInboxSvg";
 
 const ValuePropsSection = () => {
   const [visibleSections, setVisibleSections] = useState<Set<number>>(new Set());
@@ -14,7 +15,7 @@ const ValuePropsSection = () => {
       title: "Smart Inbox",
       benefit: "Find what you need instantly. Stop losing great ideas.",
       description: "Auto-organize every release note, announcement, or idea in one searchable inbox. No more hunting through docs, emails, and chats.",
-      placeholder: "📥 Smart organization demo",
+      useSvg: true,
       highlightWords: ["instantly"],
       position: "left"
     },
@@ -252,7 +253,9 @@ const ValuePropsSection = () => {
                   <div className="relative">
                     {prop.useSvg ? (
                       <div className="w-full max-w-4xl mx-auto">
-                        {prop.title === "Feedback" ? (
+                        {prop.title === "Smart Inbox" ? (
+                          <SmartInboxSvg />
+                        ) : prop.title === "Feedback" ? (
                           <FeedbackSvg />
                         ) : prop.title === "Changelog" ? (
                           <ChangelogSvg />
