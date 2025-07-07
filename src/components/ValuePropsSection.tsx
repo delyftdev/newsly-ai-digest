@@ -60,8 +60,8 @@ const ValuePropsSection = () => {
         });
       },
       {
-        threshold: 0.3,
-        rootMargin: '-10% 0px -10% 0px'
+        threshold: 0.2,
+        rootMargin: '-20% 0px -20% 0px'
       }
     );
 
@@ -96,24 +96,11 @@ const ValuePropsSection = () => {
           -webkit-text-fill-color: transparent;
           background-clip: text;
           position: relative;
-          font-weight: 700;
-        }
-        
-        .highlight-glow::after {
-          content: '';
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          background: linear-gradient(135deg, #10b981, #22d3ee);
-          filter: blur(8px);
-          opacity: 0.3;
-          z-index: -1;
+          font-weight: 600;
         }
         
         .section-animate {
-          transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
         }
         
         .section-visible {
@@ -123,11 +110,11 @@ const ValuePropsSection = () => {
         
         .section-hidden {
           opacity: 0;
-          transform: translateY(40px);
+          transform: translateY(60px);
         }
         
         .svg-container {
-          transition: all 1s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+          transition: all 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
           transform-origin: center;
         }
         
@@ -138,21 +125,21 @@ const ValuePropsSection = () => {
         
         .svg-hidden {
           opacity: 0;
-          transform: scale(0.95);
+          transform: scale(0.92);
         }
         
         .text-slide-left {
-          animation: slideInLeft 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+          animation: slideInLeft 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
         
         .text-slide-right {
-          animation: slideInRight 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+          animation: slideInRight 1s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
         }
         
         @keyframes slideInLeft {
           from {
             opacity: 0;
-            transform: translateX(-50px);
+            transform: translateX(-40px);
           }
           to {
             opacity: 1;
@@ -163,38 +150,27 @@ const ValuePropsSection = () => {
         @keyframes slideInRight {
           from {
             opacity: 0;
-            transform: translateX(50px);
+            transform: translateX(40px);
           }
           to {
             opacity: 1;
             transform: translateX(0);
           }
         }
-        
-        .glow-pulse {
-          animation: glowPulse 2s ease-in-out infinite;
-        }
-        
-        @keyframes glowPulse {
-          0%, 100% {
-            filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.6));
-          }
-          50% {
-            filter: drop-shadow(0 0 16px rgba(16, 185, 129, 0.8));
-          }
-        }
       `}</style>
 
       <section className="py-8 px-4">
         {/* Header */}
-        <div className="max-w-6xl mx-auto text-center mb-16">
-          <h2 className="text-5xl md:text-6xl lg:text-7xl font-bold text-foreground mb-6 leading-tight">
-            Everything you need for{" "}
-            <span className="highlight-glow">customer-focused releases</span>
+        <div className="max-w-6xl mx-auto text-center mb-24">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight">
+            Customer communication{" "}
+            <span className="highlight-glow">shouldn't be this hard</span>
           </h2>
-          <p className="text-xl md:text-2xl text-muted-foreground max-w-4xl mx-auto leading-relaxed">
-            Transform how you communicate with customers and build products they love
-          </p>
+          <div className="text-lg md:text-xl text-muted-foreground max-w-4xl mx-auto leading-relaxed space-y-4">
+            <p>Your team spends hours crafting customer updates, going back and forth between product and design just to get content right. The result?</p>
+            <p className="font-medium">Delayed communications and confused customers.</p>
+            <p>It's not anyone's fault. Streamlining customer communication has always been tough. Until now.</p>
+          </div>
         </div>
 
         {/* Feature Sections */}
@@ -203,17 +179,17 @@ const ValuePropsSection = () => {
             key={index}
             ref={(el) => (sectionRefs.current[index] = el)}
             data-section={index}
-            className={`py-16 flex items-center section-animate ${
+            className={`py-32 flex items-center section-animate ${
               visibleSections.has(index) ? 'section-visible' : 'section-hidden'
             }`}
           >
             <div className="max-w-7xl mx-auto w-full">
-              <div className={`grid lg:grid-cols-2 gap-16 items-center ${
+              <div className={`grid lg:grid-cols-2 gap-20 items-center ${
                 prop.position === 'right' ? 'lg:grid-flow-col-dense' : ''
               }`}>
                 
                 {/* Text Content */}
-                <div className={`space-y-8 ${
+                <div className={`space-y-6 ${
                   prop.position === 'right' ? 'lg:col-start-2' : ''
                 } ${
                   visibleSections.has(index) 
@@ -223,24 +199,22 @@ const ValuePropsSection = () => {
                     : 'opacity-0'
                 }`}>
                   <div className="flex items-center space-x-4 mb-6">
-                    <div className={`w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center glow-pulse ${
-                      visibleSections.has(index) ? 'animate-bounce' : ''
-                    }`}>
-                      <prop.icon className="h-8 w-8 text-primary" />
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                      <prop.icon className="h-6 w-6 text-primary" />
                     </div>
-                    <h3 className="text-4xl md:text-5xl font-bold text-foreground">
+                    <h3 className="text-2xl md:text-3xl font-bold text-foreground">
                       {prop.title}
                     </h3>
                   </div>
                   
                   <div 
-                    className="text-3xl md:text-4xl font-semibold leading-relaxed mb-6"
+                    className="text-xl md:text-2xl font-medium leading-relaxed mb-4 text-foreground"
                     dangerouslySetInnerHTML={{
                       __html: highlightText(prop.benefit, prop.highlightWords)
                     }}
                   />
                   
-                  <p className="text-xl md:text-2xl text-muted-foreground leading-relaxed max-w-2xl">
+                  <p className="text-base md:text-lg text-muted-foreground leading-relaxed max-w-xl">
                     {prop.description}
                   </p>
                 </div>
@@ -253,7 +227,7 @@ const ValuePropsSection = () => {
                 }`}>
                   <div className="relative">
                     {prop.useSvg ? (
-                      <div className="w-full max-w-6xl mx-auto">
+                      <div className="w-full max-w-7xl mx-auto">
                         {prop.title === "Smart Inbox" ? (
                           <SmartInboxSvg />
                         ) : prop.title === "Feedback" ? (
