@@ -32,6 +32,10 @@ import PublicChangelog from "./pages/PublicChangelog";
 import PublicChangelogView from "./pages/PublicChangelogView";
 import PublicChangelogEntry from "./pages/PublicChangelogEntry";
 import PublicGlossary from "./pages/PublicGlossary";
+import SmartInbox from "./pages/SmartInbox";
+import ChangelogProduct from "./pages/ChangelogProduct";
+import FeedbackProduct from "./pages/FeedbackProduct";
+import InsightsProduct from "./pages/InsightsProduct";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -74,6 +78,14 @@ function App() {
               <Route path="/releases/new" element={<ReleaseEditor />} />
               <Route path="/releases/:id/edit" element={<ReleaseEditor />} />
               <Route path="/roadmap" element={<Roadmap />} />
+              
+              {/* Product Pages */}
+              <Route path="/product/smart-inbox" element={<SmartInbox />} />
+              <Route path="/product/changelog" element={<ChangelogProduct />} />
+              <Route path="/product/feedback" element={<FeedbackProduct />} />
+              <Route path="/product/insights" element={<InsightsProduct />} />
+              
+              {/* Public Pages */}
               <Route path="/public/:companySlug/changelog" element={<PublicChangelog />} />
               <Route path="/public/:companySlug/changelog/:slug" element={<PublicChangelogEntry />} />
               <Route path="/changelog/:companySlug" element={<PublicChangelogView />} />
