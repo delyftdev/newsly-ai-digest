@@ -1,3 +1,4 @@
+
 import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 
@@ -38,12 +39,6 @@ interface ChangelogStore {
   deleteChangelog: (id: string) => Promise<{ error?: string }>;
   autoSaveChangelog: (id: string, data: Partial<Changelog>) => Promise<void>;
   setCurrentChangelog: (changelog: Changelog | null) => void;
-  
-  // New collaboration actions
-  addParticipant: (changelogId: string, userId: string, role?: string) => Promise<{ error?: string }>;
-  removeParticipant: (changelogId: string, userId: string) => Promise<{ error?: string }>;
-  getParticipants: (changelogId: string) => Promise<any[]>;
-  logActivity: (changelogId: string, activityType: string, description: string, activityData?: any) => Promise<void>;
 }
 
 // Helper function to transform database row to Changelog type
@@ -323,9 +318,6 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         currentChangelog: transformedData
       }));
 
-      // Log activity for new changelog
-      await get().logActivity(transformedData.id, 'created', 'Changelog created');
-
       console.log('=== CREATE CHANGELOG SUCCESS ===');
       return { data: transformedData };
       
@@ -467,9 +459,6 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
         currentChangelog: transformedData
       }));
 
-      // Log activity for published changelog
-      await get().logActivity(id, 'published', 'Changelog published');
-
       console.log('Changelog published with URL:', shareableUrl);
 
       return {};
@@ -563,92 +552,5 @@ export const useChangelogStore = create<ChangelogStore>((set, get) => ({
   setCurrentChangelog: (changelog: Changelog | null) => {
     console.log('=== SETTING CURRENT CHANGELOG ===', changelog?.id || 'null');
     set({ currentChangelog: changelog });
-  },
-
-  // New collaboration methods
-  addParticipant: async (changelogId: string, userId: string, role: string = 'collaborator') => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return { error: 'User not authenticated' };
-
-      const { error } = await supabase
-        .from('changelog_participants')
-        .insert({
-          changelog_id: changelogId,
-          user_id: userId,
-          role,
-          invited_by: user.id,
-        });
-
-      if (error) throw error;
-
-      // Log activity
-      await get().logActivity(changelogId, 'participant_added', 'New participant added to collaboration');
-
-      return {};
-    } catch (error: any) {
-      console.error('Error adding participant:', error);
-      return { error: error.message };
-    }
-  },
-
-  removeParticipant: async (changelogId: string, userId: string) => {
-    try {
-      const { error } = await supabase
-        .from('changelog_participants')
-        .delete()
-        .eq('changelog_id', changelogId)
-        .eq('user_id', userId);
-
-      if (error) throw error;
-
-      // Log activity
-      await get().logActivity(changelogId, 'participant_removed', 'Participant removed from collaboration');
-
-      return {};
-    } catch (error: any) {
-      console.error('Error removing participant:', error);
-      return { error: error.message };
-    }
-  },
-
-  getParticipants: async (changelogId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('changelog_participants')
-        .select(`
-          *,
-          profiles (
-            full_name
-          )
-        `)
-        .eq('changelog_id', changelogId)
-        .eq('status', 'active');
-
-      if (error) throw error;
-      return data || [];
-    } catch (error) {
-      console.error('Error fetching participants:', error);
-      return [];
-    }
-  },
-
-  logActivity: async (changelogId: string, activityType: string, description: string, activityData?: any) => {
-    try {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
-
-      await supabase
-        .from('changelog_activity')
-        .insert({
-          changelog_id: changelogId,
-          user_id: user.id,
-          activity_type: activityType,
-          description,
-          activity_data: activityData || {}
-        });
-    } catch (error) {
-      console.error('Error logging activity:', error);
-    }
   },
 }));
