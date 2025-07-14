@@ -3,43 +3,51 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SlackLogo from "@/components/logos/SlackLogo";
+import GitHubLogo from "@/components/logos/GitHubLogo";
+import JiraLogo from "@/components/logos/JiraLogo";
+import LinearLogo from "@/components/logos/LinearLogo";
+import IntercomLogo from "@/components/logos/IntercomLogo";
+import ZendeskLogo from "@/components/logos/ZendeskLogo";
+import DiscordLogo from "@/components/logos/DiscordLogo";
+import GmailLogo from "@/components/logos/GmailLogo";
 
 const Integrations = () => {
   const integrationCategories = [
     {
       category: "Communication",
       integrations: [
-        { name: "Slack", description: "Get notifications and updates in your Slack channels", logo: "🟣" },
-        { name: "Microsoft Teams", description: "Collaborate seamlessly with your team", logo: "🟦" },
-        { name: "Discord", description: "Engage with your community directly", logo: "🟪" },
-        { name: "Email", description: "Send updates via email campaigns", logo: "📧" }
+        { name: "Slack", description: "Get notifications and updates in your Slack channels", logo: SlackLogo },
+        { name: "Microsoft Teams", description: "Collaborate seamlessly with your team", logo: GmailLogo },
+        { name: "Discord", description: "Engage with your community directly", logo: DiscordLogo },
+        { name: "Email", description: "Send updates via email campaigns", logo: GmailLogo }
       ]
     },
     {
       category: "Development",
       integrations: [
-        { name: "GitHub", description: "Link releases to code changes and pull requests", logo: "⚫" },
-        { name: "GitLab", description: "Integrate with your GitLab workflow", logo: "🟠" },
-        { name: "Jira", description: "Connect feedback to development tickets", logo: "🔵" },
-        { name: "Linear", description: "Streamline issue tracking and project management", logo: "⚪" }
+        { name: "GitHub", description: "Link releases to code changes and pull requests", logo: GitHubLogo },
+        { name: "GitLab", description: "Integrate with your GitLab workflow", logo: GitHubLogo },
+        { name: "Jira", description: "Connect feedback to development tickets", logo: JiraLogo },
+        { name: "Linear", description: "Streamline issue tracking and project management", logo: LinearLogo }
       ]
     },
     {
       category: "Customer Success",
       integrations: [
-        { name: "Intercom", description: "Sync customer conversations and feedback", logo: "🔵" },
-        { name: "Zendesk", description: "Connect support tickets to product updates", logo: "🟢" },
-        { name: "HubSpot", description: "Align marketing and customer communications", logo: "🟠" },
-        { name: "Salesforce", description: "Enterprise CRM integration", logo: "🟦" }
+        { name: "Intercom", description: "Sync customer conversations and feedback", logo: IntercomLogo },
+        { name: "Zendesk", description: "Connect support tickets to product updates", logo: ZendeskLogo },
+        { name: "HubSpot", description: "Align marketing and customer communications", logo: IntercomLogo },
+        { name: "Salesforce", description: "Enterprise CRM integration", logo: IntercomLogo }
       ]
     },
     {
       category: "Analytics",
       integrations: [
-        { name: "Google Analytics", description: "Track engagement and conversion metrics", logo: "🟡" },
-        { name: "Mixpanel", description: "Advanced product analytics integration", logo: "🟣" },
-        { name: "Amplitude", description: "User behavior and retention analysis", logo: "🔵" },
-        { name: "Segment", description: "Unified customer data platform", logo: "🟢" }
+        { name: "Google Analytics", description: "Track engagement and conversion metrics", logo: GmailLogo },
+        { name: "Mixpanel", description: "Advanced product analytics integration", logo: IntercomLogo },
+        { name: "Amplitude", description: "User behavior and retention analysis", logo: IntercomLogo },
+        { name: "Segment", description: "Unified customer data platform", logo: IntercomLogo }
       ]
     }
   ];
@@ -74,7 +82,9 @@ const Integrations = () => {
               <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {category.integrations.map((integration, idx) => (
                   <div key={idx} className="bg-card rounded-xl p-6 border border-border hover:border-primary/50 transition-colors cursor-pointer">
-                    <div className="text-4xl mb-4">{integration.logo}</div>
+                    <div className="mb-4">
+                      <integration.logo size={32} className="text-foreground" />
+                    </div>
                     <h3 className="text-lg font-semibold text-foreground mb-2">{integration.name}</h3>
                     <p className="text-sm text-muted-foreground">{integration.description}</p>
                   </div>

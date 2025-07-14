@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +6,12 @@ import { ArrowRight, Users, Vote, Bell, TrendingUp, MessageSquare, Target, Check
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SlackLogo from "@/components/logos/SlackLogo";
+import GitHubLogo from "@/components/logos/GitHubLogo";
+import IntercomLogo from "@/components/logos/IntercomLogo";
+import NotionLogo from "@/components/logos/NotionLogo";
+import LinearLogo from "@/components/logos/LinearLogo";
+import JiraLogo from "@/components/logos/JiraLogo";
 
 const FeedbackProduct = () => {
   const [activeTab, setActiveTab] = useState("board");
@@ -89,10 +94,12 @@ const FeedbackProduct = () => {
               with transparent roadmaps and public voting.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-6">
-                Create Your Feedback Board
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <Link to="/auth">
+                <Button size="lg" className="text-lg px-8 py-6">
+                  Create Your Feedback Board
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 See Example Board
               </Button>
@@ -242,6 +249,33 @@ const FeedbackProduct = () => {
         </div>
       </section>
 
+      {/* Integration Section */}
+      <section className="py-16 px-4">
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-8">Connects with your development tools</h2>
+          <p className="text-lg text-muted-foreground mb-12">
+            Sync feedback directly with your project management and development workflow.
+          </p>
+          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-8">
+            {[
+              { name: "GitHub", logo: GitHubLogo },
+              { name: "Jira", logo: JiraLogo },
+              { name: "Linear", logo: LinearLogo },
+              { name: "Slack", logo: SlackLogo },
+              { name: "Notion", logo: NotionLogo },
+              { name: "Intercom", logo: IntercomLogo }
+            ].map((tool, index) => (
+              <div key={index} className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center hover:bg-accent transition-colors">
+                  <tool.logo size={24} className="text-foreground" />
+                </div>
+                <span className="text-sm font-medium">{tool.name}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Benefits Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
@@ -295,10 +329,12 @@ const FeedbackProduct = () => {
             Transform feedback into features. Create transparent roadmaps that build trust and drive engagement.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8 py-6">
-              Create Feedback Board
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link to="/auth">
+              <Button size="lg" className="text-lg px-8 py-6">
+                Create Feedback Board
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
             <Link to="/pricing">
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 View Pricing

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -7,6 +6,12 @@ import { ArrowRight, BarChart3, TrendingUp, Eye, Users, Clock, Target, Zap, PieC
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SlackLogo from "@/components/logos/SlackLogo";
+import GitHubLogo from "@/components/logos/GitHubLogo";
+import IntercomLogo from "@/components/logos/IntercomLogo";
+import NotionLogo from "@/components/logos/NotionLogo";
+import GmailLogo from "@/components/logos/GmailLogo";
+import ZendeskLogo from "@/components/logos/ZendeskLogo";
 
 const InsightsProduct = () => {
   const [activeMetric, setActiveMetric] = useState("engagement");
@@ -111,10 +116,12 @@ const InsightsProduct = () => {
               Track engagement, measure impact, and optimize your strategy with comprehensive insights.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-6">
-                View Your Analytics
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <Link to="/auth">
+                <Button size="lg" className="text-lg px-8 py-6">
+                  View Your Analytics
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 Live Demo
               </Button>
@@ -270,12 +277,19 @@ const InsightsProduct = () => {
             Seamlessly integrate with your current stack to get a complete view of customer interactions.
           </p>
           <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-8">
-            {["Google Analytics", "Mixpanel", "Amplitude", "Segment", "HubSpot", "Salesforce"].map((tool, index) => (
+            {[
+              { name: "Google Analytics", logo: GmailLogo },
+              { name: "Mixpanel", logo: IntercomLogo },
+              { name: "Amplitude", logo: IntercomLogo },
+              { name: "Segment", logo: IntercomLogo },
+              { name: "HubSpot", logo: IntercomLogo },
+              { name: "Salesforce", logo: IntercomLogo }
+            ].map((tool, index) => (
               <div key={index} className="flex flex-col items-center gap-2">
-                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center">
-                  <span className="text-lg">📊</span>
+                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center hover:bg-accent transition-colors">
+                  <tool.logo size={24} className="text-foreground" />
                 </div>
-                <span className="text-sm font-medium">{tool}</span>
+                <span className="text-sm font-medium">{tool.name}</span>
               </div>
             ))}
           </div>
@@ -290,10 +304,12 @@ const InsightsProduct = () => {
             Get the insights you need to optimize your customer communications and drive business growth.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8 py-6">
-              Get Started Free
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link to="/auth">
+              <Button size="lg" className="text-lg px-8 py-6">
+                Get Started Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
             <Link to="/pricing">
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 View Pricing

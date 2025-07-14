@@ -22,33 +22,6 @@ const About = () => {
     }
   ];
 
-  const team = [
-    {
-      name: "Alex Chen",
-      role: "Co-Founder & CEO",
-      bio: "Former Product Manager at Stripe. Passionate about customer communication.",
-      avatar: "👨‍💼"
-    },
-    {
-      name: "Sarah Kim",
-      role: "Co-Founder & CTO",
-      bio: "Ex-Engineering Lead at Notion. Expert in AI and product development.",
-      avatar: "👩‍💻"
-    },
-    {
-      name: "Mike Rodriguez",
-      role: "Head of Design",
-      bio: "Previously at Figma. Believes great design makes complex things simple.",
-      avatar: "👨‍🎨"
-    },
-    {
-      name: "Emily Watson",
-      role: "Head of Customer Success",
-      bio: "Former Customer Success Director at Intercom. Customer advocate.",
-      avatar: "👩‍💼"
-    }
-  ];
-
   return (
     <div className="min-h-screen bg-background">
       <Header />
@@ -96,23 +69,6 @@ const About = () => {
                 </div>
                 <h3 className="text-xl font-semibold text-foreground mb-3">{value.title}</h3>
                 <p className="text-muted-foreground">{value.description}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Team Section */}
-      <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Meet the Team</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {team.map((member, index) => (
-              <div key={index} className="text-center">
-                <div className="text-6xl mb-4">{member.avatar}</div>
-                <h3 className="text-lg font-semibold text-foreground mb-1">{member.name}</h3>
-                <p className="text-primary font-medium mb-3">{member.role}</p>
-                <p className="text-sm text-muted-foreground">{member.bio}</p>
               </div>
             ))}
           </div>

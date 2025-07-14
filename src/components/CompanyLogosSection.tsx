@@ -1,20 +1,24 @@
 
 import React from 'react';
+import SlackLogo from '@/components/logos/SlackLogo';
+import NotionLogo from '@/components/logos/NotionLogo';
+import LinearLogo from '@/components/logos/LinearLogo';
+import GitHubLogo from '@/components/logos/GitHubLogo';
+import FigmaLogo from '@/components/logos/FigmaLogo';
+import DiscordLogo from '@/components/logos/DiscordLogo';
+import IntercomLogo from '@/components/logos/IntercomLogo';
+import ZendeskLogo from '@/components/logos/ZendeskLogo';
 
 const CompanyLogosSection = () => {
   const companies = [
-    { name: 'Slack', logo: '💬' },
-    { name: 'Notion', logo: '📝' },
-    { name: 'Linear', logo: '📊' },
-    { name: 'GitHub', logo: '🐙' },
-    { name: 'Figma', logo: '🎨' },
-    { name: 'Discord', logo: '🎮' },
-    { name: 'Intercom', logo: '💬' },
-    { name: 'Zendesk', logo: '🎫' },
-    { name: 'Stripe', logo: '💳' },
-    { name: 'Shopify', logo: '🛍️' },
-    { name: 'Airtable', logo: '📋' },
-    { name: 'Calendly', logo: '📅' },
+    { name: 'Slack', logo: SlackLogo },
+    { name: 'Notion', logo: NotionLogo },
+    { name: 'Linear', logo: LinearLogo },
+    { name: 'GitHub', logo: GitHubLogo },
+    { name: 'Figma', logo: FigmaLogo },
+    { name: 'Discord', logo: DiscordLogo },
+    { name: 'Intercom', logo: IntercomLogo },
+    { name: 'Zendesk', logo: ZendeskLogo },
   ];
 
   // Duplicate the array for seamless infinite scroll
@@ -34,7 +38,7 @@ const CompanyLogosSection = () => {
                 key={`${company.name}-${index}`}
                 className="flex-shrink-0 mx-8 flex items-center space-x-3 text-muted-foreground hover:text-foreground transition-colors"
               >
-                <span className="text-2xl">{company.logo}</span>
+                <company.logo size={24} className="text-current" />
                 <span className="text-sm font-medium whitespace-nowrap">{company.name}</span>
               </div>
             ))}

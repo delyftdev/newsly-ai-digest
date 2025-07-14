@@ -1,54 +1,63 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ArrowRight, Palette, Mail, Globe, BarChart3, Users, Megaphone, Sparkles } from "lucide-react";
+import { ArrowRight, PenTool, Users, Bell, TrendingUp, Sparkles, CheckCircle, Edit3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import SlackLogo from "@/components/logos/SlackLogo";
+import GitHubLogo from "@/components/logos/GitHubLogo";
+import IntercomLogo from "@/components/logos/IntercomLogo";
+import NotionLogo from "@/components/logos/NotionLogo";
+import LinearLogo from "@/components/logos/LinearLogo";
+import FigmaLogo from "@/components/logos/FigmaLogo";
 
 const ChangelogProduct = () => {
-  const [selectedTemplate, setSelectedTemplate] = useState("modern");
-
-  const templates = [
-    { id: "modern", name: "Modern", preview: "🎨" },
-    { id: "minimal", name: "Minimal", preview: "⚡" },
-    { id: "corporate", name: "Corporate", preview: "🏢" },
-    { id: "creative", name: "Creative", preview: "🌈" }
-  ];
+  const [activeTab, setActiveTab] = useState("list");
 
   const features = [
     {
-      icon: Palette,
-      title: "Brand Customization",
-      description: "Match your brand perfectly with custom colors, fonts, and layouts.",
+      icon: Sparkles,
+      title: "Beautiful Design",
+      description: "Create on-brand changelogs that reflect your unique style.",
     },
     {
-      icon: Mail,
-      title: "Multi-Channel Publishing",
-      description: "Publish to email, in-app widgets, and external sites simultaneously.",
+      icon: Bell,
+      title: "Automatic Notifications",
+      description: "Keep customers informed when new features are released.",
     },
     {
-      icon: BarChart3,
-      title: "Engagement Analytics",
-      description: "Track reads, clicks, and engagement across all your announcements.",
+      icon: TrendingUp,
+      title: "Engagement Tracking",
+      description: "Measure the impact of your updates with detailed analytics.",
     },
     {
       icon: Users,
-      title: "Team Collaboration",
-      description: "Collaborate with your team on drafts before publishing.",
+      title: "User Feedback",
+      description: "Collect and prioritize feedback directly from your changelog.",
     }
   ];
 
-  const publishingChannels = [
-    { name: "Email Newsletter", icon: "📧", description: "Send to subscriber lists" },
-    { name: "In-App Widget", icon: "📱", description: "Embed in your product" },
-    { name: "Public Page", icon: "🌐", description: "Shareable changelog URL" },
-    { name: "RSS Feed", icon: "📡", description: "Syndicate updates" },
-    { name: "Slack/Discord", icon: "💬", description: "Team notifications" },
-    { name: "API Webhook", icon: "🔗", description: "Custom integrations" }
+  const mockChangelog = [
+    {
+      title: "Dark mode is here!",
+      date: "October 18, 2024",
+      description: "You asked, we delivered! Dark mode is now available for all users.",
+      category: "New Feature"
+    },
+    {
+      title: "Improved search functionality",
+      date: "October 12, 2024",
+      description: "Find what you need faster with our new and improved search.",
+      category: "Improvement"
+    },
+    {
+      title: "Bug fixes and performance improvements",
+      date: "October 5, 2024",
+      description: "We've squashed some bugs and made the app even faster.",
+      category: "Bug Fix"
+    }
   ];
 
   return (
@@ -61,75 +70,101 @@ const ChangelogProduct = () => {
         <div className="relative max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <Badge variant="secondary" className="mb-4">
-              <Megaphone className="h-3 w-3 mr-1" />
-              Changelog
+              <PenTool className="h-3 w-3 mr-1" />
+              Changelog & Updates
             </Badge>
             <h1 className="text-5xl md:text-6xl font-extrabold text-foreground mb-6">
-              Beautiful changelogs that
+              Keep customers informed with
               <span className="bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent block">
-                customers actually read
+                beautiful changelogs
               </span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto">
-              Create stunning, branded announcements that engage your users and keep them 
-              excited about your product updates. No design skills required.
+              Create stunning product updates that customers actually read. Turn feature releases 
+              into engagement opportunities with our powerful changelog platform.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" className="text-lg px-8 py-6">
-                Create Your First Changelog
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <Link to="/auth">
+                <Button size="lg" className="text-lg px-8 py-6">
+                  Start Creating Changelogs
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
-                View Examples
+                View Example
               </Button>
             </div>
           </div>
 
-          {/* Template Preview */}
+          {/* Interactive Demo */}
           <div className="bg-card rounded-2xl shadow-2xl p-8">
-            <div className="mb-6">
-              <h3 className="text-xl font-semibold mb-4">Choose from beautiful templates</h3>
-              <div className="flex gap-4">
-                {templates.map((template) => (
-                  <button
-                    key={template.id}
-                    onClick={() => setSelectedTemplate(template.id)}
-                    className={`p-4 rounded-lg border-2 transition-colors ${
-                      selectedTemplate === template.id 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-border hover:border-primary/50'
-                    }`}
-                  >
-                    <div className="text-2xl mb-2">{template.preview}</div>
-                    <div className="text-sm font-medium">{template.name}</div>
-                  </button>
-                ))}
-              </div>
+            <div className="flex gap-4 mb-6">
+              <Button 
+                variant={activeTab === "list" ? "default" : "outline"}
+                onClick={() => setActiveTab("list")}
+              >
+                Changelog List
+              </Button>
+              <Button 
+                variant={activeTab === "editor" ? "default" : "outline"}
+                onClick={() => setActiveTab("editor")}
+              >
+                Changelog Editor
+              </Button>
+              <Button 
+                variant={activeTab === "analytics" ? "default" : "outline"}
+                onClick={() => setActiveTab("analytics")}
+              >
+                Analytics
+              </Button>
             </div>
             
-            <div className="bg-muted/30 rounded-lg p-8 min-h-[400px]">
-              <div className="max-w-md mx-auto">
-                <div className="bg-card rounded-lg p-6 shadow-sm">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center">
-                      <Sparkles className="h-4 w-4 text-primary-foreground" />
-                    </div>
-                    <div>
-                      <h4 className="font-semibold">New Feature Release</h4>
-                      <p className="text-sm text-muted-foreground">March 15, 2024</p>
-                    </div>
-                  </div>
-                  <p className="text-sm mb-4">
-                    We're excited to announce our new Smart Inbox feature that will 
-                    revolutionize how you manage customer communications.
-                  </p>
-                  <div className="flex gap-2">
-                    <Badge variant="secondary">Feature</Badge>
-                    <Badge variant="outline">New</Badge>
-                  </div>
-                </div>
+            {activeTab === "list" && (
+              <div className="space-y-4">
+                {mockChangelog.map((item, index) => (
+                  <Card key={index} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <div className="flex items-center gap-3 mb-2">
+                            <h3 className="font-semibold">{item.title}</h3>
+                            <Badge variant="secondary">{item.category}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{item.description}</p>
+                          <p className="text-xs text-muted-foreground mt-2">{item.date}</p>
+                        </div>
+                        <div className="flex items-center gap-2 ml-4">
+                          <Button variant="outline" size="sm" className="flex items-center gap-1">
+                            <Edit3 className="h-3 w-3" />
+                            Edit
+                          </Button>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
               </div>
-            </div>
+            )}
+
+            {activeTab === "editor" && (
+              <div className="text-center py-12">
+                <PenTool className="h-16 w-16 mx-auto mb-4 text-primary" />
+                <h3 className="text-xl font-semibold mb-2">Changelog Editor</h3>
+                <p className="text-muted-foreground">
+                  Create and customize your changelog entries with ease
+                </p>
+              </div>
+            )}
+
+            {activeTab === "analytics" && (
+              <div className="text-center py-12">
+                <BarChart3 className="h-16 w-16 mx-auto mb-4 text-primary" />
+                <h3 className="text-xl font-semibold mb-2">Changelog Analytics</h3>
+                <p className="text-muted-foreground">
+                  Track engagement, popular updates, and customer satisfaction metrics
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -137,7 +172,7 @@ const ChangelogProduct = () => {
       {/* Features Section */}
       <section className="py-16 px-4">
         <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Everything you need for great announcements</h2>
+          <h2 className="text-3xl font-bold text-center mb-12">The power to keep customers informed</h2>
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {features.map((feature, index) => (
               <Card key={index} className="text-center hover:shadow-lg transition-shadow">
@@ -152,64 +187,29 @@ const ChangelogProduct = () => {
         </div>
       </section>
 
-      {/* Publishing Channels */}
-      <section className="py-16 px-4 bg-muted/20">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Publish everywhere at once</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {publishingChannels.map((channel, index) => (
-              <Card key={index} className="hover:shadow-lg transition-shadow">
-                <CardContent className="p-6">
-                  <div className="flex items-start gap-4">
-                    <div className="text-3xl">{channel.icon}</div>
-                    <div>
-                      <h3 className="font-semibold mb-1">{channel.name}</h3>
-                      <p className="text-sm text-muted-foreground">{channel.description}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Analytics Preview */}
+      {/* Integration Section */}
       <section className="py-16 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold mb-6">Track what matters</h2>
-              <p className="text-lg text-muted-foreground mb-6">
-                See how your announcements perform with detailed analytics. 
-                Track engagement, identify your most popular updates, and optimize your communication strategy.
-              </p>
-              <ul className="space-y-3">
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span>Read rates and engagement metrics</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span>Click-through tracking</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span>Subscriber growth analytics</span>
-                </li>
-                <li className="flex items-center gap-2">
-                  <div className="w-2 h-2 bg-primary rounded-full"></div>
-                  <span>Performance comparisons</span>
-                </li>
-              </ul>
-            </div>
-            <div className="bg-muted/30 rounded-lg p-8">
-              <div className="text-center text-muted-foreground">
-                📊 Analytics Dashboard Preview
-                <br />
-                <span className="text-sm">Interactive charts and metrics</span>
+        <div className="max-w-6xl mx-auto text-center">
+          <h2 className="text-3xl font-bold mb-8">Connects with your workflow</h2>
+          <p className="text-lg text-muted-foreground mb-12">
+            Seamlessly integrate with the tools your team uses every day.
+          </p>
+          <div className="grid md:grid-cols-3 lg:grid-cols-6 gap-8">
+            {[
+              { name: "Slack", logo: SlackLogo },
+              { name: "GitHub", logo: GitHubLogo },
+              { name: "Notion", logo: NotionLogo },
+              { name: "Intercom", logo: IntercomLogo },
+              { name: "Linear", logo: LinearLogo },
+              { name: "Figma", logo: FigmaLogo }
+            ].map((tool, index) => (
+              <div key={index} className="flex flex-col items-center gap-2">
+                <div className="w-12 h-12 bg-muted rounded-lg flex items-center justify-center hover:bg-accent transition-colors">
+                  <tool.logo size={24} className="text-foreground" />
+                </div>
+                <span className="text-sm font-medium">{tool.name}</span>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -217,15 +217,17 @@ const ChangelogProduct = () => {
       {/* CTA Section */}
       <section className="py-16 px-4 bg-primary/5">
         <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-6">Start creating beautiful changelogs today</h2>
+          <h2 className="text-3xl font-bold mb-6">Ready to create your first changelog?</h2>
           <p className="text-xl text-muted-foreground mb-8">
-            Join thousands of companies who trust Delyft to keep their customers informed and engaged.
+            Join thousands of teams who trust Delyft to keep their customers informed and engaged.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="text-lg px-8 py-6">
-              Get Started Free
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link to="/auth">
+              <Button size="lg" className="text-lg px-8 py-6">
+                Get Started Free
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
             <Link to="/pricing">
               <Button variant="outline" size="lg" className="text-lg px-8 py-6">
                 View Pricing
