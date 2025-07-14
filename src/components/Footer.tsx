@@ -17,27 +17,27 @@ const Footer = () => {
           <div>
             <h4 className="font-semibold text-foreground mb-4">Product</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="#" className="hover:text-foreground">Features</Link></li>
+              <li><Link to="/features" className="hover:text-foreground">Features</Link></li>
               <li><Link to="/pricing" className="hover:text-foreground">Pricing</Link></li>
-              <li><Link to="#" className="hover:text-foreground">Integrations</Link></li>
+              <li><Link to="/integrations" className="hover:text-foreground">Integrations</Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-semibold text-foreground mb-4">Company</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="#" className="hover:text-foreground">About</Link></li>
-              <li><Link to="#" className="hover:text-foreground">Blog</Link></li>
-              <li><Link to="#" className="hover:text-foreground">Careers</Link></li>
+              <li><Link to="/about" className="hover:text-foreground">About</Link></li>
+              <li><Link to="/blog" className="hover:text-foreground">Blog</Link></li>
+              <li><Link to="/careers" className="hover:text-foreground">Careers</Link></li>
             </ul>
           </div>
           
           <div>
             <h4 className="font-semibold text-foreground mb-4">Support</h4>
             <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="#" className="hover:text-foreground">Help Center</Link></li>
-              <li><Link to="#" className="hover:text-foreground">Contact</Link></li>
-              <li><Link to="#" className="hover:text-foreground">Privacy</Link></li>
+              <li><Link to="/help" className="hover:text-foreground">Help Center</Link></li>
+              <li><Link to="/contact" className="hover:text-foreground">Contact</Link></li>
+              <li><Link to="/privacy" className="hover:text-foreground">Privacy</Link></li>
             </ul>
           </div>
         </div>

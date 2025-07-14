@@ -9,6 +9,14 @@ import { useEffect } from "react";
 import { useAuthStore } from "@/stores/authStore";
 import Index from "./pages/Index";
 import Pricing from "./pages/Pricing";
+import Features from "./pages/Features";
+import Integrations from "./pages/Integrations";
+import About from "./pages/About";
+import Blog from "./pages/Blog";
+import Careers from "./pages/Careers";
+import HelpCenter from "./pages/HelpCenter";
+import Contact from "./pages/Contact";
+import Privacy from "./pages/Privacy";
 import AuthPage from "./pages/AuthPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import DashboardPage from "./pages/DashboardPage";
@@ -45,6 +53,14 @@ function App() {
             <Routes>
               <Route path="/" element={<Index />} />
               <Route path="/pricing" element={<Pricing />} />
+              <Route path="/features" element={<Features />} />
+              <Route path="/integrations" element={<Integrations />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/blog" element={<Blog />} />
+              <Route path="/careers" element={<Careers />} />
+              <Route path="/help" element={<HelpCenter />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/onboarding" element={<OnboardingPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />

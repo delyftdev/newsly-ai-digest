@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { ChevronDown, Sun, Moon } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import DelyftLogo from "@/components/DelyftLogo";
 import { useTheme } from "next-themes";
 import {
@@ -14,13 +14,42 @@ import {
 
 const Header = () => {
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const productItems = [
-    { name: "Smart Inbox", description: "Organize all customer updates" },
-    { name: "Changelog", description: "Create on-brand content" },
-    { name: "Feedback", description: "Collect and prioritize feedback" },
-    { name: "Insights", description: "Track engagement and performance" },
+    { name: "Smart Inbox", description: "Organize all customer updates", sectionId: "smart-inbox" },
+    { name: "Changelog", description: "Create on-brand content", sectionId: "changelog" },
+    { name: "Feedback", description: "Collect and prioritize feedback", sectionId: "feedback" },
+    { name: "Insights", description: "Track engagement and performance", sectionId: "insights" },
   ];
+
+  const handleProductItemClick = (sectionId: string) => {
+    if (location.pathname !== '/') {
+      // Navigate to home page first, then scroll
+      navigate('/');
+      setTimeout(() => {
+        scrollToSection(sectionId);
+      }, 100);
+    } else {
+      // Already on home page, just scroll
+      scrollToSection(sectionId);
+    }
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      const headerHeight = 80; // Account for sticky header
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
@@ -45,7 +74,11 @@ const Header = () => {
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-64 bg-background/95 backdrop-blur-lg">
                   {productItems.map((item) => (
-                    <DropdownMenuItem key={item.name} className="flex flex-col items-start p-3">
+                    <DropdownMenuItem 
+                      key={item.name} 
+                      className="flex flex-col items-start p-3 cursor-pointer"
+                      onClick={() => handleProductItemClick(item.sectionId)}
+                    >
                       <div className="font-medium">{item.name}</div>
                       <div className="text-sm text-muted-foreground">{item.description}</div>
                     </DropdownMenuItem>

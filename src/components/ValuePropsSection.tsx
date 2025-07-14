@@ -1,4 +1,3 @@
-
 import { useEffect, useRef, useState } from "react";
 import { Inbox, Edit, MessageCircle, BarChart3 } from "lucide-react";
 import FeedbackSvg from "./FeedbackSvg";
@@ -18,7 +17,8 @@ const ValuePropsSection = () => {
       description: "Auto-organize every release note, announcement, or idea in one searchable inbox. No more hunting through docs, emails, and chats.",
       useSvg: true,
       highlightWords: ["instantly"],
-      position: "left"
+      position: "left",
+      id: "smart-inbox"
     },
     {
       icon: Edit,
@@ -27,7 +27,8 @@ const ValuePropsSection = () => {
       description: "Tweak drafts to match your brand's voice and customer's tone — then publish as changelogs or widgets.",
       useSvg: true,
       highlightWords: ["actually read"],
-      position: "right"
+      position: "right",
+      id: "changelog"
     },
     {
       icon: MessageCircle,
@@ -36,7 +37,8 @@ const ValuePropsSection = () => {
       description: "Let customers and teammates submit, vote, and see how ideas are progressing.",
       useSvg: true,
       highlightWords: ["Close the loop"],
-      position: "left"
+      position: "left",
+      id: "feedback"
     },
     {
       icon: BarChart3,
@@ -45,7 +47,8 @@ const ValuePropsSection = () => {
       description: "Check open rates, clicks, and reactions for every update you send.",
       useSvg: true,
       highlightWords: ["working"],
-      position: "right"
+      position: "right",
+      id: "insights"
     }
   ];
 
@@ -160,7 +163,6 @@ const ValuePropsSection = () => {
       `}</style>
 
       <section className="py-8 px-4">
-        {/* Header */}
         <div className="max-w-6xl mx-auto text-center mb-24">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground mb-6 leading-tight">
             Customer communication{" "}
@@ -173,10 +175,10 @@ const ValuePropsSection = () => {
           </div>
         </div>
 
-        {/* Feature Sections */}
         {valueProps.map((prop, index) => (
           <div
             key={index}
+            id={prop.id}
             ref={(el) => (sectionRefs.current[index] = el)}
             data-section={index}
             className={`py-32 flex items-center section-animate ${
@@ -188,7 +190,6 @@ const ValuePropsSection = () => {
                 prop.position === 'right' ? 'lg:grid-flow-col-dense' : ''
               }`}>
                 
-                {/* Text Content */}
                 <div className={`space-y-6 ${
                   prop.position === 'right' ? 'lg:col-start-2' : ''
                 } ${
@@ -219,7 +220,6 @@ const ValuePropsSection = () => {
                   </p>
                 </div>
 
-                {/* SVG/Visual Content */}
                 <div className={`${
                   prop.position === 'right' ? 'lg:col-start-1 lg:row-start-1' : ''
                 } svg-container ${
