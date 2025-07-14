@@ -50,32 +50,15 @@ export const ParticipantDropdown: React.FC<ParticipantDropdownProps> = ({
         .select(`
           id,
           user_id,
-          role
+          role,
+          profiles (
+            full_name
+          )
         `)
         .eq('status', 'active');
 
       if (error) throw error;
-
-      // Fetch profile data separately
-      if (data && data.length > 0) {
-        const userIds = data.map(tm => tm.user_id).filter(Boolean);
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', userIds);
-
-        if (profilesError) throw profilesError;
-
-        // Combine data
-        const membersWithProfiles = data.map(member => ({
-          ...member,
-          profiles: profiles?.find(p => p.id === member.user_id) || { full_name: 'Unknown User' }
-        }));
-
-        setTeamMembers(membersWithProfiles);
-      } else {
-        setTeamMembers([]);
-      }
+      setTeamMembers(data || []);
     } catch (error) {
       console.error('Error fetching team members:', error);
       toast({

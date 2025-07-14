@@ -63,33 +63,16 @@ export const AvatarRow: React.FC<AvatarRowProps> = ({
         .select(`
           id,
           user_id,
-          role
+          role,
+          profiles (
+            full_name
+          )
         `)
         .eq('changelog_id', changelogId)
         .eq('status', 'active');
 
       if (error) throw error;
-
-      // Fetch profile data separately
-      if (data && data.length > 0) {
-        const userIds = data.map(p => p.user_id);
-        const { data: profiles, error: profilesError } = await supabase
-          .from('profiles')
-          .select('id, full_name')
-          .in('id', userIds);
-
-        if (profilesError) throw profilesError;
-
-        // Combine data
-        const participantsWithProfiles = data.map(participant => ({
-          ...participant,
-          profiles: profiles?.find(p => p.id === participant.user_id) || { full_name: 'Unknown User' }
-        }));
-
-        setParticipants(participantsWithProfiles);
-      } else {
-        setParticipants([]);
-      }
+      setParticipants(data || []);
     } catch (error) {
       console.error('Error fetching participants:', error);
     }

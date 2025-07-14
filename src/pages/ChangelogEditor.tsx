@@ -67,10 +67,7 @@ const ChangelogEditor = () => {
         featured_image_url: featuredImage,
         visibility,
       };
-      autoSaveChangelog(id, {
-        ...autoSaveData,
-        visibility: visibility as "public" | "private"
-      });
+      autoSaveChangelog(id, autoSaveData);
     }
   }, [title, content, category, tags, featuredImage, visibility, isEditing, id, autoSaveChangelog]);
 
@@ -93,7 +90,7 @@ const ChangelogEditor = () => {
         status: 'draft' as const,
         tags,
         featured_image_url: featuredImage,
-        visibility: visibility as "public" | "private",
+        visibility,
         ai_generated: false,
       };
 
