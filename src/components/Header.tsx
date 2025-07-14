@@ -53,7 +53,9 @@ const Header = () => {
                 </DropdownMenuContent>
               </DropdownMenu>
               
-              <Button variant="ghost">Pricing</Button>
+              <Link to="/pricing">
+                <Button variant="ghost">Pricing</Button>
+              </Link>
               <Button variant="ghost">What's New</Button>
             </nav>
           </div>
